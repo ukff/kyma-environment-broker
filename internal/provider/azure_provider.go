@@ -8,10 +8,10 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
+	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 )
 
 const (
