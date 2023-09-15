@@ -515,10 +515,10 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	}
 
 	if e := validateOverlapping(*nodes, *pods); e != nil {
-		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap pods CIDR"))
+		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", pods.String()))
 	}
 	if e := validateOverlapping(*nodes, *services); e != nil {
-		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap services CIDR"))
+		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", services.String()))
 	}
 	if e := validateOverlapping(*services, *pods); e != nil {
 		err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap pods CIDR"))

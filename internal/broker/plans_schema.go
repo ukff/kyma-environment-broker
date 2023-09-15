@@ -186,7 +186,7 @@ func NewNetworkingSchema() *NetworkingType {
 	return &NetworkingType{
 		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later."},
 		Properties: NetworkingProperties{
-			Nodes: Type{Type: "string", Title: "Node network's CIDR", Description: fmt.Sprintf("Node network's CIDR, must not overlap with the following CIDRs: %s, %s, %s", networking.DefaultPodsCIDR, networking.DefaultServicesCIDR, seedCIDRs),
+			Nodes: Type{Type: "string", Title: "CIDR range for nodes", Description: fmt.Sprintf("CIDR range for nodes, must not overlap with the following CIDRs: %s, %s, %s", networking.DefaultPodsCIDR, networking.DefaultServicesCIDR, seedCIDRs),
 				Default: networking.DefaultNodesCIDR},
 		},
 		Required: []string{"nodes"},
