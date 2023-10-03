@@ -183,13 +183,28 @@ func (s *InitialisationStep) performRuntimeTasks(step int, operation internal.Up
 	}
 }
 
+func (s *InitialisationStep) restoreAvsAndFailOperation(operation internal.UpgradeClusterOperation, description string, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
+	err := s.evaluationManager.RestoreStatus(&operation.Avs, log)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "error while restoring AvS state", err, 3*time.Second, time.Minute, log)
+	}
+	operation, retry, _ := s.operationManager.UpdateOperation(operation, func(op *internal.UpgradeClusterOperation) {
+		op.Avs.AvsInternalEvaluationStatus = operation.Avs.AvsInternalEvaluationStatus
+		op.Avs.AvsExternalEvaluationStatus = operation.Avs.AvsExternalEvaluationStatus
+	}, log)
+	if retry > 0 {
+		return operation, retry, nil
+	}
+	return s.operationManager.OperationFailed(operation, description, nil, log)
+}
+
 // checkRuntimeStatus will check operation runtime status
 // It will also trigger performRuntimeTasks upgrade steps to ensure
 // all the required dependencies have been fulfilled for upgrade operation.
 func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
 	if time.Since(operation.UpdatedAt) > CheckStatusTimeout {
 		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
-		//send cunstomer notification
+		//send customer notification
 		if operation.RuntimeOperation.Notification {
 			err := s.sendNotificationComplete(operation, log)
 			//currently notification error can only be temporary error
@@ -197,7 +212,7 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeCluste
 				return operation, 5 * time.Second, nil
 			}
 		}
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), nil, log)
+		return s.restoreAvsAndFailOperation(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), log)
 	}
 
 	status, err := s.provisionerClient.RuntimeOperationStatus(operation.RuntimeOperation.GlobalAccountID, operation.ProvisionerOperationID)

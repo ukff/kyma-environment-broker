@@ -204,7 +204,7 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeKymaOp
 				return operation, 5 * time.Second, nil
 			}
 		}
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), nil, log)
+		return s.restoreAvsAndFailOperation(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), log)
 	}
 
 	var err error
@@ -305,4 +305,19 @@ func (s *InitialisationStep) sendNotificationComplete(operation internal.Upgrade
 		return err
 	}
 	return nil
+}
+
+func (s *InitialisationStep) restoreAvsAndFailOperation(operation internal.UpgradeKymaOperation, description string, log logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
+	err := s.evaluationManager.RestoreStatus(&operation.Avs, log)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "error while restoring AvS state", err, 3*time.Second, time.Minute, log)
+	}
+	operation, retry, _ := s.operationManager.UpdateOperation(operation, func(op *internal.UpgradeKymaOperation) {
+		op.Avs.AvsInternalEvaluationStatus = operation.Avs.AvsInternalEvaluationStatus
+		op.Avs.AvsExternalEvaluationStatus = operation.Avs.AvsExternalEvaluationStatus
+	}, log)
+	if retry > 0 {
+		return operation, retry, nil
+	}
+	return s.operationManager.OperationFailed(operation, description, nil, log)
 }
