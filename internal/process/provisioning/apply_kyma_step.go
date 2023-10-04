@@ -86,6 +86,17 @@ func (a *ApplyKymaStep) Run(operation internal.Operation, logger logrus.FieldLog
 func (a *ApplyKymaStep) addLabelsAndName(operation internal.Operation, obj *unstructured.Unstructured) bool {
 	oldLabels := obj.GetLabels()
 	steps.ApplyLabelsAndAnnotationsForLM(obj, operation)
+
+	// this if-block is a temporary solution, should be removed after the migration of compass registration is completed
+	if operation.IsRegisteredInCompassByProvisioner() {
+		annotations := obj.GetAnnotations()
+		if annotations == nil {
+			annotations = map[string]string{}
+		}
+		annotations["compass-runtime-id-for-migration"] = operation.GetCompassRuntimeId()
+		obj.SetAnnotations(annotations)
+	}
+
 	obj.SetName(steps.KymaName(operation))
 	return !reflect.DeepEqual(obj.GetLabels(), oldLabels)
 }

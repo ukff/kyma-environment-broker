@@ -310,6 +310,29 @@ type InstanceDetails struct {
 	KymaResourceName      string `json:"kyma_resource_name"`
 
 	EuAccess bool `json:"eu_access"`
+
+	// CompassRuntimeId - a runtime ID created by the Compass. Existing instances has a nil value (because the field was not existing) - it means the compass runtime Id is equal to runtime ID.
+	// If the value is an empty string - it means the runtime was not registered by Provisioner in the Compass.
+	// Should be removed after the migration of compass registration is completed
+	CompassRuntimeId *string
+}
+
+// IsRegisteredInCompassByProvisioner returns true, if the runtime was registered in Compass by Provisioner
+func (i *InstanceDetails) IsRegisteredInCompassByProvisioner() bool {
+	return i.CompassRuntimeId == nil || *i.CompassRuntimeId != ""
+}
+
+func (i *InstanceDetails) SetCompassRuntimeIdNotRegisteredByProvisioner() {
+	i.CompassRuntimeId = ptr.String("")
+}
+
+// GetCompassRuntimeId provides a compass runtime Id registered by Provisioner or empty string if it was not provisioned by Provisioner.
+func (i *InstanceDetails) GetCompassRuntimeId() string {
+	// for backward compatibility, if CompassRuntimeID field was not set, use RuntimeId
+	if i.CompassRuntimeId == nil {
+		return i.RuntimeID
+	}
+	return *i.CompassRuntimeId
 }
 
 // ProvisioningOperation holds all information about provisioning operation
