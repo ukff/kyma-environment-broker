@@ -72,6 +72,7 @@ type RuntimeInput struct {
 	shootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
 	clusterName       string
+	modules           internal.ModulesDTO
 }
 
 func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
@@ -255,6 +256,10 @@ func (r *RuntimeInput) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntime
 		{
 			name:    "configure networking",
 			execute: r.configureNetworking,
+		},
+		{
+			name:    "configure modules",
+			execute: r.configureModules,
 		},
 	} {
 		if err := step.execute(); err != nil {
@@ -784,6 +789,14 @@ func (r *RuntimeInput) setOIDCDefaultValuesIfEmpty(oidcConfig *gqlschema.OIDCCon
 	if oidcConfig.UsernamePrefix == "" {
 		oidcConfig.UsernamePrefix = r.oidcDefaultValues.UsernamePrefix
 	}
+}
+
+func (r *RuntimeInput) configureModules() error {
+	if r.provisioningParameters.Parameters.Modules == nil {
+		return nil
+	}
+	r.modules = *r.provisioningParameters.Parameters.Modules
+	return nil
 }
 
 func updateString(toUpdate *string, value *string) {

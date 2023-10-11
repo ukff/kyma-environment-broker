@@ -189,6 +189,7 @@ type ProvisioningParametersDTO struct {
 
 	OIDC       *OIDCConfigDTO `json:"oidc,omitempty"`
 	Networking *NetworkingDTO `json:"networking,omitempty""`
+	Modules    *ModulesDTO    `json:"networking,omitempty"`
 }
 
 type UpdatingParametersDTO struct {
@@ -339,4 +340,29 @@ type ServiceManagerOperatorCredentials struct {
 	ServiceManagerURL string `json:"sm_url"`
 	URL               string `json:"url"`
 	XSAppName         string `json:"xsappname"`
+}
+
+type Channel string
+
+const (
+	Fast    Channel = "fast"
+	Regular Channel = "regular"
+)
+
+type CustomResourcePolicy string
+
+const (
+	Ignore          CustomResourcePolicy = "Ignore"
+	CreateAndDelete CustomResourcePolicy = "CreateAndDelete"
+)
+
+type ModulesDTO struct {
+	UseDefault bool         `json:"default"`
+	List       []*ModuleDTO `json:"modules"`
+}
+
+type ModuleDTO struct {
+	Name                 string               `json:"name"`
+	Channel              Channel              `json:"channel"`
+	CustomResourcePolicy CustomResourcePolicy `json:"CustomResourcePolicy"`
 }
