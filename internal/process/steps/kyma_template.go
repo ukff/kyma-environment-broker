@@ -2,6 +2,9 @@ package steps
 
 import (
 	"bytes"
+	"fmt"
+	cyaml2 "gopkg.in/yaml.v2"
+	"log"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -36,6 +39,19 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
 	}
 	logger.Infof("Decoded kyma template: %v", obj)
+
+	modules := operation.ProvisioningParameters.Parameters.Modules
+	if err := appendModules(obj, modules); err != nil {
+		logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
+		return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
+	}
+	tmpl, err = encodeKymaTemplate(obj)
+	if err != nil {
+		logger.Errorf("Unable to create yaml kyma template : %s", err.Error())
+		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
+	}
+	fmt.Println("Yaml will be")
+	fmt.Println(tmpl)
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
 		op.KymaTemplate = tmpl
@@ -58,7 +74,6 @@ func (s initKymaTemplateUpgradeKyma) Run(o internal.UpgradeKymaOperation, logger
 
 func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	tmpl := []byte(template)
-
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
 	var rawObj runtime.RawExtension
 	if err := decoder.Decode(&rawObj); err != nil {
@@ -68,8 +83,36 @@ func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
 	return unstructuredObj, err
+}
+
+func appendModules(out *unstructured.Unstructured, m *internal.ModulesDTO) error {
+	//To consider using -> unstructured.SetNestedSlice()
+	template := out.Object
+	specSection := template["spec"]
+	spec := specSection.(map[string]interface{})
+	modulesSection := spec["modules"]
+	if m == nil || m.List == nil || len(m.List) == 0 {
+		return nil
+	}
+
+	toInsert := make([]interface{}, len(m.List))
+	for i := range m.List {
+		toInsert[i] = m.List[i]
+	}
+	modulesSection = toInsert
+	spec["modules"] = modulesSection
+	out.Object["spec"] = specSection
+	return nil
+}
+
+func encodeKymaTemplate(tmpl *unstructured.Unstructured) (string, error) {
+	out, err := cyaml2.Marshal(tmpl.Object)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//mt.Printf("output:\n%s\n", out)
+	return string(out), nil
 }

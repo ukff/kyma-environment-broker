@@ -239,6 +239,9 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
 
+	if err := b.validateModules(parameters); err != nil {
+		return ersContext, parameters, err
+	}
 	ersContext, err := b.extractERSContext(details)
 	logger := l.WithField("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {
@@ -261,7 +264,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
-
 	var autoscalerMin, autoscalerMax int
 	if defaults.GardenerConfig != nil {
 		p := defaults.GardenerConfig
@@ -533,5 +535,30 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 		return fmt.Errorf("%s overlaps %s", n1.String(), n2.String())
 	}
 
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
+	if parameters.Modules == nil {
+		return fmt.Errorf("section with modules not set")
+	}
+	modules := parameters.Modules
+
+	//reject scenarios
+	if modules.List != nil || len(modules.List) > 0 && modules.UseDefault != nil {
+		return fmt.Errorf("it is not possible to set custom")
+	}
+	//
+	if (modules.UseDefault == nil || *modules.UseDefault) && (modules.List != nil || len(modules.List) > 0) {
+
+	}
+
+	//We differ nil from len(0) -> nil means that user not set explicity that modules should be empty, if it is supposed to be empty it must be not nil with len(0)
+	if !*modules.UseDefault && modules.List == nil {
+		//Set specify List to empty array
+	}
+	//reject scenarios
+
+	//we return and install what is in Modules.
 	return nil
 }
