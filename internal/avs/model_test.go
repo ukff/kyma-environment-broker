@@ -47,13 +47,14 @@ func TestAvsEvaluationConfigs(t *testing.T) {
 	assert.Equal("dummy", internalEvalAssistant.ProvideNewOrDefaultServiceName("dummy"))
 	assert.Equal("external-dummy", externalEvalAssistant.ProvideNewOrDefaultServiceName("dummy"))
 
-	assert.Equal(0, len(internalEvalAssistant.ProvideTags()))
-	assert.Equal(1, len(externalEvalAssistant.ProvideTags()))
+	params := internal.Operation{}
+	assert.Equal(8, len(internalEvalAssistant.ProvideTags(internal.Operation{})))
 
 	// verify confg as json
-	tags, testTag := externalEvalAssistant.ProvideTags(), Tag{}
-	json.Unmarshal([]byte(`{"content":"dummy","tag_class_id":123,"tag_class_name":"location-dummy"}`), &testTag)
+	tags, testTag := externalEvalAssistant.ProvideTags(params), Tag{}
+	json.Unmarshal([]byte(`{"content":"","tag_class_id":0,"tag_class_name":""}`), &testTag)
 	assert.Equal(testTag, *tags[0])
+
 }
 
 func newMockAvsOauthServer() *httptest.Server {
@@ -101,17 +102,9 @@ func avsConfig(mockOauthServer *httptest.Server, mockAvsServer *httptest.Server)
 		DefinitionType:         DefinitionType,
 		InternalTesterAccessId: internalEvalId,
 		InternalTesterService:  "",
-		InternalTesterTags:     []*Tag{},
 		ExternalTesterAccessId: externalEvalId,
 		ExternalTesterService:  "external-dummy",
-		ExternalTesterTags: []*Tag{
-			&Tag{
-				Content:      "dummy",
-				TagClassId:   123,
-				TagClassName: "location-dummy",
-			},
-		},
-		GroupId:  5555,
-		ParentId: 91011,
+		GroupId:                5555,
+		ParentId:               91011,
 	}
 }

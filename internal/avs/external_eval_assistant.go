@@ -48,8 +48,56 @@ func (eea *ExternalEvalAssistant) ProvideParentId(_ internal.ProvisioningParamet
 	return eea.avsConfig.ParentId
 }
 
-func (eea *ExternalEvalAssistant) ProvideTags() []*Tag {
-	return eea.avsConfig.ExternalTesterTags
+func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
+
+	tags := []*Tag{
+		{
+			Content:    operation.InstanceID,
+			TagClassId: eea.avsConfig.InstanceIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+			TagClassId: eea.avsConfig.GlobalAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
+			TagClassId: eea.avsConfig.SubAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.PlatformRegion,
+			TagClassId: eea.avsConfig.LandscapeTagClassId,
+		},
+		{
+			Content:    string(operation.ProvisioningParameters.PlatformProvider),
+			TagClassId: eea.avsConfig.ProviderTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: eea.avsConfig.ShootNameTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: eea.avsConfig.GardenerShootNameTagClassId,
+		},
+	}
+
+	region := ""
+	if operation.ProvisioningParameters.Parameters.Region != nil {
+		region = *operation.ProvisioningParameters.Parameters.Region
+	} else if operation.LastRuntimeState.ClusterSetup != nil {
+		region = operation.LastRuntimeState.ClusterSetup.Metadata.Region
+	} else if operation.LastRuntimeState.ClusterConfig.Region != "" {
+		region = operation.LastRuntimeState.ClusterConfig.Region
+	} else if operation.Region != "" {
+		region = operation.Region
+	}
+
+	tags = append(tags, &Tag{
+		Content:    region,
+		TagClassId: eea.avsConfig.RegionTagClassId,
+	})
+
+	return tags
 }
 
 func (eea *ExternalEvalAssistant) ProvideNewOrDefaultServiceName(defaultServiceName string) string {

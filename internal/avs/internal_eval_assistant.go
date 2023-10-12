@@ -60,8 +60,57 @@ func (iec *InternalEvalAssistant) ProvideCheckType() string {
 	return ""
 }
 
-func (iec *InternalEvalAssistant) ProvideTags() []*Tag {
-	return iec.avsConfig.InternalTesterTags
+func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
+
+	tags := []*Tag{
+		{
+			Content:    operation.InstanceID,
+			TagClassId: iec.avsConfig.InstanceIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+			TagClassId: iec.avsConfig.GlobalAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
+			TagClassId: iec.avsConfig.SubAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.PlatformRegion,
+			TagClassId: iec.avsConfig.LandscapeTagClassId,
+		},
+		{
+			Content:    string(operation.ProvisioningParameters.PlatformProvider),
+			TagClassId: iec.avsConfig.ProviderTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: iec.avsConfig.ShootNameTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: iec.avsConfig.GardenerShootNameTagClassId,
+		},
+	}
+
+	region := ""
+	if operation.ProvisioningParameters.Parameters.Region != nil {
+		region = *operation.ProvisioningParameters.Parameters.Region
+	} else if operation.LastRuntimeState.ClusterSetup != nil {
+		region = operation.LastRuntimeState.ClusterSetup.Metadata.Region
+	} else if operation.LastRuntimeState.ClusterConfig.Region != "" {
+		region = operation.LastRuntimeState.ClusterConfig.Region
+	} else if operation.Region != "" {
+		region = operation.Region
+	}
+
+	tags = append(tags, &Tag{
+		Content:    region,
+		TagClassId: iec.avsConfig.RegionTagClassId,
+	})
+
+	return tags
+
 }
 
 func (iec *InternalEvalAssistant) ProvideNewOrDefaultServiceName(defaultServiceName string) string {

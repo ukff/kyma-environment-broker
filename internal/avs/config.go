@@ -18,16 +18,18 @@ type Config struct {
 	Disabled                                        bool   `envconfig:"default=false"`
 	InternalTesterAccessId                          int64
 	InternalTesterService                           string `envconfig:"optional"`
-	InternalTesterTags                              []*Tag `envconfig:"optional"`
 	GroupId                                         int64
 	ExternalTesterAccessId                          int64
 	ExternalTesterService                           string `envconfig:"optional"`
-	ExternalTesterTags                              []*Tag `envconfig:"optional"`
 	ParentId                                        int64
-	AdditionalTagsEnabled                           bool
+	InstanceIdTagClassId                            int
+	ShootNameTagClassId                             int
 	GardenerShootNameTagClassId                     int
-	GardenerSeedNameTagClassId                      int
 	RegionTagClassId                                int
+	GlobalAccountIdTagClassId                       int
+	SubAccountIdTagClassId                          int
+	LandscapeTagClassId                             int
+	ProviderTagClassId                              int
 	TrialInternalTesterAccessId                     int64    `envconfig:"optional"`
 	TrialParentId                                   int64    `envconfig:"optional"`
 	TrialGroupId                                    int64    `envconfig:"optional"`
