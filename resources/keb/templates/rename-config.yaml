@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dummy-config-map
-data:
-  foo: This config map has been created to validate deployment of KEB chart.
