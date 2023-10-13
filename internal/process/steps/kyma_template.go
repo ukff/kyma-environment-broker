@@ -87,27 +87,26 @@ func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	return unstructuredObj, err
 }
 
-func appendModules(out *unstructured.Unstructured, modules *internal.ModulesDTO) error {
-	//To consider using -> unstructured.SetNestedSlice()
+// To consider using -> unstructured.SetNestedSlice()
+func appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO) error {
 	const (
 		specKey    = "spec"
 		modulesKey = "modules"
 	)
-	template := out.Object
-	specSection := template[specKey]
-	spec := specSection.(map[string]interface{})
-	modulesSection := spec[modulesKey]
 	if modules == nil || modules.List == nil || len(modules.List) == 0 {
 		return nil
 	}
-
+	content := kyma.Object
+	specSection := content[specKey]
+	spec := specSection.(map[string]interface{})
+	modulesSection := spec[modulesKey]
 	toInsert := make([]interface{}, len(modules.List))
 	for i := range modules.List {
 		toInsert[i] = modules.List[i]
 	}
 	modulesSection = toInsert
 	spec[modulesKey] = modulesSection
-	out.Object[specKey] = specSection
+	kyma.Object[specKey] = specSection
 
 	return nil
 }
