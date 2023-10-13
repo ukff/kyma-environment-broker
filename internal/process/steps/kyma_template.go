@@ -113,6 +113,7 @@ func appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO
 	modulesSection = toInsert
 	spec[modulesKey] = modulesSection
 	kyma.Object[specKey] = specSection
+
 	return nil
 }
 
