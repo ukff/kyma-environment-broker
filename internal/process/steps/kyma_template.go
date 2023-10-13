@@ -33,7 +33,7 @@ func (s *InitKymaTemplate) Name() string {
 func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	tmpl := operation.InputCreator.Configuration().KymaTemplate
 	obj, err := DecodeKymaTemplate(tmpl)
-	if err != nil {
+	if err != nil || obj == nil {
 		logger.Errorf("Unable to create kyma template: %s", err.Error())
 		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
 	}
@@ -93,13 +93,19 @@ func appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO
 		specKey    = "spec"
 		modulesKey = "modules"
 	)
-	if modules == nil || modules.List == nil || len(modules.List) == 0 {
-		return nil
-	}
 	content := kyma.Object
-	specSection := content[specKey]
-	spec := specSection.(map[string]interface{})
-	modulesSection := spec[modulesKey]
+	specSection, ok := content[specKey]
+	if !ok {
+		return fmt.Errorf("getting spec content of kyma template")
+	}
+	spec, ok := specSection.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("converting spec of kyma template")
+	}
+	modulesSection, ok := spec[modulesKey]
+	if !ok {
+		return fmt.Errorf("getting modules content of kyma template")
+	}
 	toInsert := make([]interface{}, len(modules.List))
 	for i := range modules.List {
 		toInsert[i] = modules.List[i]
@@ -107,7 +113,6 @@ func appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO
 	modulesSection = toInsert
 	spec[modulesKey] = modulesSection
 	kyma.Object[specKey] = specSection
-
 	return nil
 }
 
