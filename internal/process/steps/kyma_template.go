@@ -40,7 +40,7 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 	logger.Infof("Decoded kyma template: %v", obj)
 
 	modules := operation.ProvisioningParameters.Parameters.Modules
-	if modules != nil && !modules.UseDefault {
+	if modules != nil && !modules.Default {
 		if err := appendModules(obj, modules); err != nil {
 			logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
 			return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
