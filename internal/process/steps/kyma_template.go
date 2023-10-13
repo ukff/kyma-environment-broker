@@ -3,7 +3,7 @@ package steps
 import (
 	"bytes"
 	"fmt"
-	yamlv2 "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -12,8 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	k8syamlutil "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type InitKymaTemplate struct {
@@ -73,12 +73,12 @@ func (s initKymaTemplateUpgradeKyma) Run(o internal.UpgradeKymaOperation, logger
 
 func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	tmpl := []byte(template)
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
+	decoder := k8syamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
 	var rawObj runtime.RawExtension
 	if err := decoder.Decode(&rawObj); err != nil {
 		return nil, err
 	}
-	obj, _, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+	obj, _, err := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func appendModules(out *unstructured.Unstructured, m *internal.ModulesDTO) error
 }
 
 func encodeKymaTemplate(tmpl *unstructured.Unstructured) (string, error) {
-	result, err := yamlv2.Marshal(tmpl.Object)
+	result, err := yaml.Marshal(tmpl.Object)
 	if err != nil {
 		return "", fmt.Errorf("while marshal unstructured to yaml: %v", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,12 @@ import (
 const (
 	workersAmount int = 5
 )
+
+func getYaml(t *testing.T, name string) string {
+	b, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", "testdata/modules/", name)) // just pass the file name
+	assert.NoError(t, err)
+	return string(b)
+}
 
 func TestProvisioning_HappyPath(t *testing.T) {
 	// given
@@ -1228,4 +1235,7 @@ func TestProvisioning_Modules(t *testing.T) {
 	suite.processProvisioningAndReconcilingByOperationID(opID)
 
 	suite.WaitForOperationState(opID, domain.Succeeded)
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	assert.NoError(t, err)
+	assert.YAMLEq(t, op.KymaTemplate, getYaml(t, "testcase1.yaml"))
 }
