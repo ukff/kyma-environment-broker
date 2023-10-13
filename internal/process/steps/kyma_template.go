@@ -3,17 +3,19 @@ package steps
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"gopkg.in/yaml.v2"
+
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	k8syamlutil "k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
 type InitKymaTemplate struct {
