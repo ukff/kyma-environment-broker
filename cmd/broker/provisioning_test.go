@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -118,7 +120,17 @@ func TestProvisioning_Preview(t *testing.T) {
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	t.Skip()
+	//t.Skip()
+	// config:
+	outputToFile := false
+	prettyJson := false
+	prettify := func(content []byte) *bytes.Buffer {
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, content, "", "    ")
+		assert.NoError(t, err)
+		return &prettyJSON
+	}
+
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -126,10 +138,25 @@ func TestCatalog(t *testing.T) {
 	// when
 	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/catalog"), ``)
 
-	m, _ := io.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
 	defer resp.Body.Close()
 
-	fmt.Println(string(m))
+	if outputToFile {
+		if prettyJson {
+			err = os.WriteFile("catalog.json", prettify(content).Bytes(), 0644)
+			assert.NoError(t, err)
+		} else {
+			err = os.WriteFile("catalog.json", content, 0644)
+			assert.NoError(t, err)
+		}
+	} else {
+		if prettyJson {
+			fmt.Println(prettify(content).String())
+		} else {
+			fmt.Println(string(content))
+		}
+	}
 }
 
 func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
@@ -1265,7 +1292,7 @@ func TestProvisioning_Modules2(t *testing.T) {
 						"nodes": "192.168.48.0/20"
 					},
 					"modules": {
-						"default": true,
+						"default": "true",
 						"list": [
 							{
 								"name": "btpmanager",
