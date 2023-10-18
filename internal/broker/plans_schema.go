@@ -49,9 +49,6 @@ type NetworkingProperties struct {
 	Nodes Type `json:"nodes"`
 }
 
-type Modules struct {
-}
-
 type NetworkingType struct {
 	Type
 	Properties NetworkingProperties `json:"properties"`
@@ -92,6 +89,7 @@ type Type struct {
 	Items           *Type             `json:"items,omitempty"`
 	AdditionalItems *bool             `json:"additionalItems,omitempty"`
 	UniqueItems     *bool             `json:"uniqueItems,omitempty"`
+	ReadOnly        interface{}       `json:"readOnly,omitempty"`
 }
 
 type NameType struct {
@@ -102,6 +100,54 @@ type NameType struct {
 type BTPdefaultTemplate struct {
 	Elements  []string `json:"elements,omitempty"`
 	Separator string   `json:"separator,omitempty"`
+}
+
+type Modules struct {
+	Type
+	ControlsOrder []string `json:"_controlsOrder"`
+	OneOf         []any    `json:"oneOf"`
+	Required      []string `json:"required"`
+}
+
+type ModulesDefault struct {
+	Type
+	Properties []Type `json:"properties"`
+}
+
+type ModulesCustomList struct {
+	Type
+	Properties []Type `json:"properties"`
+}
+
+type ModulesCustomListItems struct {
+	Type
+	ControlsOrder []string `json:"_controlsOrder"`
+	Properties    []Type   `json:"properties"`
+}
+
+func NewModulesSchema() *Modules {
+	return &Modules{
+		Type: Type{
+			Type:        "string",
+			Description: "User can select default modules or provide custom list.",
+		},
+		ControlsOrder: []string{"useDefault", "modules"},
+		OneOf: []any{ModulesDefault{
+			Type: Type{
+				Type:        "object",
+				Title:       "Default",
+				Description: "Default modules",
+			},
+			Properties: []Type{{
+				Type:        "boolean",
+				Description: "Link to help SAP portal, where we describe default module list",
+				Default:     true,
+				ReadOnly:    true,
+			}},
+		}, ModulesCustomList{
+			Properties: []Type{{}, {}, {}},
+		}},
+	}
 }
 
 func NameProperty() NameType {
@@ -175,6 +221,7 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 			Enum: ToInterfaceSlice(regions),
 		},
 		Networking: NewNetworkingSchema(),
+		Modules:    NewModulesSchema(),
 	}
 
 	if update {
@@ -195,6 +242,10 @@ func NewNetworkingSchema() *NetworkingType {
 		},
 		Required: []string{"nodes"},
 	}
+}
+
+func NewModulesSchema() *Modules {
+	return &Modules{}
 }
 
 func NewOIDCSchema() *OIDCType {
