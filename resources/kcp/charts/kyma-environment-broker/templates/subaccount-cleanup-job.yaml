@@ -3,6 +3,8 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: "kcp-subaccount-cleaner-v1.0"
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   schedule: "{{ .Values.subaccountCleanup.schedule }}"
   failedJobsHistoryLimit: 5
@@ -22,6 +24,7 @@ spec:
             sidecar.istio.io/inject: "false"
           {{ end }}
         spec:
+          serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
           restartPolicy: Never
           shareProcessNamespace: true
           {{- with .Values.deployment.securityContext }}
@@ -30,7 +33,7 @@ spec:
           {{- end }}
           containers:
             - name: cleaner
-              image: "{{ .Values.global.images.containerRegistry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
+              image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
               imagePullPolicy: IfNotPresent
               env:
                 {{if eq .Values.global.database.embedded.enabled true}}
@@ -106,19 +109,20 @@ spec:
                   readOnly: true
               {{- end}}
             {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql-instance-credentials
-                  readOnly: true
-
             - name: cloudsql-proxy
               image: {{ .Values.global.images.cloudsql_proxy_image }}
-              command: [ "/cloud_sql_proxy",
-                         "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432",
-                         "-credential_file=/secrets/cloudsql-instance-credentials/credentials.json" ]
+              {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
+              command: ["/cloud_sql_proxy",
+                        "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432"]
+              {{- else }}
+              command: ["/cloud_sql_proxy",
+                        "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432",
+                        "-credential_file=/secrets/cloudsql-instance-credentials/credentials.json"]
               volumeMounts:
                 - name: cloudsql-instance-credentials
                   mountPath: /secrets/cloudsql-instance-credentials
                   readOnly: true
+              {{- end }}
               {{- with .Values.deployment.securityContext }}
               securityContext:
                 {{ toYaml . | nindent 16 }}
@@ -126,7 +130,7 @@ spec:
             {{- end}}
 
           volumes:
-          {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
+          {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}
             - name: cloudsql-instance-credentials
               secret:
                 secretName: cloudsql-instance-credentials
@@ -145,6 +149,8 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: "kcp-subaccount-cleaner-v2.0"
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   schedule: "{{ .Values.subaccountCleanup.schedule }}"
   failedJobsHistoryLimit: 5
@@ -160,6 +166,7 @@ spec:
           labels:
             cronjob: subaccount-cleaner-v2.0
         spec:
+          serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
           restartPolicy: Never
           shareProcessNamespace: true
           {{- with .Values.deployment.securityContext }}
@@ -168,7 +175,7 @@ spec:
           {{- end }}
           containers:
             - name: cleaner
-              image: "{{ .Values.global.images.containerRegistry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
+              image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
               imagePullPolicy: IfNotPresent
               env:
                 {{if eq .Values.global.database.embedded.enabled true}}
@@ -244,19 +251,20 @@ spec:
                 readOnly: true
               {{- end}}
             {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
-              - name: cloudsql-instance-credentials
-                mountPath: /secrets/cloudsql-instance-credentials
-                readOnly: true
-
             - name: cloudsql-proxy
               image: {{ .Values.global.images.cloudsql_proxy_image }}
-              command: [ "/cloud_sql_proxy",
-                         "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432",
-                         "-credential_file=/secrets/cloudsql-instance-credentials/credentials.json" ]
+              {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
+              command: ["/cloud_sql_proxy",
+                        "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432"]
+              {{- else }}
+              command: ["/cloud_sql_proxy",
+                        "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432",
+                        "-credential_file=/secrets/cloudsql-instance-credentials/credentials.json"]
               volumeMounts:
                 - name: cloudsql-instance-credentials
                   mountPath: /secrets/cloudsql-instance-credentials
                   readOnly: true
+              {{- end }}
               {{- with .Values.deployment.securityContext }}
               securityContext:
                 {{ toYaml . | nindent 16 }}
@@ -264,7 +272,7 @@ spec:
             {{- end}}
 
           volumes:
-          {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
+          {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}
             - name: cloudsql-instance-credentials
               secret:
                 secretName: cloudsql-instance-credentials
