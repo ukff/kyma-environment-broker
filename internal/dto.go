@@ -357,12 +357,12 @@ const (
 )
 
 type ModulesDTO struct {
-	Default bool         `json:"default"`
-	List    []*ModuleDTO `json:"list"`
+	Default bool         `json:"default, omitempty"`
+	List    []*ModuleDTO `json:"list, omitempty"`
 }
 
 type ModuleDTO struct {
-	Name                 string               `json:"name"`
-	Channel              Channel              `json:"channel"`
-	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy"`
+	Name                 string               `json:"name, omitempty"`
+	Channel              Channel              `json:"channel, omitempty"`
+	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy, omitempty"`
 }

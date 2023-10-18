@@ -14,13 +14,14 @@ import (
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -28,7 +29,7 @@ const (
 )
 
 func getYaml(t *testing.T, name string) string {
-	b, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", "testdata/modules/", name)) // just pass the file name
+	b, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", "testdata", "modules", name)) // just pass the file name
 	assert.NoError(t, err)
 	return string(b)
 }
@@ -1191,7 +1192,7 @@ func TestProvisioning_PRVersionWithoutOverrides(t *testing.T) {
 	suite.WaitForProvisioningState(opID, domain.Failed)
 }
 
-func TestProvisioning_Modules(t *testing.T) {
+func TestProvisioning_Modules1(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1237,5 +1238,55 @@ func TestProvisioning_Modules(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, op.KymaTemplate, getYaml(t, "testcase1.yaml"))
+	assert.YAMLEq(t, op.KymaTemplate, getYaml(t, "expected1.yaml"))
+}
+
+func TestProvisioning_Modules2(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+		
+				"context": {
+					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
+						"subaccount_id": "test",
+					"user_id": "piotr.miskiewicz@sap.com"
+					
+				},
+				"parameters": {
+					"name": "test",
+					"networking": {
+						"nodes": "192.168.48.0/20"
+					},
+					"modules": {
+						"default": true,
+						"list": [
+							{
+								"name": "btpmanager",
+								"channel": "regular",
+								"customResourcePolicy": "CreateAndDelete"
+							},
+							{
+								"name": "keda",
+								"channel": "fast",
+								"customResourcePolicy": "Ignore"
+							}
+						]
+					}
+				}
+}`)
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processProvisioningAndReconcilingByOperationID(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	assert.NoError(t, err)
+	assert.YAMLEq(t, op.KymaTemplate, getYaml(t, "expected2.yaml"))
 }

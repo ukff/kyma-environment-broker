@@ -13,4 +13,4 @@ spec:
       customresourcepolicy: CreateAndDelete
     - name: keda
       channel: fast
-      customresourcepolicy: CreateAndDelete
+      customresourcepolicy: Ignore

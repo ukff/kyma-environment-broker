@@ -28,6 +28,7 @@ type ProvisioningProperties struct {
 	ShootDomain *Type           `json:"shootDomain,omitempty"`
 	Region      *Type           `json:"region,omitempty"`
 	Networking  *NetworkingType `json:"networking,omitempty"`
+	Modules     *Modules        `json:"modules,omitempty"`
 }
 
 type UpdateProperties struct {
@@ -46,6 +47,9 @@ func (up *UpdateProperties) IncludeAdditional() {
 
 type NetworkingProperties struct {
 	Nodes Type `json:"nodes"`
+}
+
+type Modules struct {
 }
 
 type NetworkingType struct {
