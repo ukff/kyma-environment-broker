@@ -144,10 +144,10 @@ func TestCatalog(t *testing.T) {
 
 	if outputToFile {
 		if prettyJson {
-			err = os.WriteFile("catalog.json", prettify(content).Bytes(), 0644)
+			err = os.WriteFile("catalog-test.json", prettify(content).Bytes(), 0644)
 			assert.NoError(t, err)
 		} else {
-			err = os.WriteFile("catalog.json", content, 0644)
+			err = os.WriteFile("catalog-test.json", content, 0644)
 			assert.NoError(t, err)
 		}
 	} else {
