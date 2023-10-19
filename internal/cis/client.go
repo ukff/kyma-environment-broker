@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -20,11 +21,13 @@ const (
 )
 
 type Config struct {
-	ClientID        string
-	ClientSecret    string
-	AuthURL         string
-	EventServiceURL string
-	PageSize        string `envconfig:"optional"`
+	ClientID             string
+	ClientSecret         string
+	AuthURL              string
+	EventServiceURL      string
+	PageSize             string        `envconfig:"optional"`
+	RateLimitingInterval time.Duration `envconfig:"default=2s,optional"`
+	MaxRequestRetries    int           `envconfig:"default=3,optional"`
 }
 
 type Client struct {
@@ -57,17 +60,17 @@ func (c *Client) SetHttpClient(httpClient *http.Client) {
 	c.httpClient = httpClient
 }
 
-type subAccounts struct {
+type subaccounts struct {
 	total int
 	ids   []string
 	from  time.Time
 	to    time.Time
 }
 
-func (c *Client) FetchSubAccountsToDelete() ([]string, error) {
-	subaccounts := subAccounts{}
+func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
+	subaccounts := subaccounts{}
 
-	err := c.fetchSubAccountsFromDeleteEvents(&subaccounts, 0)
+	err := c.fetchSubaccountsFromDeleteEvents(&subaccounts)
 	if err != nil {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
@@ -82,48 +85,54 @@ func (c *Client) FetchSubAccountsToDelete() ([]string, error) {
 	return subaccounts.ids, nil
 }
 
-func (c *Client) fetchSubAccountsFromDeleteEvents(collection *subAccounts, page int) error {
+func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
+	var currentPage, totalPages, retries int
+	for currentPage <= totalPages {
+		cisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
+		if err != nil {
+			if kebError.IsTemporaryError(err) && retries < c.config.MaxRequestRetries {
+				time.Sleep(c.config.RateLimitingInterval)
+				retries++
+				continue
+			}
+			return fmt.Errorf("while fetching subaccount delete events for %d page: %w", currentPage, err)
+		}
+		totalPages = cisResponse.TotalPages
+		subaccs.total = cisResponse.Total
+		c.appendSubaccountsFromDeleteEvents(&cisResponse, subaccs)
+		retries = 0
+		currentPage++
+	}
+
+	return nil
+}
+
+func (c *Client) fetchSubaccountDeleteEventsForGivenPageNum(page int) (CisResponse, error) {
 	request, err := c.buildRequest(page)
 	if err != nil {
-		return fmt.Errorf("while building request for event service: %w", err)
+		return CisResponse{}, fmt.Errorf("while building request for event service: %w", err)
 	}
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return fmt.Errorf("while executing request to event service: %w", err)
+		return CisResponse{}, fmt.Errorf("while executing request to event service: %w", err)
 	}
+	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
+	switch {
+	case response.StatusCode == http.StatusTooManyRequests:
+		return CisResponse{}, kebError.NewTemporaryError("rate limiting: %s", c.handleWrongStatusCode(response))
+	case response.StatusCode != http.StatusOK:
+		return CisResponse{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
 	}
 
 	var cisResponse CisResponse
 	err = json.NewDecoder(response.Body).Decode(&cisResponse)
 	if err != nil {
-		return fmt.Errorf("while decoding CIS response: %w", err)
+		return CisResponse{}, fmt.Errorf("while decoding CIS response: %w", err)
 	}
 
-	collection.total = cisResponse.Total
-	for _, event := range cisResponse.Events {
-		if event.Type != eventType {
-			c.log.Warnf("event type %s is not equal to %s, skip event", event.Type, eventType)
-			continue
-		}
-		collection.ids = append(collection.ids, event.SubAccount)
-
-		if collection.from.IsZero() {
-			collection.from = time.Unix(0, event.CreationTime*int64(1000000))
-		}
-		if collection.total == len(collection.ids) {
-			collection.to = time.Unix(0, event.CreationTime*int64(1000000))
-		}
-	}
-
-	page++
-	if page <= cisResponse.TotalPages {
-		return c.fetchSubAccountsFromDeleteEvents(collection, page)
-	}
-	return nil
+	return cisResponse, nil
 }
 
 func (c *Client) buildRequest(page int) (*http.Request, error) {
@@ -145,10 +154,27 @@ func (c *Client) buildRequest(page int) (*http.Request, error) {
 }
 
 func (c *Client) handleWrongStatusCode(response *http.Response) string {
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Sprintf("server returned %d status code, response body is unreadable", response.StatusCode)
 	}
 
 	return fmt.Sprintf("server returned %d status code, body: %s", response.StatusCode, string(body))
+}
+
+func (c *Client) appendSubaccountsFromDeleteEvents(cisResp *CisResponse, subaccs *subaccounts) {
+	for _, event := range cisResp.Events {
+		if event.Type != eventType {
+			c.log.Warnf("event type %s is not equal to %s, skip event", event.Type, eventType)
+			continue
+		}
+		subaccs.ids = append(subaccs.ids, event.SubAccount)
+
+		if subaccs.from.IsZero() {
+			subaccs.from = time.Unix(0, event.CreationTime*int64(1000000))
+		}
+		if subaccs.total == len(subaccs.ids) {
+			subaccs.to = time.Unix(0, event.CreationTime*int64(1000000))
+		}
+	}
 }
