@@ -122,8 +122,8 @@ func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
 	//t.Skip()
 	// config:
-	outputToFile := false
-	prettyJson := false
+	outputToFile := true
+	prettyJson := true
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")

@@ -87,8 +87,8 @@ type Type struct {
 	Enum            []interface{}     `json:"enum,omitempty"`
 	EnumDisplayName map[string]string `json:"_enumDisplayName,omitempty"`
 	Items           *Type             `json:"items,omitempty"`
-	AdditionalItems *bool             `json:"additionalItems,omitempty"`
-	UniqueItems     *bool             `json:"uniqueItems,omitempty"`
+	AdditionalItems interface{}       `json:"additionalItems,omitempty"`
+	UniqueItems     interface{}       `json:"uniqueItems,omitempty"`
 	ReadOnly        interface{}       `json:"readOnly,omitempty"`
 }
 
@@ -111,24 +111,43 @@ type Modules struct {
 
 type ModulesDefault struct {
 	Type
-	Properties []Type `json:"properties"`
+	Properties ModulesDefaultProperties `json:"properties"`
+}
+
+type ModulesDefaultProperties struct {
+	UseDefault Type `json:"useDefault"`
+}
+
+type ModulesCustom struct {
+	Type
+	Properties ModulesCustomProperties `json:"properties"`
+}
+
+type ModulesCustomProperties struct {
+	List ModulesCustomList `json:"list"`
 }
 
 type ModulesCustomList struct {
 	Type
-	Properties []Type `json:"properties"`
+	Items ModulesCustomListItems `json:"items"`
 }
 
 type ModulesCustomListItems struct {
 	Type
-	ControlsOrder []string `json:"_controlsOrder"`
-	Properties    []Type   `json:"properties"`
+	ControlsOrder []string                    `json:"_controlsOrder"`
+	Properties    ModulesCustomListProperties `json:"properties"`
+}
+
+type ModulesCustomListProperties struct {
+	Name                 Type `json:"name"`
+	Channel              Type `json:"channel"`
+	CustomResourcePolicy Type `json:"customResourcePolicy"`
 }
 
 func NewModulesSchema() *Modules {
 	return &Modules{
 		Type: Type{
-			Type:        "string",
+			Type:        "object",
 			Description: "User can select default modules or provide custom list.",
 		},
 		ControlsOrder: []string{"useDefault", "modules"},
@@ -138,14 +157,60 @@ func NewModulesSchema() *Modules {
 				Title:       "Default",
 				Description: "Default modules",
 			},
-			Properties: []Type{{
+			Properties: ModulesDefaultProperties{Type{
 				Type:        "boolean",
 				Description: "Link to help SAP portal, where we describe default module list",
 				Default:     true,
 				ReadOnly:    true,
+			},
+			},
+		}, ModulesCustom{
+			Type: Type{
+				Type:        "object",
+				Title:       "Custom",
+				Description: "Define custom module list",
+			},
+			Properties: ModulesCustomProperties{ModulesCustomList{
+				Type: Type{
+					Type:        "array",
+					UniqueItems: true,
+					Description: "Pickup module name from https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules. You can add module with given name only once.",
+				},
+				Items: ModulesCustomListItems{
+					Type: Type{
+						Type: "object",
+					},
+					ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
+					Properties: ModulesCustomListProperties{
+						Name: Type{
+							Type:        "string",
+							Title:       "name",
+							MinLength:   1,
+							Description: "Pickup module name from https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules. You can add module with given name only once.",
+						},
+						Channel: Type{
+							Type:        "string",
+							Default:     "regular",
+							Description: "`regular` - most stable version or `fast` - newest version",
+							Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
+							EnumDisplayName: map[string]string{
+								"regular": "regular - most stable version",
+								"fast":    "fast - newest version",
+							},
+						},
+						CustomResourcePolicy: Type{
+							Type:        "string",
+							Description: "`CreateAndDelete` - default module resource will be created/deleted or `Ignore` - module resource will not be created",
+							Default:     "CreateAndDelete",
+							Enum:        ToInterfaceSlice([]string{"CreateAndDelete", "Ignore"}),
+							EnumDisplayName: map[string]string{
+								"CreateAndDelete": "CreateAndDelete - default module resource will be created/deleted",
+								"Ignore":          "Ignore - module resource will not be created",
+							},
+						},
+					},
+				},
 			}},
-		}, ModulesCustomList{
-			Properties: []Type{{}, {}, {}},
 		}},
 	}
 }
@@ -242,10 +307,6 @@ func NewNetworkingSchema() *NetworkingType {
 		},
 		Required: []string{"nodes"},
 	}
-}
-
-func NewModulesSchema() *Modules {
-	return &Modules{}
 }
 
 func NewOIDCSchema() *OIDCType {
