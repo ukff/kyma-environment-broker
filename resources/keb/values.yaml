@@ -302,7 +302,7 @@ deprovisionRetrigger:
   # version: "PR-2476"
   # dir:
   # envs:
-  #   - APP_DRY_RUN: "{{ .Values.deprovisionRetrigger.dryRun }}"
+  #   - APP_DRY_RUN: "\{\{ .Values.deprovisionRetrigger.dryRun \}\}" # remove escape slashes when uncommenting the section
 
 serviceMonitor:
   enabled: true
