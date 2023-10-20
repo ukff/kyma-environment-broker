@@ -2,8 +2,17 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "kyma-env-broker.name" -}}
+{{- define "name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+ {{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "fullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- "kcp-kyma-environment-broker" -}}
 {{- end -}}
 
 {{/*
@@ -56,3 +65,6 @@ Utility function for joining Avs tag list into string.
 {{- $_ := set $local "first" false -}}
 {{- end -}}
 {{- end -}}
+
+
+

@@ -32,7 +32,7 @@ The provisioning process contains the following steps:
 | post_actions   | AVS_Create_External_Eval_Step      | AvS                      | Sets up external monitoring of Kyma Runtime.                                                                                                | Team Gopher     |
 | post_actions   | AVS_Tags                           | AvS                      | Sets up proper tags in the internal monitoring system.                                                                                      | Team Gopher     |
 
-The timeout for processing the whole provisioning operation is set to `24h`. In Kyma 2.0 provisioning steps delegate resource creation to Reconciler. Since Reconciler does not constrain a number of retries in case of a failed reconciliation, KEB sets [provisioning timeout for Reconciler](../resources/kcp/charts/kyma-environment-broker/values.yaml) to `2h`.
+The timeout for processing the whole provisioning operation is set to `24h`. In Kyma 2.0 provisioning steps delegate resource creation to Reconciler. Since Reconciler does not constrain a number of retries in case of a failed reconciliation, KEB sets [provisioning timeout for Reconciler](../resources/keb/values.yaml) to `2h`.
 
 ## Deprovisioning
 
