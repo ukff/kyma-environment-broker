@@ -13,10 +13,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getYaml(t *testing.T, name string) string {
-	b, err := os.ReadFile(fmt.Sprintf("%s/%s", "kyma_template_test_assets", name)) // just pass the file name
+var (
+	kymaTemplateTestAssets = "kyma_template_test_assets"
+	withDefaultModules     = "with_default_modules"
+	withoutDefaultModules  = "without_default_modules"
+)
+
+func getYaml(t *testing.T, path, name string) string {
+	file, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", kymaTemplateTestAssets, path, name))
 	assert.NoError(t, err)
-	return string(b)
+	return string(file)
 }
 
 func TestInitKymaTemplate_Run(t *testing.T) {
@@ -28,7 +34,7 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default.yaml"),
+		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
@@ -69,11 +75,11 @@ func TestInitKymaTemplateWithModules1_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default.yaml"),
+		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
-	KymaTemplateOutput := getYaml(t, "testcase1.yaml")
+	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase1.yaml")
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
@@ -107,11 +113,11 @@ func TestInitKymaTemplateWithModules2_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default.yaml"),
+		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
-	KymaTemplateOutput := getYaml(t, "testcase2.yaml")
+	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase2.yaml")
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
@@ -137,11 +143,11 @@ func TestInitKymaTemplateWithModules3_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default.yaml"),
+		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
-	KymaTemplateOutput := getYaml(t, "testcase3.yaml")
+	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase3.yaml")
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
@@ -163,11 +169,11 @@ func TestInitKymaTemplateWithModules4_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default.yaml"),
+		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
-	KymaTemplateOutput := getYaml(t, "testcase4.yaml")
+	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase4.yaml")
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
@@ -195,11 +201,11 @@ func TestInitKymaTemplateWithModules5_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default.yaml"),
+		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
-	KymaTemplateOutput := getYaml(t, "testcase5.yaml")
+	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase5.yaml")
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
@@ -233,11 +239,11 @@ func TestInitKymaTemplateWithModules6_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, "default_set.yaml"),
+		KymaTemplate: getYaml(t, withDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
 
-	KymaTemplateOutput := getYaml(t, "testcase6_set.yaml")
+	KymaTemplateOutput := getYaml(t, withDefaultModules, "testcase1.yaml")
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
