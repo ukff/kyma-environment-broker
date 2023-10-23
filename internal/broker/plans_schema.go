@@ -104,43 +104,43 @@ type BTPdefaultTemplate struct {
 
 type Modules struct {
 	Type
-	ControlsOrder []string      `json:"_controlsOrder"`
-	OneOf         []interface{} `json:"oneOf"`
+	ControlsOrder []string      `json:"_controlsOrder,omitempty"`
+	OneOf         []interface{} `json:"oneOf,omitempty"`
 }
 
 type ModulesDefault struct {
 	Type
-	Properties ModulesDefaultProperties `json:"properties"`
+	Properties ModulesDefaultProperties `json:"properties,omitempty"`
 }
 
 type ModulesDefaultProperties struct {
-	UseDefault Type `json:"useDefault"`
+	UseDefault Type `json:"useDefault,omitempty"`
 }
 
 type ModulesCustom struct {
 	Type
-	Properties ModulesCustomProperties `json:"properties"`
+	Properties ModulesCustomProperties `json:"properties,omitempty"`
 }
 
 type ModulesCustomProperties struct {
-	List ModulesCustomList `json:"list"`
+	List ModulesCustomList `json:"list,omitempty"`
 }
 
 type ModulesCustomList struct {
 	Type
-	Items ModulesCustomListItems `json:"items"`
+	Items ModulesCustomListItems `json:"items,omitempty"`
 }
 
 type ModulesCustomListItems struct {
 	Type
-	ControlsOrder []string                         `json:"_controlsOrder"`
-	Properties    ModulesCustomListItemsProperties `json:"properties"`
+	ControlsOrder []string                         `json:"_controlsOrder,omitempty"`
+	Properties    ModulesCustomListItemsProperties `json:"properties,omitempty"`
 }
 
 type ModulesCustomListItemsProperties struct {
-	Name                 Type `json:"name"`
-	Channel              Type `json:"channel"`
-	CustomResourcePolicy Type `json:"customResourcePolicy"`
+	Name                 Type `json:"name,omitempty"`
+	Channel              Type `json:"channel,omitempty"`
+	CustomResourcePolicy Type `json:"customResourcePolicy,omitempty"`
 }
 
 func NewModulesSchema() *Modules {

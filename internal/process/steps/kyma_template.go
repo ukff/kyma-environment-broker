@@ -53,7 +53,7 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 			tmpl, err = encodeKymaTemplate(obj)
 			if err != nil {
 				logger.Errorf("Unable to create yaml kyma template within added modules: %s", err.Error())
-				return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
+				return s.operationManager.OperationFailed(operation, "unable to create yaml kyma template within added modules", err, logger)
 			}
 		} else {
 			logger.Info("custom module list not provided, the default one will be used")
