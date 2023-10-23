@@ -104,9 +104,8 @@ type BTPdefaultTemplate struct {
 
 type Modules struct {
 	Type
-	ControlsOrder []string `json:"_controlsOrder"`
-	OneOf         []any    `json:"oneOf"`
-	Required      []string `json:"required"`
+	ControlsOrder []string      `json:"_controlsOrder"`
+	OneOf         []interface{} `json:"oneOf"`
 }
 
 type ModulesDefault struct {
@@ -134,11 +133,11 @@ type ModulesCustomList struct {
 
 type ModulesCustomListItems struct {
 	Type
-	ControlsOrder []string                    `json:"_controlsOrder"`
-	Properties    ModulesCustomListProperties `json:"properties"`
+	ControlsOrder []string                         `json:"_controlsOrder"`
+	Properties    ModulesCustomListItemsProperties `json:"properties"`
 }
 
-type ModulesCustomListProperties struct {
+type ModulesCustomListItemsProperties struct {
 	Name                 Type `json:"name"`
 	Channel              Type `json:"channel"`
 	CustomResourcePolicy Type `json:"customResourcePolicy"`
@@ -151,67 +150,71 @@ func NewModulesSchema() *Modules {
 			Description: "User can select default modules or provide custom list.",
 		},
 		ControlsOrder: []string{"useDefault", "modules"},
-		OneOf: []any{ModulesDefault{
-			Type: Type{
-				Type:        "object",
-				Title:       "Default",
-				Description: "Default modules",
-			},
-			Properties: ModulesDefaultProperties{Type{
-				Type:        "boolean",
-				Description: "Link to help SAP portal, where we describe default module list",
-				Default:     true,
-				ReadOnly:    true,
-			},
-			},
-		}, ModulesCustom{
-			Type: Type{
-				Type:        "object",
-				Title:       "Custom",
-				Description: "Define custom module list",
-			},
-			Properties: ModulesCustomProperties{ModulesCustomList{
+		OneOf: []any{
+			ModulesDefault{
 				Type: Type{
-					Type:        "array",
-					UniqueItems: true,
-					Description: "Pickup module name from https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules. You can add module with given name only once.",
+					Type:        "object",
+					Title:       "Default",
+					Description: "Default modules",
 				},
-				Items: ModulesCustomListItems{
-					Type: Type{
-						Type: "object",
+				Properties: ModulesDefaultProperties{
+					Type{
+						Type:        "boolean",
+						Description: "Link to help SAP portal, where we describe default module list",
+						Default:     true,
+						ReadOnly:    true,
 					},
-					ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
-					Properties: ModulesCustomListProperties{
-						Name: Type{
-							Type:        "string",
-							Title:       "name",
-							MinLength:   1,
+				},
+			},
+			ModulesCustom{
+				Type: Type{
+					Type:        "object",
+					Title:       "Custom",
+					Description: "Define custom module list",
+				},
+				Properties: ModulesCustomProperties{
+					ModulesCustomList{
+						Type: Type{
+							Type:        "array",
+							UniqueItems: true,
 							Description: "Pickup module name from https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules. You can add module with given name only once.",
 						},
-						Channel: Type{
-							Type:        "string",
-							Default:     "regular",
-							Description: "`regular` - most stable version or `fast` - newest version",
-							Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
-							EnumDisplayName: map[string]string{
-								"regular": "regular - most stable version",
-								"fast":    "fast - newest version",
+						Items: ModulesCustomListItems{
+							Type: Type{
+								Type: "object",
+							},
+							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
+							Properties: ModulesCustomListItemsProperties{
+								Name: Type{
+									Type:        "string",
+									Title:       "name",
+									MinLength:   1,
+									Description: "Pickup module name from https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules. You can add module with given name only once.",
+								},
+								Channel: Type{
+									Type:        "string",
+									Default:     "regular",
+									Description: "`regular` - most stable version or `fast` - newest version",
+									Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
+									EnumDisplayName: map[string]string{
+										"regular": "regular - most stable version",
+										"fast":    "fast - newest version",
+									},
+								},
+								CustomResourcePolicy: Type{
+									Type:        "string",
+									Description: "`CreateAndDelete` - default module resource will be created/deleted or `Ignore` - module resource will not be created",
+									Default:     "CreateAndDelete",
+									Enum:        ToInterfaceSlice([]string{"CreateAndDelete", "Ignore"}),
+									EnumDisplayName: map[string]string{
+										"CreateAndDelete": "CreateAndDelete - default module resource will be created/deleted",
+										"Ignore":          "Ignore - module resource will not be created",
+									},
+								},
 							},
 						},
-						CustomResourcePolicy: Type{
-							Type:        "string",
-							Description: "`CreateAndDelete` - default module resource will be created/deleted or `Ignore` - module resource will not be created",
-							Default:     "CreateAndDelete",
-							Enum:        ToInterfaceSlice([]string{"CreateAndDelete", "Ignore"}),
-							EnumDisplayName: map[string]string{
-								"CreateAndDelete": "CreateAndDelete - default module resource will be created/deleted",
-								"Ignore":          "Ignore - module resource will not be created",
-							},
-						},
-					},
-				},
+					}},
 			}},
-		}},
 	}
 }
 

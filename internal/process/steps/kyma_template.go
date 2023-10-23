@@ -41,18 +41,25 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 	}
 	logger.Infof("Decoded kyma template: %v", obj)
 
-	modules := operation.ProvisioningParameters.Parameters.Modules
-	if modules != nil && !modules.Default {
-		if err := appendModules(obj, modules); err != nil {
-			logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
-			return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
-		}
-		tmpl, err = encodeKymaTemplate(obj)
-		if err != nil {
-			logger.Errorf("Unable to create yaml kyma template : %s", err.Error())
-			return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
+	if operation.Type == internal.OperationTypeProvision {
+		modules := operation.ProvisioningParameters.Parameters.Modules
+		logger.Infof("modules section filled? %d", modules != nil)
+		if modules != nil && !modules.Default {
+			logger.Info("custom module list provided")
+			if err := appendModules(obj, modules); err != nil {
+				logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
+				return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
+			}
+			tmpl, err = encodeKymaTemplate(obj)
+			if err != nil {
+				logger.Errorf("Unable to create yaml kyma template within added modules: %s", err.Error())
+				return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
+			}
+		} else {
+			logger.Info("custom module list not provided, the default one will be used")
 		}
 	}
+
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
 		op.KymaTemplate = tmpl

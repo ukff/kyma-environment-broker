@@ -20,6 +20,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/sirupsen/logrus"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
@@ -27,9 +31,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
@@ -239,10 +240,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
 
-	if !b.config.AllowModulesParameters {
-		parameters.Modules = nil
-	}
-
 	ersContext, err := b.extractERSContext(details)
 	logger := l.WithField("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {
@@ -265,6 +262,14 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
+	b.config.AllowModulesParameters = true
+	if !b.config.AllowModulesParameters && parameters.Modules != nil {
+		return ersContext, parameters, fmt.Errorf("`modules` parameters where send to KEB API but in config AllowModulesParameters value is set to false")
+	}
+	if err := b.validateModules(parameters); err != nil {
+		return ersContext, parameters, err
+	}
+
 	var autoscalerMin, autoscalerMax int
 	if defaults.GardenerConfig != nil {
 		p := defaults.GardenerConfig
@@ -534,6 +539,24 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 
 	if n1.Contains(n2.IP) || n2.Contains(n1.IP) {
 		return fmt.Errorf("%s overlaps %s", n1.String(), n2.String())
+	}
+
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
+	modules := parameters.Modules
+	if modules == nil {
+		b.log.Info("`module` configuration section not provided at all, the default modules will be applied")
+		return nil
+	}
+
+	if modules.Default && (modules.List != nil || len(modules.List) > 0) {
+		return fmt.Errorf("in `module` configuration section, using default mode (`default`) is set to true , but also in same time the list `List` with custom parameters is provided")
+	}
+
+	if !modules.Default && modules.List == nil {
+		return fmt.Errorf("in `module` configuration section, using default mode (`default`) is set to false , but also in same time the list `List` with custom modules is not provided. please provide modules or set `List` to empty([]) implicility")
 	}
 
 	return nil

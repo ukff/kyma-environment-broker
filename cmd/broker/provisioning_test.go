@@ -120,7 +120,7 @@ func TestProvisioning_Preview(t *testing.T) {
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	//t.Skip()
+	// t.Skip()
 	// config:
 	outputToFile := true
 	prettyJson := true
@@ -1292,7 +1292,7 @@ func TestProvisioning_Modules2(t *testing.T) {
 						"nodes": "192.168.48.0/20"
 					},
 					"modules": {
-						"default": "true",
+						"default": false,
 						"list": [
 							{
 								"name": "btpmanager",
