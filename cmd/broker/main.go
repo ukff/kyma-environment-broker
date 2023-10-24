@@ -13,9 +13,9 @@ import (
 	"runtime/pprof"
 	"sort"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-
+	
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
@@ -87,37 +87,37 @@ type Config struct {
 	// DbInMemory allows to use memory storage instead of the postgres one.
 	// Suitable for development purposes.
 	DbInMemory bool `envconfig:"default=false"`
-
+	
 	// DisableProcessOperationsInProgress allows to disable processing operations
 	// which are in progress on starting application. Set to true if you are
 	// running in a separate testing deployment but with the production DB.
 	DisableProcessOperationsInProgress bool `envconfig:"default=false"`
-
+	
 	// DevelopmentMode if set to true then errors are returned in http
 	// responses, otherwise errors are only logged and generic message
 	// is returned to client.
 	// Currently works only with /info endpoints.
 	DevelopmentMode bool `envconfig:"default=false"`
-
+	
 	// DumpProvisionerRequests enables dumping Provisioner requests. Must be disabled on Production environments
 	// because some data must not be visible in the log file.
 	DumpProvisionerRequests bool `envconfig:"default=false"`
-
+	
 	// OperationTimeout is used to check on a top-level if any operation didn't exceed the time for processing.
 	// It is used for provisioning and deprovisioning operations.
 	OperationTimeout time.Duration `envconfig:"default=24h"`
-
+	
 	Host       string `envconfig:"optional"`
 	Port       string `envconfig:"default=8080"`
 	StatusPort string `envconfig:"default=8071"`
-
+	
 	Provisioner input.Config
 	Reconciler  reconciler.Config
 	Director    director.Config
 	Database    storage.Config
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
-
+	
 	KymaVersion                                                         string
 	EnableOnDemandVersion                                               bool `envconfig:"default=false"`
 	ManagedRuntimeComponentsYAMLFilePath                                string
@@ -130,46 +130,46 @@ type Config struct {
 	LifecycleManagerIntegrationDisabled                                 bool   `envconfig:"default=true"`
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-
+	
 	Broker          broker.Config
 	CatalogFilePath string
-
+	
 	Avs avs.Config
 	IAS ias.Config
 	EDP edp.Config
-
+	
 	Notification notification.Config
-
+	
 	VersionConfig struct {
 		Namespace string
 		Name      string
 	}
-
+	
 	KymaDashboardConfig dashboard.Config
-
+	
 	OrchestrationConfig orchestration.Config
-
+	
 	TrialRegionMappingFilePath string
-
+	
 	EuAccessWhitelistedGlobalAccountsFilePath string
 	EuAccessRejectionMessage                  string `envconfig:"default=Due to limited availability you need to open support ticket before attempting to provision Kyma clusters in EU Access only regions"`
-
+	
 	MaxPaginationPage int `envconfig:"default=100"`
-
+	
 	LogLevel string `envconfig:"default=info"`
-
+	
 	// FreemiumProviders is a list of providers for freemium
 	FreemiumProviders []string `envconfig:"default=aws"`
-
+	
 	DomainName string
-
+	
 	// Enable/disable profiler configuration. The profiler samples will be stored
 	// under /tmp/profiler directory. Based on the deployment strategy, this will be
 	// either ephemeral container filesystem or persistent storage
 	Profiler ProfilerConfig
-
+	
 	Events events.Config
-
+	
 	Provisioning   process.StagedManagerConfiguration
 	Deprovisioning process.StagedManagerConfiguration
 	Update         process.StagedManagerConfiguration
@@ -213,46 +213,46 @@ func main() {
 	apiextensionsv1.AddToScheme(scheme.Scheme)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
+	
 	// create and fill config
 	var cfg Config
 	err := envconfig.InitWithPrefix(&cfg, "APP")
 	fatalOnError(err)
-
+	
 	// check default Kyma versions
 	err = checkDefaultVersions(cfg.KymaVersion)
 	panicOnError(err)
-
+	
 	cfg.OrchestrationConfig.KymaVersion = cfg.KymaVersion
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
-
+	
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
-
+	
 	logger.Info("Starting Kyma Environment Broker")
-
+	
 	logs := logrus.New()
 	logs.SetFormatter(&logrus.JSONFormatter{})
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
 	}
-
+	
 	logger.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Host, cfg.StatusPort, logs).ServeAsync()
 	go periodicProfile(logger, cfg.Profiler)
-
+	
 	// create provisioner client
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)
-
+	
 	reconcilerClient := reconciler.NewReconcilerClient(http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler)
-
+	
 	// create kubernetes client
 	k8sCfg, err := config.GetConfig()
 	fatalOnError(err)
 	cli, err := initClient(k8sCfg)
 	fatalOnError(err)
-
+	
 	// create storage
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	var db storage.BrokerStorage
@@ -265,14 +265,14 @@ func main() {
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
 	}
-
+	
 	// Customer Notification
 	clientHTTPForNotification := httputil.NewClient(60, true)
 	notificationClient := notification.NewClient(clientHTTPForNotification, notification.ClientConfig{
 		URL: cfg.Notification.Url,
 	})
 	notificationBuilder := notification.NewBundleBuilder(notificationClient, cfg.Notification)
-
+	
 	// Register disabler. Convention:
 	// {component-name} : {component-disabler-service}
 	//
@@ -282,9 +282,9 @@ func main() {
 		components.Tracing: runtime.NewGenericComponentDisabler(components.Tracing),
 	}
 	optComponentsSvc := runtime.NewOptionalComponentsService(optionalComponentsDisablers)
-
+	
 	disabledComponentsProvider := runtime.NewDisabledComponentsProvider()
-
+	
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logs, cfg.KymaVersion),
@@ -297,24 +297,24 @@ func main() {
 	fatalOnError(err)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err)
-
+	
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
-
+	
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err)
 	logs.Infof("Platform region mapping for trial: %v", regions)
-
+	
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err)
 	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentsProvider,
 		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues)
 	fatalOnError(err)
-
+	
 	edpClient := edp.NewClient(cfg.EDP, logs.WithField("service", "edpClient"))
-
+	
 	panicOnError(cfg.Avs.ReadMaintenanceModeDuringUpgradeAlwaysDisabledGAIDsFromYaml(
 		cfg.AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath))
 	avsClient, err := avs.NewClient(ctx, cfg.Avs, logs)
@@ -324,7 +324,7 @@ func main() {
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
 	upgradeEvalManager := avs.NewEvaluationManager(avsDel, cfg.Avs)
-
+	
 	// IAS
 	clientHTTPForIAS := httputil.NewClient(60, cfg.IAS.SkipCertVerification)
 	if cfg.IAS.TLSRenegotiationEnable {
@@ -336,61 +336,61 @@ func main() {
 		Secret: cfg.IAS.UserSecret,
 	})
 	bundleBuilder := ias.NewBundleBuilder(iasClient, cfg.IAS)
-
+	
 	// application event broker
 	eventBroker := event.NewPubSub(logs)
-
+	
 	// metrics collectors
 	metrics.RegisterAll(eventBroker, db.Operations(), db.Instances())
 	metrics.StartOpsMetricService(ctx, db.Operations(), logs)
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
-
+	
 	// define steps
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, db.RuntimeStates())
-
+	
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
 		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
 		runtimeOverrides, edpClient, accountProvider, reconcilerClient, k8sClientProvider, cli, logs)
-
+	
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
 		avsDel, internalEvalAssistant, externalEvalAssistant, bundleBuilder, edpClient, accountProvider, reconcilerClient,
 		k8sClientProvider, cli, configProvider, logs)
-
+	
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
 		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, k8sClientProvider, cli, logs)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err)
-
+	
 	// create server
 	router := mux.NewRouter()
-
+	
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults)
-
+	
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
-
+	
 	// create SKR kubeconfig endpoint
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient)
 	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, logs.WithField("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
-
+	
 	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
-
+	
 	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, reconcilerClient, notificationBuilder, logs, cli, 1)
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
 		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1)
-
+	
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
 	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs)
-
+	
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, logs)
 		fatalOnError(err)
@@ -405,26 +405,26 @@ func main() {
 	} else {
 		logger.Info("Skipping processing operation in progress on start")
 	}
-
+	
 	// configure templates e.g. {{.domain}} to replace it with the domain name
 	swaggerTemplates := map[string]string{
 		"domain": cfg.DomainName,
 	}
 	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
 	fatalOnError(err)
-
+	
 	// create /orchestration
 	orchestrationHandler.AttachRoutes(router)
-
+	
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion)
 	runtimeHandler.AttachRoutes(router)
-
+	
 	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
 	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
 		logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
 	})
-
+	
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr))
 }
 
@@ -433,7 +433,7 @@ func k8sClientProvider(kcfg string) (client.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	k8sCli, err := client.New(restCfg, client.Options{
 		Scheme: scheme.Scheme,
 	})
@@ -459,22 +459,22 @@ func isVersionFollowingSemanticVersioning(version string) bool {
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults) {
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
-
+	
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
 	fatalOnError(err)
-
+	
 	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
 	fatalOnError(err)
 	logger.RegisterSink(debugSink)
 	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
 	fatalOnError(err)
 	logger.RegisterSink(errorSink)
-
+	
 	// EU Access whitelisting
 	whitelistedGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
-
+	
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs),
@@ -492,7 +492,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
-
+	
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
 	for _, prefix := range []string{
@@ -502,7 +502,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		route := router.PathPrefix(prefix).Subrouter()
 		broker.AttachRoutes(route, kymaEnvBroker, logger)
 	}
-
+	
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
@@ -550,7 +550,7 @@ func processOrchestration(orchestrationType orchestrationExt.Type, state string,
 	sort.Slice(orchestrations, func(i, j int) bool {
 		return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
 	})
-
+	
 	for _, o := range orchestrations {
 		queue.Add(o.OrchestrationID)
 		log.Infof("Resuming the processing of %s %s orchestration ID: %s", state, orchestrationType, o.OrchestrationID)
@@ -572,7 +572,7 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 	sort.Slice(orchestrations, func(i, j int) bool {
 		return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
 	})
-
+	
 	for _, o := range orchestrations {
 		count := 0
 		err = nil
@@ -584,7 +584,7 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 		if err != nil {
 			return fmt.Errorf("while listing %s operations for orchestration %s: %w", orchestrationType, o.OrchestrationID, err)
 		}
-
+		
 		if count > 0 {
 			log.Infof("Resuming the processing of %s %s orchestration ID: %s", orchestrationExt.Canceling, orchestrationType, o.OrchestrationID)
 			queue.Add(o.OrchestrationID)
@@ -633,7 +633,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator,
 	runtimeOverrides provisioning.RuntimeOverridesAppender, edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	reconcilerClient reconciler.Client, k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, logs logrus.FieldLogger) *process.Queue {
-
+	
 	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName, postActionsStageName})
@@ -645,10 +645,10 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		    All steps which requires InputCreator must be run in this stage.
 			3. "check_kyma" - checks if the Kyma is installed
 			4. "post_actions" - all steps which must be executed after the runtime is provisioned
-
+	
 			Once the stage is done it will never be retried.
 	*/
-
+	
 	provisioningSteps := []struct {
 		disabled  bool
 		stage     string
@@ -758,17 +758,17 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			}
 		}
 	}
-
+	
 	queue := process.NewQueue(provisionManager, logs)
 	queue.Run(ctx.Done(), workersAmount)
-
+	
 	return queue
 }
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage, inputFactory input.CreatorForPlan,
 	provisionerClient provisioner.Client, publisher event.Publisher, runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeStatesDb storage.RuntimeStates,
 	runtimeProvider input.ComponentListProvider, reconcilerClient reconciler.Client, cfg Config, k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, logs logrus.FieldLogger) *process.Queue {
-
+	
 	requiresReconcilerUpdate := update.RequiresReconcilerUpdate
 	if cfg.ReconcilerIntegrationDisabled {
 		requiresReconcilerUpdate = func(op internal.Operation) bool { return false }
@@ -818,7 +818,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 			condition: update.SkipForOwnClusterPlan,
 		},
 	}
-
+	
 	for _, step := range updateSteps {
 		err := manager.AddStep(step.stage, step.step, step.condition)
 		if err != nil {
@@ -827,7 +827,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	}
 	queue := process.NewQueue(manager, logs)
 	queue.Run(ctx.Done(), workersAmount)
-
+	
 	return queue
 }
 
@@ -837,7 +837,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	externalEvalAssistant *avs.ExternalEvalAssistant, bundleBuilder ias.BundleBuilder,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider, reconcilerClient reconciler.Client,
 	k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, configProvider input.ConfigurationProvider, logs logrus.FieldLogger) *process.Queue {
-
+	
 	deprovisioningSteps := []struct {
 		disabled bool
 		step     process.Step
@@ -904,19 +904,19 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			deprovisionManager.AddStep(step.step.Name(), step.step, nil)
 		}
 	}
-
+	
 	queue := process.NewQueue(deprovisionManager, logs)
 	queue.Run(ctx.Done(), workersAmount)
-
+	
 	return queue
 }
 
 func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerStorage, runtimeOverrides upgrade_kyma.RuntimeOverridesAppender, provisionerClient provisioner.Client, pub event.Publisher, inputFactory input.CreatorForPlan, icfg *upgrade_kyma.TimeSchedule, pollingInterval time.Duration, runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeResolver orchestrationExt.RuntimeResolver, upgradeEvalManager *avs.EvaluationManager, cfg *Config, internalEvalAssistant *avs.InternalEvalAssistant, reconcilerClient reconciler.Client, notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger, cli client.Client, speedFactor int) *process.Queue {
-
+	
 	upgradeKymaManager := upgrade_kyma.NewManager(db.Operations(), pub, logs.WithField("upgradeKyma", "manager"))
 	upgradeKymaInit := upgrade_kyma.NewInitialisationStep(db.Operations(), db.Orchestrations(), db.Instances(),
 		provisionerClient, inputFactory, upgradeEvalManager, icfg, runtimeVerConfigurator, notificationBuilder)
-
+	
 	upgradeKymaManager.InitStep(upgradeKymaInit)
 	upgradeKymaSteps := []struct {
 		disabled bool
@@ -976,14 +976,14 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 			upgradeKymaManager.AddStep(step.weight, step.step, step.cnd)
 		}
 	}
-
+	
 	orchestrateKymaManager := manager.NewUpgradeKymaManager(db.Orchestrations(), db.Operations(), db.Instances(),
 		upgradeKymaManager, runtimeResolver, pollingInterval, logs.WithField("upgradeKyma", "orchestration"),
 		cli, &cfg.OrchestrationConfig, notificationBuilder, speedFactor)
 	queue := process.NewQueue(orchestrateKymaManager, logs)
-
+	
 	queue.Run(ctx.Done(), 3)
-
+	
 	return queue
 }
 
@@ -991,11 +991,11 @@ func NewClusterOrchestrationProcessingQueue(ctx context.Context, db storage.Brok
 	pub event.Publisher, inputFactory input.CreatorForPlan, icfg *upgrade_cluster.TimeSchedule, pollingInterval time.Duration,
 	runtimeResolver orchestrationExt.RuntimeResolver, upgradeEvalManager *avs.EvaluationManager, notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger,
 	cli client.Client, cfg Config, speedFactor int) *process.Queue {
-
+	
 	upgradeClusterManager := upgrade_cluster.NewManager(db.Operations(), pub, logs.WithField("upgradeCluster", "manager"))
 	upgradeClusterInit := upgrade_cluster.NewInitialisationStep(db.Operations(), db.Orchestrations(), provisionerClient, inputFactory, upgradeEvalManager, icfg, notificationBuilder)
 	upgradeClusterManager.InitStep(upgradeClusterInit)
-
+	
 	upgradeClusterSteps := []struct {
 		disabled  bool
 		weight    int
@@ -1018,20 +1018,20 @@ func NewClusterOrchestrationProcessingQueue(ctx context.Context, db storage.Brok
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 	}
-
+	
 	for _, step := range upgradeClusterSteps {
 		if !step.disabled {
 			upgradeClusterManager.AddStep(step.weight, step.step, step.condition)
 		}
 	}
-
+	
 	orchestrateClusterManager := manager.NewUpgradeClusterManager(db.Orchestrations(), db.Operations(), db.Instances(),
 		upgradeClusterManager, runtimeResolver, pollingInterval, logs.WithField("upgradeCluster", "orchestration"),
 		cli, cfg.OrchestrationConfig, notificationBuilder, speedFactor)
 	queue := process.NewQueue(orchestrateClusterManager, logs)
-
+	
 	queue.Run(ctx.Done(), 3)
-
+	
 	return queue
 }
 

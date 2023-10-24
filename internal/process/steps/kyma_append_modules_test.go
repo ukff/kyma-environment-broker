@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -19,7 +19,7 @@ var (
 	withoutDefaultModules  = "without_default_modules"
 )
 
-func getYaml(t *testing.T, path, name string) string {
+func GetFile(t *testing.T, path, name string) string {
 	file, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", kymaTemplateTestAssets, path, name))
 	assert.NoError(t, err)
 	return string(file)
@@ -42,7 +42,7 @@ func TestInitKymaTemplateWithModules1_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1, &m2)
 		return modules
 	}
-
+	
 	// given
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
@@ -51,20 +51,20 @@ func TestInitKymaTemplateWithModules1_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
-	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase1.yaml")
-
+	
+	KymaTemplateOutput := GetFile(t, withoutDefaultModules, "testcase1.yaml")
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, KymaTemplateOutput)
 }
 
@@ -80,7 +80,7 @@ func TestInitKymaTemplateWithModules2_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-
+	
 	// given
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
@@ -89,20 +89,20 @@ func TestInitKymaTemplateWithModules2_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
-	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase2.yaml")
-
+	
+	KymaTemplateOutput := GetFile(t, withoutDefaultModules, "testcase2.yaml")
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, KymaTemplateOutput)
 }
 
@@ -110,7 +110,7 @@ func TestInitKymaTemplateWithModules3_Run(t *testing.T) {
 	getTestCase3Params := func() *internal.ModulesDTO {
 		return &internal.ModulesDTO{}
 	}
-
+	
 	// given
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
@@ -119,20 +119,20 @@ func TestInitKymaTemplateWithModules3_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
-	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase3.yaml")
-
+	
+	KymaTemplateOutput := GetFile(t, withoutDefaultModules, "testcase3.yaml")
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, KymaTemplateOutput)
 }
 
@@ -145,20 +145,20 @@ func TestInitKymaTemplateWithModules4_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
-	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase4.yaml")
-
+	
+	KymaTemplateOutput := GetFile(t, withoutDefaultModules, "testcase4.yaml")
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, KymaTemplateOutput)
 }
 
@@ -168,7 +168,7 @@ func TestInitKymaTemplateWithModules5_Run(t *testing.T) {
 		modules.List = make([]*internal.ModuleDTO, 0)
 		return modules
 	}
-
+	
 	// given
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
@@ -177,20 +177,20 @@ func TestInitKymaTemplateWithModules5_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
-	KymaTemplateOutput := getYaml(t, withoutDefaultModules, "testcase5.yaml")
-
+	
+	KymaTemplateOutput := GetFile(t, withoutDefaultModules, "testcase5.yaml")
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, KymaTemplateOutput)
 }
 
@@ -206,7 +206,7 @@ func TestInitKymaTemplateWithModules6_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-
+	
 	// given
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
@@ -215,19 +215,19 @@ func TestInitKymaTemplateWithModules6_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
-	KymaTemplateOutput := getYaml(t, withDefaultModules, "testcase1.yaml")
-
+	
+	KymaTemplateOutput := GetFile(t, withDefaultModules, "testcase1.yaml")
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, KymaTemplateOutput)
 }

@@ -2,7 +2,7 @@ package steps
 
 import (
 	"testing"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -19,17 +19,17 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: getYaml(t, withoutDefaultModules, "default.yaml"),
+		KymaTemplate: GetFile(t, withoutDefaultModules, "default.yaml"),
 	}
 	operation.InputCreator = ic
-
+	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
 	require.NoError(t, err)
-
+	
 	// then
 	assert.Zero(t, backoff)
 	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-
+	
 	assert.YAMLEq(t, op.KymaTemplate, ic.Config.KymaTemplate)
 }

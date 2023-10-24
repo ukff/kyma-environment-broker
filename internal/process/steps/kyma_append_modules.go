@@ -3,7 +3,7 @@ package steps
 import (
 	"fmt"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -15,6 +15,8 @@ type KymaAppendModules struct {
 	operationManager *process.OperationManager
 	logger           logrus.FieldLogger
 }
+
+var _ process.Step = &KymaAppendModules{}
 
 func (k *KymaAppendModules) Name() string {
 	return "Kyma_Append_Modules"
@@ -28,7 +30,7 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 	if operation.Type != internal.OperationTypeProvision {
 		return operation, 0, nil
 	}
-
+	
 	kymaTemplate := operation.InputCreator.Configuration().KymaTemplate
 	decodeKymaTemplate, err := DecodeKymaTemplate(kymaTemplate)
 	if err != nil {
@@ -49,7 +51,7 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 				logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
 				return k.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
 			}
-			kymaTemplate, err = encodeKymaTemplate(decodeKymaTemplate)
+			kymaTemplate, err = EncodeKymaTemplate(decodeKymaTemplate)
 			if err != nil {
 				logger.Errorf("Unable to create yaml kyma template within added modules: %s", err.Error())
 				return k.operationManager.OperationFailed(operation, "unable to create yaml kyma template within added modules", err, logger)
@@ -100,11 +102,11 @@ func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modul
 			toInsert[i] = modules.List[i]
 		}
 	}
-
+	
 	modulesSection = toInsert
 	spec[modulesKey] = modulesSection
 	kyma.Object[specKey] = specSection
-
+	
 	k.logger.Info("modules attached to kyma successfully")
 	return nil
 }
