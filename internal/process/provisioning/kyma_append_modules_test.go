@@ -170,11 +170,11 @@ func TestInitKymaTemplateWithModules5_Run(t *testing.T) {
 	svc := steps.NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: internal.GetFile(t, MakePathToFile(withoutDefaultModules, "default.yaml")),
+		KymaTemplate: internal.GetFile(t, internal.MakePathToFile(withoutDefaultModules, "default.yaml")),
 	}
 	operation.InputCreator = ic
 	
-	KymaTemplateOutput := internal.GetFile(t, MakePathToFile(withoutDefaultModules, "testcase5.yaml"))
+	KymaTemplateOutput := internal.GetFile(t, internal.MakePathToFile(withoutDefaultModules, "testcase5.yaml"))
 	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
@@ -208,11 +208,11 @@ func TestInitKymaTemplateWithModules6_Run(t *testing.T) {
 	svc := steps.NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: internal.GetFile(t, MakePathToFile(withDefaultModules, "default.yaml")),
+		KymaTemplate: internal.GetFile(t, internal.MakePathToFile(withDefaultModules, "default.yaml")),
 	}
 	operation.InputCreator = ic
 	
-	KymaTemplateOutput := internal.GetFile(t, MakePathToFile(withDefaultModules, "testcase1.yaml"))
+	KymaTemplateOutput := internal.GetFile(t, internal.MakePathToFile(withDefaultModules, "testcase1.yaml"))
 	
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())

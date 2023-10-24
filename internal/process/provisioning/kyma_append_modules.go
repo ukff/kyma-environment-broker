@@ -29,14 +29,17 @@ func NewKymaAppendModules(os storage.Operations) *KymaAppendModules {
 
 func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	if operation.Type != internal.OperationTypeProvision {
-		return operation, 0, nil
+		errMsg := "appending module is allowed only while provisioning"
+		return k.operationManager.OperationFailed(operation, errMsg, fmt.Errorf("%s", errMsg), logger)
 	}
 	
-	kymaTemplate := operation.InputCreator.Configuration().KymaTemplate
+	kymaTemplate := operation.KymaTemplate
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(kymaTemplate)
 	if err != nil {
-		return operation, 0, nil
+		errMsg := "while decoding kyma template from previous step"
+		return k.operationManager.OperationFailed(operation, errMsg, fmt.Errorf("%s", errMsg), logger)
 	}
+	needUpdate := false
 	modules := operation.ProvisioningParameters.Parameters.Modules
 	switch {
 	case modules == nil:
@@ -58,6 +61,7 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 				return k.operationManager.OperationFailed(operation, "unable to create yaml kyma template within added modules", err, logger)
 			}
 			logger.Info("encoded kyma template with modules attached with success")
+			needUpdate = true
 			break
 		}
 	default:
@@ -65,10 +69,14 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 		break
 	}
 	
-	return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-		op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
-		op.KymaTemplate = kymaTemplate
-	}, logger)
+	if needUpdate {
+		return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+			op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
+			op.KymaTemplate = kymaTemplate
+		}, logger)
+	}
+	
+	return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {}, logger)
 }
 
 // To consider using -> unstructured.SetNestedSlice()
