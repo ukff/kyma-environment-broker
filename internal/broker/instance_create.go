@@ -262,7 +262,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
-	b.config.AllowModulesParameters = true
+
 	if !b.config.AllowModulesParameters && parameters.Modules != nil {
 		return ersContext, parameters, fmt.Errorf("`modules` parameters where send to KEB API but in config AllowModulesParameters value is set to false")
 	}

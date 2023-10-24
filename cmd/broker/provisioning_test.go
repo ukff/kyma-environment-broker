@@ -31,9 +31,9 @@ const (
 )
 
 func getYaml(t *testing.T, name string) string {
-	b, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", "testdata", "modules", name)) // just pass the file name
+	file, err := os.ReadFile(fmt.Sprintf("%s/%s/%s", "testdata", "modules", name)) // just pass the file name
 	assert.NoError(t, err)
-	return string(b)
+	return string(file)
 }
 
 func TestProvisioning_HappyPath(t *testing.T) {
