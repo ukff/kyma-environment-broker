@@ -60,6 +60,7 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 		}
 	}
 
+	logger.Info("applied kyma will be: %s", tmpl)
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
 		op.KymaTemplate = tmpl
