@@ -20,6 +20,7 @@ import (
 
 type InitKymaTemplate struct {
 	operationManager *process.OperationManager
+	logger           logrus.FieldLogger
 }
 
 var _ process.Step = &InitKymaTemplate{}
@@ -33,6 +34,7 @@ func (s *InitKymaTemplate) Name() string {
 }
 
 func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	s.logger = logger
 	logger.Infof("kyma template generation started for operation type %s", operation.Type)
 	kymaTemplate := operation.InputCreator.Configuration().KymaTemplate
 	decodeKymaTemplate, err := DecodeKymaTemplate(kymaTemplate)
@@ -57,8 +59,8 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 			break
 		case !modules.Default:
 			{
-				logger.Info("provisioning kyma: custom module list provided, with number of items: %d", len(modules.List))
-				if err := appendModules(decodeKymaTemplate, modules); err != nil {
+				logger.Infof("provisioning kyma: custom module list provided, with number of items: %d", len(modules.List))
+				if err := s.appendModules(decodeKymaTemplate, modules); err != nil {
 					logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
 					return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
 				}
@@ -81,6 +83,51 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 		op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
 		op.KymaTemplate = kymaTemplate
 	}, logger)
+}
+
+// To consider using -> unstructured.SetNestedSlice()
+func (s *InitKymaTemplate) appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO) error {
+	const (
+		specKey    = "spec"
+		modulesKey = "modules"
+	)
+	if kyma == nil {
+		return fmt.Errorf("kyma unstructured object not passed to append modules")
+	}
+	if modules == nil {
+		return fmt.Errorf("modules not passed to append modules")
+	}
+	content := kyma.Object
+	specSection, ok := content[specKey]
+	if !ok {
+		return fmt.Errorf("getting spec content of kyma template")
+	}
+	spec, ok := specSection.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("converting spec of kyma template")
+	}
+	modulesSection, ok := spec[modulesKey]
+	if !ok {
+		return fmt.Errorf("getting modules content of kyma template")
+	}
+	var toInsert []interface{}
+	if modules.List == nil || len(modules.List) == 0 {
+		s.logger.Info("no modules set for kyma during provisioning")
+		toInsert = make([]interface{}, 0)
+	} else {
+		s.logger.Info("modules are set for kyma during provisioning")
+		toInsert = make([]interface{}, len(modules.List))
+		for i := range modules.List {
+			toInsert[i] = modules.List[i]
+		}
+	}
+
+	modulesSection = toInsert
+	spec[modulesKey] = modulesSection
+	kyma.Object[specKey] = specSection
+
+	s.logger.Info("modules attached to kyma successfully")
+	return nil
 }
 
 // NOTE: adapter for upgrade_kyma which is currently not using shared staged_manager
@@ -111,51 +158,6 @@ func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
 	return unstructuredObj, err
-}
-
-// To consider using -> unstructured.SetNestedSlice()
-func appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO) error {
-	const (
-		specKey    = "spec"
-		modulesKey = "modules"
-	)
-	if kyma == nil {
-		return fmt.Errorf("kyma unstructured object not passed to append modules")
-	}
-	if modules == nil {
-		return fmt.Errorf("modules not passed to append modules")
-	}
-	content := kyma.Object
-	specSection, ok := content[specKey]
-	if !ok {
-		return fmt.Errorf("getting spec content of kyma template")
-	}
-	spec, ok := specSection.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("converting spec of kyma template")
-	}
-	modulesSection, ok := spec[modulesKey]
-	if !ok {
-		return fmt.Errorf("getting modules content of kyma template")
-	}
-	var toInsert []interface{}
-	if modules.List == nil {
-		fmt.Println("no modules set for kyma during provisioning")
-		toInsert = make([]interface{}, 0)
-	} else {
-		fmt.Println("modules are set for kyma during provisioning")
-		toInsert = make([]interface{}, len(modules.List))
-		for i := range modules.List {
-			toInsert[i] = modules.List[i]
-		}
-	}
-
-	modulesSection = toInsert
-	spec[modulesKey] = modulesSection
-	kyma.Object[specKey] = specSection
-
-	fmt.Println("modules attached to kyma successfully")
-	return nil
 }
 
 func encodeKymaTemplate(tmpl *unstructured.Unstructured) (string, error) {
