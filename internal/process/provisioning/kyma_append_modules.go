@@ -1,4 +1,4 @@
-package steps
+package provisioning
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -32,7 +33,7 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 	}
 	
 	kymaTemplate := operation.InputCreator.Configuration().KymaTemplate
-	decodeKymaTemplate, err := DecodeKymaTemplate(kymaTemplate)
+	decodeKymaTemplate, err := steps.DecodeKymaTemplate(kymaTemplate)
 	if err != nil {
 		return operation, 0, nil
 	}
@@ -51,7 +52,7 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 				logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
 				return k.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
 			}
-			kymaTemplate, err = EncodeKymaTemplate(decodeKymaTemplate)
+			kymaTemplate, err = steps.EncodeKymaTemplate(decodeKymaTemplate)
 			if err != nil {
 				logger.Errorf("Unable to create yaml kyma template within added modules: %s", err.Error())
 				return k.operationManager.OperationFailed(operation, "unable to create yaml kyma template within added modules", err, logger)
@@ -63,7 +64,11 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 		logger.Info("not supported case in switch, the default kyma template will be used")
 		break
 	}
-	return operation, 0, nil
+	
+	return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
+		op.KymaTemplate = kymaTemplate
+	}, logger)
 }
 
 // To consider using -> unstructured.SetNestedSlice()

@@ -1,6 +1,11 @@
 package internal
 
 import (
+	"fmt"
+	"os"
+	"testing"
+	
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,4 +19,14 @@ func NewSchemeForTests() *runtime.Scheme {
 	corev1.AddToScheme(sch)
 	apiextensionsv1.AddToScheme(sch)
 	return sch
+}
+
+func GetFile(t *testing.T, path string) string {
+	file, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	return string(file)
+}
+
+func MakePathToFile(directory, file string) string {
+	return fmt.Sprintf("%s/%s", directory, file)
 }
