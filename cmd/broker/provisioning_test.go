@@ -1253,7 +1253,7 @@ func TestProvisioning_Modules1(t *testing.T) {
 						]
 					}
 				}
-}`)
+			}`)
 	opID := suite.DecodeOperationID(resp)
 	
 	suite.processProvisioningAndReconcilingByOperationID(opID)
@@ -1303,7 +1303,7 @@ func TestProvisioning_Modules2(t *testing.T) {
 						]
 					}
 				}
-}`)
+			}`)
 	opID := suite.DecodeOperationID(resp)
 	
 	suite.processProvisioningAndReconcilingByOperationID(opID)
@@ -1341,9 +1341,60 @@ func TestProvisioning_Modules3(t *testing.T) {
 						"default": false
 					}
 				}
-}`)
+				}`)
 	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
 	errResponse := suite.DecodeErrorResponse(resp)
 	fmt.Println(errResponse.Description)
 	assert.Contains(t, errResponse.Description, broker.ErrMsgModulesBadConfigured)
+}
+
+func TestProvisioning_Modules4(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+		
+				"context": {
+					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
+						"subaccount_id": "test",
+					"user_id": "piotr.miskiewicz@sap.com"
+					
+				},
+				"parameters": {
+					"name": "test",
+					"networking": {
+						"nodes": "192.168.48.0/20"
+					},
+					"modules": {
+						"default": false,
+						"list": [
+							{
+								"name": "btpmanager",
+								"channel": "regular",
+								"customResourcePolicy": "CreateAndDelete"
+							},
+							{
+								"name": "keda",
+								"channel": "fast",
+								"customResourcePolicy": "Ignore"
+							}
+						]
+					}
+				}
+				}`)
+	
+	opID := suite.DecodeOperationID(resp)
+	
+	suite.processProvisioningAndReconcilingByOperationID(opID)
+	
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	assert.NoError(t, err)
+	assert.YAMLEq(t, op.KymaTemplate, internal.GetFile(t, "expected2.yaml"))
 }

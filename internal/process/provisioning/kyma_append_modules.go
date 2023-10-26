@@ -28,6 +28,7 @@ func NewKymaAppendModules(os storage.Operations) *KymaAppendModules {
 }
 
 func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	k.logger = logger
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		errMsg := "while decoding kyma template from previous step"
