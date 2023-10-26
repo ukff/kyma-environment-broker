@@ -28,20 +28,13 @@ func NewKymaAppendModules(os storage.Operations) *KymaAppendModules {
 }
 
 func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if operation.Type != internal.OperationTypeProvision {
-		errMsg := "appending module is allowed only while provisioning"
-		return k.operationManager.OperationFailed(operation, errMsg, fmt.Errorf("%s", errMsg), logger)
-	}
-	
-	kymaTemplate := operation.KymaTemplate
-	decodeKymaTemplate, err := steps.DecodeKymaTemplate(kymaTemplate)
+	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		errMsg := "while decoding kyma template from previous step"
 		return k.operationManager.OperationFailed(operation, errMsg, fmt.Errorf("%s", errMsg), logger)
 	}
-	needUpdate := false
-	modules := operation.ProvisioningParameters.Parameters.Modules
-	switch {
+	
+	switch modules := operation.ProvisioningParameters.Parameters.Modules; {
 	case modules == nil:
 		logger.Info("module params section not set, the default kyma template will be used")
 		break
@@ -55,28 +48,23 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 				logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
 				return k.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
 			}
-			kymaTemplate, err = steps.EncodeKymaTemplate(decodeKymaTemplate)
+			updatedKymaTemplate, err := steps.EncodeKymaTemplate(decodeKymaTemplate)
 			if err != nil {
 				logger.Errorf("Unable to create yaml kyma template within added modules: %s", err.Error())
 				return k.operationManager.OperationFailed(operation, "unable to create yaml kyma template within added modules", err, logger)
 			}
 			logger.Info("encoded kyma template with modules attached with success")
-			needUpdate = true
-			break
+			return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+				op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
+				op.KymaTemplate = updatedKymaTemplate
+			}, logger)
 		}
 	default:
 		logger.Info("not supported case in switch, the default kyma template will be used")
 		break
 	}
 	
-	if needUpdate {
-		return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-			op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
-			op.KymaTemplate = kymaTemplate
-		}, logger)
-	}
-	
-	return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {}, logger)
+	return operation, 0, nil
 }
 
 // To consider using -> unstructured.SetNestedSlice()
