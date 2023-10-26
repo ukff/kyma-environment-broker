@@ -46,6 +46,10 @@ type (
 	}
 )
 
+const (
+	ErrMsgModulesBadConfigured = "in `module` configuration section, using default mode (`default`) is set to true , but also in same time the list `List` with custom parameters is provided"
+)
+
 type ProvisionEndpoint struct {
 	config            Config
 	operationsStorage storage.Operations
@@ -263,11 +267,12 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, err
 	}
 	
-	if !b.config.AllowModulesParameters && parameters.Modules != nil {
-		return ersContext, parameters, fmt.Errorf("`modules` parameters where send to KEB API but in config AllowModulesParameters value is set to false")
-	}
-	if err := b.validateModules(parameters); err != nil {
-		return ersContext, parameters, err
+	if !b.config.AllowModulesParameters {
+		parameters.Modules = nil
+	} else {
+		if err := b.validateModules(parameters); err != nil {
+			return ersContext, parameters, err
+		}
 	}
 	
 	var autoscalerMin, autoscalerMax int
@@ -545,14 +550,13 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 }
 
 func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	modules := parameters.Modules
-	if modules == nil {
+	if parameters.Modules == nil {
 		b.log.Info("`module` configuration section not provided at all, the default modules will be applied")
 		return nil
 	}
 	
-	if modules.Default && (modules.List != nil || len(modules.List) > 0) {
-		return fmt.Errorf("in `module` configuration section, using default mode (`default`) is set to true , but also in same time the list `List` with custom parameters is provided")
+	if parameters.Modules.Default && (parameters.Modules.List != nil || len(parameters.Modules.List) > 0) {
+		return fmt.Errorf(ErrMsgModulesBadConfigured)
 	}
 	
 	return nil

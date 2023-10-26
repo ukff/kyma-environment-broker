@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	
@@ -25,8 +24,4 @@ func GetFile(t *testing.T, path string) string {
 	file, err := os.ReadFile(path)
 	assert.NoError(t, err)
 	return string(file)
-}
-
-func MakePathToFile(directory, file string) string {
-	return fmt.Sprintf("%s/%s", directory, file)
 }
