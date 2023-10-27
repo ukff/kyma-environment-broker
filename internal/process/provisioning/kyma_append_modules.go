@@ -39,10 +39,13 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 	case modules == nil:
 		logger.Info("module params section not set, the default kyma template will be used")
 		break
-	case modules.Default:
+	case modules.Default == nil:
+		logger.Info("module params section not set, the default kyma template will be used")
+		break
+	case *modules.Default:
 		logger.Info("default option set to true in module params section. the default one will be used")
 		break
-	case !modules.Default:
+	case !*modules.Default:
 		{
 			logger.Infof("provisioning kyma: custom module list provided, with number of items: %d", len(modules.List))
 			if err := k.appendModules(decodeKymaTemplate, modules); err != nil {
@@ -105,7 +108,7 @@ func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modul
 		}
 	}
 	
-	modulesSection = toInsert
+	modulesSection = modules.List
 	spec[modulesKey] = modulesSection
 	kyma.Object[specKey] = specSection
 	

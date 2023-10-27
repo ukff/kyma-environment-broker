@@ -48,6 +48,7 @@ type (
 
 const (
 	ErrMsgModulesBadConfigured = "in `module` configuration section, using default mode (`default`) is set to true , but also in same time the list `List` with custom parameters is provided"
+	ErrMsgModulesDefaultNotSet = "in `module` configuration section, using default mode (`default`) is set to nil"
 )
 
 type ProvisionEndpoint struct {
@@ -555,7 +556,11 @@ func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningPara
 		return nil
 	}
 	
-	if parameters.Modules.Default && (parameters.Modules.List != nil || len(parameters.Modules.List) > 0) {
+	if parameters.Modules != nil && parameters.Modules.List == nil && parameters.Modules.Default == nil {
+		parameters.Modules.Default = ptr.Bool(true)
+	}
+	
+	if (parameters.Modules.Default == nil || *parameters.Modules.Default) && (parameters.Modules.List != nil || len(parameters.Modules.List) > 0) {
 		return fmt.Errorf(ErrMsgModulesBadConfigured)
 	}
 	

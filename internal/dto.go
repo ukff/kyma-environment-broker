@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
 
 const (
@@ -180,7 +182,7 @@ type ProvisioningParametersDTO struct {
 	KymaVersion                 string   `json:"kymaVersion,omitempty"`
 	OverridesVersion            string   `json:"overridesVersion,omitempty"`
 	RuntimeAdministrators       []string `json:"administrators,omitempty"`
-	//Provider - used in Trial plan to determine which cloud provider to use during provisioning
+	// Provider - used in Trial plan to determine which cloud provider to use during provisioning
 	Provider *CloudProvider `json:"provider,omitempty"`
 
 	Kubeconfig  string `json:"kubeconfig,omitempty"`
@@ -342,27 +344,27 @@ type ServiceManagerOperatorCredentials struct {
 	XSAppName         string `json:"xsappname"`
 }
 
-type Channel string
+type Channel *string
 
-const (
-	Fast    Channel = "fast"
-	Regular Channel = "regular"
+var (
+	Fast    Channel = ptr.String("fast")
+	Regular Channel = ptr.String("regular")
 )
 
-type CustomResourcePolicy string
+type CustomResourcePolicy *string
 
-const (
-	Ignore          CustomResourcePolicy = "Ignore"
-	CreateAndDelete CustomResourcePolicy = "CreateAndDelete"
+var (
+	Ignore          CustomResourcePolicy = ptr.String("Ignore")
+	CreateAndDelete CustomResourcePolicy = ptr.String("CreateAndDelete")
 )
 
 type ModulesDTO struct {
-	Default bool         `json:"default, omitempty"`
-	List    []*ModuleDTO `json:"list, omitempty"`
+	Default *bool        `json:"default,omitempty" yaml:"default,omitempty"`
+	List    []*ModuleDTO `json:"list,omitempty" yaml:"list,omitempty"`
 }
 
 type ModuleDTO struct {
-	Name                 string               `json:"name, omitempty"`
-	Channel              Channel              `json:"channel, omitempty"`
-	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy, omitempty"`
+	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
+	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
+	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
 }

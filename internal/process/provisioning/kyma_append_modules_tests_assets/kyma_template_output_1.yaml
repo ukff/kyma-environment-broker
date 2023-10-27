@@ -8,9 +8,7 @@ spec:
     strategy: secret
   channel: stable
   modules:
-    - name: btp
-      channel: fast
-      customresourcepolicy: CreateAndDelete
+    - name: btp-operator
+      customResourcePolicy: CreateAndDelete
     - name: keda
       channel: regular
-      customresourcepolicy: CreateAndDelete
