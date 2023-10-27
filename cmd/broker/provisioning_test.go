@@ -4,7 +4,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -75,6 +74,8 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
+	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1"})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
@@ -105,6 +106,10 @@ func TestProvisioning_Preview(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region": "eu-central-1",
+	})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
@@ -245,6 +250,9 @@ func TestProvisioning_AzureWithEURestrictedAccessHappyFlow(t *testing.T) {
 
 	// then
 	suite.AssertAzureRegion("switzerlandnorth")
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "switzerlandnorth",
+		"kyma-project.io/platform-region": "cf-ch20"})
 }
 
 func TestProvisioning_AzureWithEURestrictedAccessDefaultRegion(t *testing.T) {
@@ -276,6 +284,9 @@ func TestProvisioning_AzureWithEURestrictedAccessDefaultRegion(t *testing.T) {
 
 	// then
 	suite.AssertAzureRegion("switzerlandnorth")
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "switzerlandnorth",
+		"kyma-project.io/platform-region": "cf-ch20"})
 }
 
 func TestProvisioning_AWSWithEURestrictedAccessHappyFlow(t *testing.T) {
@@ -308,6 +319,10 @@ func TestProvisioning_AWSWithEURestrictedAccessHappyFlow(t *testing.T) {
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-central-1",
+		"kyma-project.io/platform-region": "cf-eu11"})
+
 }
 
 func TestProvisioning_AWSWithEURestrictedAccessDefaultRegion(t *testing.T) {
@@ -339,6 +354,10 @@ func TestProvisioning_AWSWithEURestrictedAccessDefaultRegion(t *testing.T) {
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-central-1",
+		"kyma-project.io/platform-region": "cf-eu11"})
+
 }
 
 func TestProvisioning_TrialWithEmptyRegion(t *testing.T) {
@@ -371,6 +390,10 @@ func TestProvisioning_TrialWithEmptyRegion(t *testing.T) {
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-west-1")
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region": "eu-west-1"})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
+
 }
 
 func TestProvisioning_Conflict(t *testing.T) {
@@ -521,6 +544,11 @@ func TestProvisioning_TrialAtEU(t *testing.T) {
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-central-1",
+		"kyma-project.io/platform-region": "cf-eu11",
+	})
+
 }
 
 func TestProvisioning_HandleExistingOperation(t *testing.T) {
@@ -566,8 +594,8 @@ func TestProvisioning_HandleExistingOperation(t *testing.T) {
 					}
 		}`)
 
-	firstBodyBytes, _ := ioutil.ReadAll(firstResp.Body)
-	secondBodyBytes, _ := ioutil.ReadAll(secondResp.Body)
+	firstBodyBytes, _ := io.ReadAll(firstResp.Body)
+	secondBodyBytes, _ := io.ReadAll(secondResp.Body)
 
 	// then
 	assert.Equal(t, string(firstBodyBytes), string(secondBodyBytes))
@@ -629,6 +657,11 @@ func TestProvisioningWithReconciler_HappyPath(t *testing.T) {
 		Components:     suite.fixExpectedComponentListWithSMOperator(opID, clusterID),
 	})
 	suite.AssertClusterConfigWithKubeconfig(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestProvisioningWithReconcilerWithBTPOperator_HappyPath(t *testing.T) {
@@ -686,6 +719,11 @@ func TestProvisioningWithReconcilerWithBTPOperator_HappyPath(t *testing.T) {
 	})
 
 	suite.AssertClusterConfigWithKubeconfig(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestProvisioning_ClusterParameters(t *testing.T) {
