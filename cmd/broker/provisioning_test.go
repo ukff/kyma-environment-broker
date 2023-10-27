@@ -62,7 +62,8 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -96,7 +97,8 @@ func TestProvisioning_Preview(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -149,6 +151,7 @@ func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
 				},
 				"parameters": {
 					"name": "test",
+					"region": "eu-central-1",
 					"networking": {
 						"nodes": "192.168.48.0/20"
 					}
@@ -276,7 +279,8 @@ func TestProvisioning_AzureWithEURestrictedAccessDefaultRegion(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "switzerlandnorth"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -346,7 +350,8 @@ func TestProvisioning_AWSWithEURestrictedAccessDefaultRegion(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -1185,6 +1190,7 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 	instance := suite.GetInstance(iid)
 
 	// then
+
 	disabled := true
 	suite.AssertDisabledNetworkFilterForProvisioning(&disabled)
 	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
