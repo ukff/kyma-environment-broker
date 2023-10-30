@@ -9,21 +9,21 @@ import (
 	"net/http"
 	"net/netip"
 	"strings"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-	
+
 	"github.com/hashicorp/go-multierror"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	
+
 	"k8s.io/client-go/tools/clientcmd"
-	
+
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"github.com/sirupsen/logrus"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
@@ -40,7 +40,7 @@ type (
 	Queue interface {
 		Add(operationId string)
 	}
-	
+
 	PlanValidator interface {
 		IsPlanSupport(planID string) bool
 	}
@@ -61,16 +61,16 @@ type ProvisionEndpoint struct {
 	plansConfig       PlansConfig
 	kymaVerOnDemand   bool
 	planDefaults      PlanDefaults
-	
+
 	shootDomain       string
 	shootProject      string
 	shootDnsProviders gardener.DNSProvidersData
-	
+
 	dashboardConfig dashboard.Config
-	
+
 	euAccessWhitelist        euaccess.WhitelistSet
 	euAccessRejectionMessage string
-	
+
 	log logrus.FieldLogger
 }
 
@@ -93,7 +93,7 @@ func NewProvision(cfg Config,
 		id := PlanIDsMapping[planName]
 		enabledPlanIDs[id] = struct{}{}
 	}
-	
+
 	return &ProvisionEndpoint{
 		config:                   cfg,
 		operationsStorage:        operationsStorage,
@@ -121,7 +121,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	operationID := uuid.New().String()
 	logger := b.log.WithFields(logrus.Fields{"instanceID": instanceID, "operationID": operationID, "planID": details.PlanID})
 	logger.Infof("Provision called with context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext)))
-	
+
 	region, found := middleware.RegionFromContext(ctx)
 	if !found {
 		err := fmt.Errorf("No region specified in request.")
@@ -132,14 +132,14 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		err := fmt.Errorf("No provider specified in request.")
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
 	}
-	
+
 	// validation of incoming input
 	ersContext, parameters, err := b.validateAndExtract(details, platformProvider, ctx, logger)
 	if err != nil {
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 	}
-	
+
 	provisioningParameters := internal.ProvisioningParameters{
 		PlanID:           details.PlanID,
 		ServiceID:        details.ServiceID,
@@ -148,11 +148,11 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformRegion:   region,
 		PlatformProvider: platformProvider,
 	}
-	
+
 	logger.Infof("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s PlatformRegion=%s, ProvisioningParameterts.Region=%s, ProvisioningParameterts.MachineType=%s",
 		parameters.Name, ersContext.GlobalAccountID, ersContext.SubAccountID, region, valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType))
 	logParametersWithMaskedKubeconfig(parameters, logger)
-	
+
 	// check if operation with instance ID already created
 	existingOperation, errStorage := b.operationsStorage.GetProvisioningOperationByInstanceID(instanceID)
 	switch {
@@ -162,19 +162,19 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	case existingOperation != nil && !dberr.IsNotFound(errStorage):
 		return b.handleExistingOperation(existingOperation, provisioningParameters)
 	}
-	
+
 	shootName := gardener.CreateShootName()
 	shootDomainSuffix := strings.Trim(b.shootDomain, ".")
-	
+
 	dashboardURL := b.createDashboardURL(details.PlanID, instanceID)
-	
+
 	// create and save new operation
 	operation, err := internal.NewProvisioningOperationWithID(operationID, instanceID, provisioningParameters)
 	if err != nil {
 		logger.Errorf("cannot create new operation: %s", err)
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot create new operation")
 	}
-	
+
 	operation.ShootName = shootName
 	operation.ShootDomain = fmt.Sprintf("%s.%s", shootName, shootDomainSuffix)
 	operation.ShootDNSProviders = b.shootDnsProviders
@@ -185,13 +185,13 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		operation.ShootDomain = provisioningParameters.Parameters.ShootDomain
 	}
 	logger.Infof("Runtime ShootDomain: %s", operation.ShootDomain)
-	
+
 	err = b.operationsStorage.InsertOperation(operation.Operation)
 	if err != nil {
 		logger.Errorf("cannot save operation: %s", err)
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save operation")
 	}
-	
+
 	instance := internal.Instance{
 		InstanceID:      instanceID,
 		GlobalAccountID: ersContext.GlobalAccountID,
@@ -208,10 +208,10 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		logger.Errorf("cannot save instance in storage: %s", err)
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save instance")
 	}
-	
+
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
-	
+
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
@@ -237,20 +237,20 @@ func valueOfPtr(ptr *string) string {
 func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context, l logrus.FieldLogger) (internal.ERSContext, internal.ProvisioningParametersDTO, error) {
 	var ersContext internal.ERSContext
 	var parameters internal.ProvisioningParametersDTO
-	
+
 	if details.ServiceID != KymaServiceID {
 		return ersContext, parameters, fmt.Errorf("service_id not recognized")
 	}
 	if _, exists := b.enabledPlanIDs[details.PlanID]; !exists {
 		return ersContext, parameters, fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
-	
+
 	ersContext, err := b.extractERSContext(details)
 	logger := l.WithField("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {
 		return ersContext, parameters, fmt.Errorf("while extracting ers context: %w", err)
 	}
-	
+
 	parameters, err = b.extractInputParameters(details)
 	if err != nil {
 		return ersContext, parameters, fmt.Errorf("while extracting input parameters: %w", err)
@@ -259,7 +259,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err != nil {
 		return ersContext, parameters, fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
-	
+
 	// TODO: remove when the feature (networking params) is completed and tested on prod
 	if !b.config.AllowNetworkingParameters && parameters.Networking != nil {
 		return ersContext, parameters, fmt.Errorf("providing networking parameters is not allowed")
@@ -267,15 +267,16 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
-	
+
 	if !b.config.AllowModulesParameters {
+		b.log.Info("AllowModulesParameters is set to false, any passed modules parameters will be reset")
 		parameters.Modules = nil
 	} else {
 		if err := b.validateModules(parameters); err != nil {
 			return ersContext, parameters, err
 		}
 	}
-	
+
 	var autoscalerMin, autoscalerMax int
 	if defaults.GardenerConfig != nil {
 		p := defaults.GardenerConfig
@@ -289,7 +290,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
-	
+
 	planValidator, err := b.validator(&details, provider, ctx)
 	if err != nil {
 		return ersContext, parameters, fmt.Errorf("while creating plan validator: %w", err)
@@ -301,7 +302,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if !result.Valid {
 		return ersContext, parameters, fmt.Errorf("while validating input parameters: %w", result.Error)
 	}
-	
+
 	// EU Access: reject requests for not whitelisted globalAccountIds
 	if isEuRestrictedAccess(ctx) {
 		logger.Infof("EU Access restricted instance creation")
@@ -311,19 +312,19 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "provisioning")
 		}
 	}
-	
+
 	if !b.kymaVerOnDemand {
 		logger.Infof("Kyma on demand functionality is disabled. Default Kyma version will be used instead %s", parameters.KymaVersion)
 		parameters.KymaVersion = ""
 		parameters.OverridesVersion = ""
 	}
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
-	
+
 	found := b.builderFactory.IsPlanSupport(details.PlanID)
 	if !found {
 		return ersContext, parameters, fmt.Errorf("the plan ID not known, planID: %s", details.PlanID)
 	}
-	
+
 	if IsOwnClusterPlan(details.PlanID) {
 		decodedKubeconfig, err := base64.StdEncoding.DecodeString(parameters.Kubeconfig)
 		if err != nil {
@@ -335,26 +336,26 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 			return ersContext, parameters, fmt.Errorf("while validating kubeconfig: %w", err)
 		}
 	}
-	
+
 	if IsTrialPlan(details.PlanID) && parameters.Region != nil && *parameters.Region != "" {
 		_, valid := validRegionsForTrial[TrialCloudRegion(*parameters.Region)]
 		if !valid {
 			return ersContext, parameters, fmt.Errorf("invalid region specified in request for trial")
 		}
 	}
-	
+
 	if IsTrialPlan(details.PlanID) && b.config.OnlySingleTrialPerGA {
 		count, err := b.instanceStorage.GetNumberOfInstancesForGlobalAccountID(ersContext.GlobalAccountID)
 		if err != nil {
 			return ersContext, parameters, fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
 		}
-		
+
 		if count > 0 {
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return ersContext, parameters, fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
 		}
 	}
-	
+
 	return ersContext, parameters, nil
 }
 
@@ -382,7 +383,7 @@ func (b *ProvisionEndpoint) extractERSContext(details domain.ProvisionDetails) (
 	if err != nil {
 		return ersContext, fmt.Errorf("while decoding context: %w", err)
 	}
-	
+
 	if ersContext.GlobalAccountID == "" {
 		return ersContext, fmt.Errorf("global accountID parameter cannot be empty")
 	}
@@ -393,7 +394,7 @@ func (b *ProvisionEndpoint) extractERSContext(details domain.ProvisionDetails) (
 		return ersContext, fmt.Errorf("UserID parameter cannot be empty")
 	}
 	ersContext.UserID = strings.ToLower(ersContext.UserID)
-	
+
 	return ersContext, nil
 }
 
@@ -403,25 +404,25 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
-	
+
 	return parameters, nil
 }
 
 func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.ProvisioningOperation, input internal.ProvisioningParameters) (domain.ProvisionedServiceSpec, error) {
-	
+
 	if !operation.ProvisioningParameters.IsEqual(input) {
 		err := fmt.Errorf("provisioning operation already exist")
 		msg := fmt.Sprintf("provisioning operation with InstanceID %s already exist", operation.InstanceID)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusConflict, msg)
 	}
-	
+
 	instance, err := b.instanceStorage.GetByID(operation.InstanceID)
 	if err != nil {
 		err := fmt.Errorf("cannot fetch instance for operation")
 		msg := fmt.Sprintf("cannot fetch instance with ID: %s for operation woth ID: %s", operation.InstanceID, operation.ID)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusConflict, msg)
 	}
-	
+
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
@@ -436,7 +437,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 	if planId == AzureLitePlanID || IsTrialPlan(planId) {
 		return ptr.String(internal.LicenceTypeLite)
 	}
-	
+
 	return nil
 }
 
@@ -445,7 +446,7 @@ func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider
 	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion))
 	plan := plans[details.PlanID]
 	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
-	
+
 	return jsonschema.NewValidatorFromStringSchema(schema)
 }
 
@@ -480,7 +481,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	if parameters.Networking == nil {
 		return nil
 	}
-	
+
 	// currently we do not support Pod's and Service's
 	if parameters.Networking.PodsCidr != nil {
 		return fmt.Errorf("pod network's CIDR is not supported in the request")
@@ -488,7 +489,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	if parameters.Networking.ServicesCidr != nil {
 		return fmt.Errorf("service network's CIDR is not supported in the request")
 	}
-	
+
 	var nodes, services, pods *net.IPNet
 	if nodes, e = validateCidr(parameters.Networking.NodesCidr); e != nil {
 		err = multierror.Append(err, fmt.Errorf("while parsing nodes CIDR: %w", e))
@@ -498,18 +499,18 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	if cidr.Bits() > 23 {
 		err = multierror.Append(err, fmt.Errorf("the suffix of the node CIDR must not be greater than 26"))
 	}
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	for _, seed := range networking.GardenerSeedCIDRs {
 		_, seedCidr, _ := net.ParseCIDR(seed)
 		if e := validateOverlapping(*nodes, *seedCidr); e != nil {
 			err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", seed))
 		}
 	}
-	
+
 	if parameters.Networking.PodsCidr != nil {
 		if pods, e = validateCidr(*parameters.Networking.PodsCidr); e != nil {
 			err = multierror.Append(err, fmt.Errorf("while parsing pods CIDR: %w", e))
@@ -527,7 +528,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	if err != nil {
 		return err
 	}
-	
+
 	if e := validateOverlapping(*nodes, *pods); e != nil {
 		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", pods.String()))
 	}
@@ -537,32 +538,23 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	if e := validateOverlapping(*services, *pods); e != nil {
 		err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap pods CIDR"))
 	}
-	
+
 	return err
 }
 
 func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
-	
+
 	if n1.Contains(n2.IP) || n2.Contains(n1.IP) {
 		return fmt.Errorf("%s overlaps %s", n1.String(), n2.String())
 	}
-	
+
 	return nil
 }
 
 func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	if parameters.Modules == nil {
-		b.log.Info("`module` configuration section not provided at all, the default modules will be applied")
-		return nil
-	}
-	
-	if parameters.Modules != nil && parameters.Modules.List == nil && parameters.Modules.Default == nil {
-		parameters.Modules.Default = ptr.Bool(true)
-	}
-	
-	if (parameters.Modules.Default == nil || *parameters.Modules.Default) && (parameters.Modules.List != nil || len(parameters.Modules.List) > 0) {
+	if parameters.Modules != nil && parameters.Modules.Default != nil &&
+		*parameters.Modules.Default && parameters.Modules.List != nil && len(parameters.Modules.List) > 0 {
 		return fmt.Errorf(ErrMsgModulesBadConfigured)
 	}
-	
 	return nil
 }
