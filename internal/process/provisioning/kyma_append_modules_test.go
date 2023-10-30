@@ -23,7 +23,7 @@ const (
 	kymaAppendModulesTestAssets     = "kyma_append_modules_tests_assets"
 )
 
-func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string) {
+func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string, expectedErr bool) {
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation(uuid.NewString(), uuid.NewString(), internal.OperationTypeProvision)
 	operation.KymaTemplate = internal.GetFile(t, fmt.Sprintf("%s/%s", kymaAppendModulesTestAssets, in))
@@ -34,12 +34,17 @@ func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string) {
 
 	// when
 	op, backoff, err := svc.Run(operation, logrus.New())
-	require.NoError(t, err)
-
-	// then
-	assert.Zero(t, backoff)
-	assert.Equal(t, kymaExpectedNamespace, op.KymaResourceNamespace)
-	assert.YAMLEq(t, expectedKymaTemplate, op.KymaTemplate)
+	if expectedErr {
+		assert.Equal(t, kymaExpectedNamespace, op.KymaResourceNamespace)
+		assert.YAMLEq(t, op.KymaTemplate, op.KymaTemplate)
+		require.Error(t, err)
+	} else {
+		// then
+		assert.Zero(t, backoff)
+		assert.Equal(t, kymaExpectedNamespace, op.KymaResourceNamespace)
+		assert.YAMLEq(t, expectedKymaTemplate, op.KymaTemplate)
+		require.NoError(t, err)
+	}
 }
 
 // when given kyma template without any default modules set
@@ -60,7 +65,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes1_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1, &m2)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_1.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_1.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes1x_Run(t *testing.T) {
@@ -75,7 +80,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes1x_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_3.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_3.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes111_Run(t *testing.T) {
@@ -84,7 +89,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes111_Run(t *testing.T) {
 		modules.Default = ptr.Bool(true)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes11_Run(t *testing.T) {
@@ -105,7 +110,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes11_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1, &m2)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, givenKymaTemplateWithoutModules, true)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes2_Run(t *testing.T) {
@@ -121,7 +126,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes2_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_2.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_2.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes2_Run_A(t *testing.T) {
@@ -137,18 +142,18 @@ func TestKymaAppendModulesWithEmptyDefaultOnes2_Run_A(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_2.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_2.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes3_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		return &internal.ModulesDTO{}
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes4_Run(t *testing.T) {
-	execTest(t, nil, givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, nil, givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes5_Run(t *testing.T) {
@@ -157,7 +162,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes5_Run(t *testing.T) {
 		modules.List = make([]*internal.ModuleDTO, 0)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes6_Run(t *testing.T) {
@@ -166,14 +171,14 @@ func TestKymaAppendModulesWithEmptyDefaultOnes6_Run(t *testing.T) {
 		modules.List = nil
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes7_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		return nil
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml")
+	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
 }
 
 // when given kyma template have default modules set
@@ -182,7 +187,7 @@ func TestKymaAppendModulesWithDefaultOnesSet1_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		return nil
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules)
+	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, false)
 }
 
 func TestKymaAppendModulesWithDefaultOnesSet2_Run(t *testing.T) {
@@ -203,7 +208,7 @@ func TestKymaAppendModulesWithDefaultOnesSet2_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1, &m2)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, "kyma_template_output_4.yaml")
+	execTest(t, params(), givenKymaTemplateWithModules, "kyma_template_output_4.yaml", false)
 }
 
 func TestKymaAppendModulesWithDefaultOnesSet3_Run(t *testing.T) {
@@ -219,7 +224,7 @@ func TestKymaAppendModulesWithDefaultOnesSet3_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules)
+	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, true)
 }
 
 func TestKymaAppendModulesWithDefaultOnesSet4_Run(t *testing.T) {
@@ -227,19 +232,19 @@ func TestKymaAppendModulesWithDefaultOnesSet4_Run(t *testing.T) {
 		modules := &internal.ModulesDTO{}
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules)
+	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, false)
 }
 
 func TestKymaAppendModulesWithDefaultOnesSet5_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		return nil
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules)
+	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, false)
 }
 
 func TestKymaAppendModulesWithDefaultOnesSet6_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		return nil
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules)
+	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, false)
 }
