@@ -41,7 +41,8 @@ func (s *CheckClusterDeregistrationStep) Run(operation internal.Operation, log l
 		log.Info("ClusterConfigurationVersion is zero, skipping")
 		return operation, 0, nil
 	}
-	if operation.TimeSinceReconcilerDeregistrationTriggered() > s.timeout {
+	timeSinceTriggered := operation.TimeSinceReconcilerDeregistrationTriggered()
+	if timeSinceTriggered > s.timeout {
 		log.Errorf("Cluster deregistration has reached the time limit: %s", s.timeout)
 		modifiedOp, d, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.ClusterConfigurationVersion = 0
@@ -76,6 +77,9 @@ func (s *CheckClusterDeregistrationStep) Run(operation internal.Operation, log l
 	case reconcilerApi.StatusDeletePending, reconcilerApi.StatusDeleting, reconcilerApi.StatusDeleteErrorRetryable:
 		return operation, 30 * time.Second, nil
 	case reconcilerApi.StatusDeleted:
+		msg := fmt.Sprintf("Reconciler succeeded in %s.", timeSinceTriggered)
+		log.Info(msg)
+		operation.EventInfof(msg)
 		modifiedOp, d, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.ClusterConfigurationVersion = 0
 		}, log)

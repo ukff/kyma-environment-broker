@@ -18,15 +18,18 @@ type CheckRuntimeRemovalStep struct {
 	operationManager  *process.OperationManager
 	provisionerClient provisioner.Client
 	instanceStorage   storage.Instances
+	timeout           time.Duration
 }
 
 var _ process.Step = &CheckRuntimeRemovalStep{}
 
-func NewCheckRuntimeRemovalStep(operations storage.Operations, instances storage.Instances, provisionerClient provisioner.Client) *CheckRuntimeRemovalStep {
+func NewCheckRuntimeRemovalStep(operations storage.Operations, instances storage.Instances,
+	provisionerClient provisioner.Client, timeout time.Duration) *CheckRuntimeRemovalStep {
 	return &CheckRuntimeRemovalStep{
 		operationManager:  process.NewOperationManager(operations),
 		provisionerClient: provisionerClient,
 		instanceStorage:   instances,
+		timeout:           timeout,
 	}
 }
 
@@ -35,9 +38,9 @@ func (s *CheckRuntimeRemovalStep) Name() string {
 }
 
 func (s *CheckRuntimeRemovalStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if time.Since(operation.UpdatedAt) > CheckStatusTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), nil, log)
+	if time.Since(operation.UpdatedAt) > s.timeout {
+		log.Infof("operation has reached the time limit: %s updated operation time: %s", s.timeout, operation.UpdatedAt)
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("CheckRuntimeRemovalStep operation has reached the time limit: %s", s.timeout), nil, log)
 	}
 	if operation.ProvisionerOperationID == "" {
 		log.Infof("ProvisionerOperationID is empty, skipping (there is no runtime)")
@@ -68,6 +71,9 @@ func (s *CheckRuntimeRemovalStep) Run(operation internal.Operation, log logrus.F
 
 	switch status.State {
 	case gqlschema.OperationStateSucceeded:
+		msg := fmt.Sprintf("Provisioner succeeded in %s.", time.Since(operation.UpdatedAt))
+		log.Info(msg)
+		operation.EventInfof(msg)
 		return operation, 0, nil
 	case gqlschema.OperationStateInProgress:
 		return operation, 30 * time.Second, nil

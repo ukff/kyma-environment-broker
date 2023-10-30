@@ -67,9 +67,9 @@ func (s *CheckRuntimeStep) checkRuntimeStatus(operation internal.Operation, log 
 	case gqlschema.OperationStateSucceeded:
 		return operation, 0, nil
 	case gqlschema.OperationStateInProgress:
-		return operation, 2 * time.Minute, nil
+		return operation, 20 * time.Second, nil
 	case gqlschema.OperationStatePending:
-		return operation, 2 * time.Minute, nil
+		return operation, 20 * time.Second, nil
 	case gqlschema.OperationStateFailed:
 		lastErr := provisioner.OperationStatusLastError(status.LastError)
 		return s.operationManager.OperationFailed(operation, "provisioner client returns failed status", lastErr, log)
