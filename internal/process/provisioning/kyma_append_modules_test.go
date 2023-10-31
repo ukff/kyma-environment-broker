@@ -52,7 +52,6 @@ func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string, exp
 func TestKymaAppendModulesWithEmptyDefaultOnes1_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(false)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,
@@ -71,7 +70,6 @@ func TestKymaAppendModulesWithEmptyDefaultOnes1_Run(t *testing.T) {
 func TestKymaAppendModulesWithEmptyDefaultOnes1x_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(false)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,
@@ -110,13 +108,12 @@ func TestKymaAppendModulesWithEmptyDefaultOnes11_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1, &m2)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithoutModules, givenKymaTemplateWithoutModules, true)
+	execTest(t, params(), givenKymaTemplateWithoutModules, givenKymaTemplateWithoutModules, false)
 }
 
 func TestKymaAppendModulesWithEmptyDefaultOnes2_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(false)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,
@@ -132,7 +129,6 @@ func TestKymaAppendModulesWithEmptyDefaultOnes2_Run(t *testing.T) {
 func TestKymaAppendModulesWithEmptyDefaultOnes2_Run_A(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(false)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,
@@ -193,7 +189,6 @@ func TestKymaAppendModulesWithDefaultOnesSet1_Run(t *testing.T) {
 func TestKymaAppendModulesWithDefaultOnesSet2_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(false)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,
@@ -224,7 +219,7 @@ func TestKymaAppendModulesWithDefaultOnesSet3_Run(t *testing.T) {
 		modules.List = append(modules.List, &m1)
 		return modules
 	}
-	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, true)
+	execTest(t, params(), givenKymaTemplateWithModules, givenKymaTemplateWithModules, false)
 }
 
 func TestKymaAppendModulesWithDefaultOnesSet4_Run(t *testing.T) {

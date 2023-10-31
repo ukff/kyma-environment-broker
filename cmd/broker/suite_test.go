@@ -539,7 +539,11 @@ kyma-template: |-
       sync:
           strategy: secret
       channel: stable
-      modules: []
+      modules:
+          - name: btp-operator
+            customResourcePolicy: CreateAndDelete
+          - name: keda
+            channel: fast
 
 additional-components:
   - name: "btp-operator"

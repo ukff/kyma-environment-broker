@@ -48,7 +48,6 @@ type (
 
 const (
 	ErrMsgModulesBadConfigured = "in `module` configuration section, using default mode (`default`) is set to true , but also in same time the list `List` with custom parameters is provided"
-	ErrMsgModulesDefaultNotSet = "in `module` configuration section, using default mode (`default`) is set to nil"
 )
 
 type ProvisionEndpoint struct {
@@ -268,9 +267,14 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, err
 	}
 
-	if !b.config.AllowModulesParameters {
+	b.config.AllowModulesParameters = true
+	if !b.config.AllowModulesParameters ||
+		parameters.Modules == nil ||
+		parameters.Modules.Default == nil && parameters.Modules.List == nil {
 		b.log.Info("AllowModulesParameters is set to false, any passed modules parameters will be reset")
-		parameters.Modules = nil
+		parameters.Modules = &internal.ModulesDTO{
+			Default: ptr.Bool(true),
+		}
 	} else {
 		if err := b.validateModules(parameters); err != nil {
 			return ersContext, parameters, err
@@ -552,8 +556,7 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 }
 
 func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	if parameters.Modules != nil && parameters.Modules.Default != nil &&
-		*parameters.Modules.Default && parameters.Modules.List != nil && len(parameters.Modules.List) > 0 {
+	if parameters.Modules != nil && parameters.Modules.Default != nil && !*parameters.Modules.Default {
 		return fmt.Errorf(ErrMsgModulesBadConfigured)
 	}
 	return nil
