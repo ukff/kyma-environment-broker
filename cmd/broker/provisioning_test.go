@@ -118,17 +118,17 @@ func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
 	// t.Skip()
 	var (
-		catalogTestFile = "catalog-test.json"
-		outputToFile    = true
-		prettyJson      = true
-		prettify        = func(content []byte) *bytes.Buffer {
+		catalogTestFile     = "catalog-test.json"
+		catalogTestFilePerm = os.FileMode.Perm(0666)
+		outputToFile        = false
+		prettyJson          = false
+		prettify            = func(content []byte) *bytes.Buffer {
 			var prettyJSON bytes.Buffer
 			err := json.Indent(&prettyJSON, content, "", "    ")
 			assert.NoError(t, err)
 			return &prettyJSON
 		}
 	)
-
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -142,10 +142,10 @@ func TestCatalog(t *testing.T) {
 
 	if outputToFile {
 		if prettyJson {
-			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), 0666)
+			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), catalogTestFilePerm)
 			assert.NoError(t, err)
 		} else {
-			err = os.WriteFile(catalogTestFile, content, 0666)
+			err = os.WriteFile(catalogTestFile, content, catalogTestFilePerm)
 			assert.NoError(t, err)
 		}
 	} else {
