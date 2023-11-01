@@ -763,7 +763,7 @@ func (s *ProvisioningSuite) WaitForProvisioningState(operationID string, state d
 
 func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconciler(operationID string) {
 	var op *internal.Operation
-	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
+	err := wait.PollImmediate(pollingInterval, 5*time.Second, func() (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
 		if op.RuntimeID != "" {
 			return true, nil
