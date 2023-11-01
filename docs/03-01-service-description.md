@@ -53,6 +53,8 @@ These are the provisioning parameters that you can configure:
 | **oidc.usernamePrefix** | string | Provides an OIDC username prefix for a Kyma runtime. | No | None |
 | **administrators** | string | Provides administrators for a Kyma runtime. | No | None |
 | **networking.nodes** | string | The Node network's CIDR. | No | `10.250.0.0/22` |
+| **modules.default** | bool | Defines if use default module settings | No | Yes |
+| **modules.list** | array | Define custom list of modules  | No | Default from Kyma Template |
 
 ### Provider-specific parameters
 
