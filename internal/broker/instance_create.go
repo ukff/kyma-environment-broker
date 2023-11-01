@@ -268,13 +268,8 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	b.config.AllowModulesParameters = true
-	if !b.config.AllowModulesParameters ||
-		parameters.Modules == nil ||
-		parameters.Modules.Default == nil && parameters.Modules.List == nil {
-		b.log.Info("AllowModulesParameters is set to false, any passed modules parameters will be reset")
-		parameters.Modules = &internal.ModulesDTO{
-			Default: ptr.Bool(true),
-		}
+	if !b.config.AllowModulesParameters {
+		parameters.Modules = nil
 	} else {
 		if err := b.validateModules(parameters); err != nil {
 			return ersContext, parameters, err
