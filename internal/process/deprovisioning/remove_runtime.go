@@ -63,7 +63,7 @@ func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLo
 		provisionerResponse, err := s.provisionerClient.DeprovisionRuntime(instance.GlobalAccountID, instance.RuntimeID)
 		if err != nil {
 			log.Errorf("unable to deprovision runtime: %s", err)
-			return operation, 10 * time.Second, nil
+			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "unable to deprovision Runtime in Provisioner", 15*time.Second, 20*time.Minute, log)
 		}
 		log.Infof("fetched ProvisionerOperationID=%s", provisionerResponse)
 		repeat := time.Duration(0)

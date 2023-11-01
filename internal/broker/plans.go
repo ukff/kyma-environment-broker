@@ -113,46 +113,76 @@ func OpenStackRegions() []string {
 	return []string{"eu-de-1", "ap-sa-1"}
 }
 
-func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
+func requiredSchemaProperties(regionParameterIsRequired bool) []string {
+	if regionParameterIsRequired {
+		return []string{"name", "region"}
+	}
+	return []string{"name"}
+}
+
+func requiredTrialSchemaProperties() []string {
+	return []string{"name"}
+}
+
+func requiredOwnClusterSchemaProperties() []string {
+	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
+}
+
+func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, OpenStackRegions(), update)
 	properties.AutoScalerMax.Maximum = 40
 	if !update {
 		properties.AutoScalerMax.Default = 8
 	}
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
-func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
-	return createSchemaWithProperties(properties, additionalParams, update)
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
-func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
+func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
-	return createSchemaWithProperties(properties, additionalParams, update)
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
-func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
-	return createSchemaWithProperties(properties, additionalParams, update)
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
-func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
-	return createSchemaWithProperties(properties, additionalParams, update)
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
-func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Maximum = 40
 
@@ -160,11 +190,14 @@ func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []strin
 		properties.AutoScalerMax.Default = 10
 		properties.AutoScalerMin.Default = 2
 	}
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
-func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired bool) *map[string]interface{} {
 	if update && !additionalParams {
 		return empty()
 	}
@@ -188,8 +221,11 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 	if !update {
 		properties.Networking = NewNetworkingSchema()
 	}
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
+	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
 func TrialSchema(additionalParams, update bool) *map[string]interface{} {
@@ -201,7 +237,7 @@ func TrialSchema(additionalParams, update bool) *map[string]interface{} {
 		return empty()
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredTrialSchemaProperties())
 }
 
 func OwnClusterSchema(update bool) *map[string]interface{} {
@@ -215,9 +251,9 @@ func OwnClusterSchema(update bool) *map[string]interface{} {
 	}
 
 	if update {
-		return createSchemaForOwnCluster(properties.UpdateProperties, update)
+		return createSchemaWith(properties.UpdateProperties, update, requiredOwnClusterSchemaProperties())
 	} else {
-		return createSchemaForOwnCluster(properties, update)
+		return createSchemaWith(properties, update, requiredOwnClusterSchemaProperties())
 	}
 }
 
@@ -226,31 +262,20 @@ func empty() *map[string]interface{} {
 	return &empty
 }
 
-func createSchema(machineTypesDisplay map[string]string, machineTypes, regions []string, additionalParams, update bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, regions, update)
-	return createSchemaWithProperties(properties, additionalParams, update)
-}
-
-func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool) *map[string]interface{} {
+func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool, requiered []string) *map[string]interface{} {
 	if additionalParams {
 		properties.IncludeAdditional()
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, update)
+		return createSchemaWith(properties.UpdateProperties, update, requiered)
 	} else {
-		return createSchemaWith(properties, update)
+		return createSchemaWith(properties, update, requiered)
 	}
 }
 
-func createSchemaWith(properties interface{}, update bool) *map[string]interface{} {
-	schema := NewSchemaWithOnlyNameRequired(properties, update)
-
-	return unmarshalSchema(schema)
-}
-
-func createSchemaForOwnCluster(properties interface{}, update bool) *map[string]interface{} {
-	schema := NewSchemaForOwnCluster(properties, update, []string{"name", "kubeconfig", "shootName", "shootDomain"})
+func createSchemaWith(properties interface{}, update bool, requiered []string) *map[string]interface{} {
+	schema := NewSchema(properties, update, requiered)
 
 	return unmarshalSchema(schema)
 }
@@ -271,7 +296,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, regionParameterIsRequired bool) map[string]domain.ServicePlan {
 	awsMachines := []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"}
 	awsMachinesDisplay := map[string]string{
 		// source: https://aws.amazon.com/ec2/instance-types/m5/
@@ -299,14 +324,14 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		"n2-standard-32": "n2-standard-32 (32vCPU, 128GB RAM)",
 		"n2-standard-48": "n2-standard-48 (48vCPU, 192B RAM)",
 	}
-	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, false)
+	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired)
 
 	openStackMachines := []string{"g_c4_m16", "g_c8_m32"}
 	openStackMachinesDisplay := map[string]string{
 		"g_c4_m16": "g_c4_m16 (4vCPU, 16GB RAM)",
 		"g_c8_m32": "g_c8_m32 (8vCPU, 32GB RAM)",
 	}
-	openstackSchema := OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, false)
+	openstackSchema := OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired)
 
 	// source: https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-sizes-specs#dv3-series
 	azureMachines := []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"}
@@ -318,14 +343,14 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		"Standard_D48_v3": "Standard_D48_v3 (48vCPU, 192GB RAM)",
 		"Standard_D64_v3": "Standard_D64_v3 (64vCPU, 256GB RAM)",
 	}
-	azureSchema := AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	azureSchema := AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
 
 	azureLiteMachines := []string{"Standard_D4_v3"}
 	azureLiteMachinesDisplay := map[string]string{
 		"Standard_D4_v3": azureMachinesDisplay["Standard_D4_v3"],
 	}
-	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	freemiumSchema := FreemiumSchema(provider, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
+	freemiumSchema := FreemiumSchema(provider, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
 	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false)
 	ownClusterSchema := OwnClusterSchema(false)
 
@@ -340,19 +365,19 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		"m5.8xlarge":  awsMachinesDisplay["m5.8xlarge"],
 		"m5.12xlarge": awsMachinesDisplay["m5.12xlarge"],
 	}
-	awsCatalogSchema := AWSSchema(awsCatalogMachinesDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	awsCatalogSchema := AWSSchema(awsCatalogMachinesDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
 
 	outputPlans := map[string]domain.ServicePlan{
-		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, true)),
-		OpenStackPlanID:  defaultServicePlan(OpenStackPlanID, OpenStackPlanName, plans, openstackSchema, OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, true)),
-		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired)),
+		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired)),
+		OpenStackPlanID:  defaultServicePlan(OpenStackPlanID, OpenStackPlanName, plans, openstackSchema, OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired)),
+		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired)),
+		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired)),
+		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired)),
 		TrialPlanID:      defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
 		OwnClusterPlanID: defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
-		PreviewPlanID: defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, PreviewSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false, euAccessRestricted),
-			AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		PreviewPlanID: defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, PreviewSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired),
+			AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired)),
 	}
 
 	return outputPlans

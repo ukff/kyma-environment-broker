@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	
+
 	"gopkg.in/yaml.v2"
-	
+
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -41,8 +41,9 @@ type Config struct {
 	ShowTrialExpirationInfo                 bool   `envconfig:"default=false"`
 	SubaccountsIdsToShowTrialExpirationInfo string `envconfig:"default="`
 	TrialDocsURL                            string `envconfig:"default="`
-	
+
 	AllowNetworkingParameters bool `envconfig:"default=false"`
+	RegionParameterIsRequired bool `envconfig:"default=false"`
 	AllowModulesParameters    bool `envconfig:"default=false"`
 }
 
@@ -108,7 +109,7 @@ func (m *EnablePlans) Unmarshal(in string) error {
 			return fmt.Errorf("unrecognized %v plan name", name)
 		}
 	}
-	
+
 	*m = plans
 	return nil
 }

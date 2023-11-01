@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"testing"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 
@@ -28,7 +29,7 @@ func TestCheckRuntimeRemovalStep(t *testing.T) {
 			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 			provisionerClient := provisioner.NewFakeClient()
-			svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient)
+			svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 			dOp := fixDeprovisioningOperation().Operation
 			memoryStorage.Instances().Insert(internal.Instance{
 				GlobalAccountID: "global-acc",
@@ -53,7 +54,7 @@ func TestCheckRuntimeRemovalStep_ProvisionerFailed(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	provisionerClient := provisioner.NewFakeClient()
-	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient)
+	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
 	memoryStorage.Operations().InsertOperation(dOp)
 	memoryStorage.Instances().Insert(internal.Instance{
@@ -77,7 +78,7 @@ func TestCheckRuntimeRemovalStep_InstanceDeleted(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	provisionerClient := provisioner.NewFakeClient()
-	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient)
+	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
 	memoryStorage.Operations().InsertOperation(dOp)
 
@@ -93,7 +94,7 @@ func TestCheckRuntimeRemovalStep_NoProvisionerOperationID(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
-	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), nil)
+	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
 	memoryStorage.Instances().Insert(internal.Instance{
 		GlobalAccountID: "global-acc",

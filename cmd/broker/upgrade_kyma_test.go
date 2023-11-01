@@ -38,7 +38,8 @@ func TestClusterUpgradeUsesUpdatedAutoscalerParams(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"kymaVersion": "2.0"
+						"kymaVersion": "2.0",
+						"region": "eastus"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -117,6 +118,11 @@ func TestClusterUpgradeUsesUpdatedAutoscalerParams(t *testing.T) {
 		Administrators: []string{"john.smith@email.com"},
 	})
 
+	suite.AssertKymaResourceExists(upgradeOperationID)
+	suite.AssertKymaLabelsExist(upgradeOperationID, map[string]string{
+		"kyma-project.io/region":          "eastus",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }
 
 func TestKymaUpgradeScheduledToFutureMaintenanceWindow(t *testing.T) {
@@ -142,7 +148,8 @@ func TestKymaUpgradeScheduledToFutureMaintenanceWindow(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"kymaVersion": "2.0"
+						"kymaVersion": "2.0",
+						"region": "eastus"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)

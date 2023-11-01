@@ -38,6 +38,10 @@ type StagedManagerConfiguration struct {
 	WorkersAmount         int           `envconfig:"default=20"`
 }
 
+func (c StagedManagerConfiguration) String() string {
+	return fmt.Sprintf("(MaxStepProcessingTime=%s; WorkersAmount=%d)", c.MaxStepProcessingTime, c.WorkersAmount)
+}
+
 type Step interface {
 	Name() string
 	Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error)

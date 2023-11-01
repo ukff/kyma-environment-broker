@@ -87,6 +87,11 @@ func TestUpdate(t *testing.T) {
 		},
 		Administrators: []string{"john.smith@email.com"},
 	})
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }
 
 func TestUpdateFailedInstance(t *testing.T) {
@@ -224,6 +229,12 @@ func TestExpiration(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	// we expect new suspension in progress operation (the last operation before is failed)
 	suite.WaitForLastOperation(iid, domain.InProgress)
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestExpirationOfNonTrial(t *testing.T) {
@@ -243,7 +254,8 @@ func TestExpirationOfNonTrial(t *testing.T) {
 					   "user_id": "john.smith@email.com"
 				   },
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1"
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
@@ -267,6 +279,12 @@ func TestExpirationOfNonTrial(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	instance := suite.GetInstance(iid)
 	assert.False(suite.t, instance.IsExpired())
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-central-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestTrialExpirationOnFailedOperations(t *testing.T) {
@@ -396,7 +414,8 @@ func TestTrialExpirationOnFailedOperations(t *testing.T) {
     "user_id": "john.smith@email.com"
   },
   "parameters": {
-    "name": "aws-failed-provisioning"
+    "name": "aws-failed-provisioning",
+	"region": "eu-central-1"
   }
 }`)
 		opID := suite.DecodeOperationID(resp)
@@ -435,7 +454,8 @@ func TestTrialExpirationOnFailedOperations(t *testing.T) {
     "user_id": "john.smith@email.com"
   },
   "parameters": {
-    "name": "aws-failed-deprovisioning"
+    "name": "aws-failed-deprovisioning",
+	"region": "eu-central-1"
   }
 }`)
 		opID := suite.DecodeOperationID(resp)
@@ -530,6 +550,13 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 	errResponse := suite.DecodeErrorResponse(resp)
 
 	assert.Equal(t, "Unable to process an update of a deprovisioned instance", errResponse.Description)
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestUpdateWithNoOIDCParams(t *testing.T) {
@@ -588,6 +615,13 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 		},
 		Administrators: []string{"john.smith@email.com"},
 	})
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
@@ -706,6 +740,13 @@ func TestUpdateContext(t *testing.T) {
        }
    }`)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestUnsuspensionTrialKyma20(t *testing.T) {
@@ -778,6 +819,12 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suite.processProvisioningAndReconciliationByInstanceID(iid)
 
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region": "eu-west-1",
+	})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
+
 }
 
 func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testing.T) {
@@ -848,6 +895,13 @@ func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testi
 
 	// check that the region and zone is set
 	suite.AssertAWSRegionAndZone("us-east-1")
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "us-east-1",
+		"kyma-project.io/platform-region": "cf-us10",
+	})
+
 }
 
 func TestUpdateWithOwnClusterPlan(t *testing.T) {
@@ -1009,6 +1063,13 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	assert.Equal(t, "id-oooxx", instance.Parameters.Parameters.OIDC.ClientID)
 	input := suite.LastProvisionInput(iid)
 	assert.Equal(t, "id-oooxx", input.ClusterConfig.GardenerConfig.OidcConfig.ClientID)
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
+
 }
 
 func TestUpdateOidcForPreview(t *testing.T) {
@@ -1040,7 +1101,8 @@ func TestUpdateOidcForPreview(t *testing.T) {
 					"clientID": "id-ooo",
 					"signingAlgs": ["RS256"],
 					"issuerURL": "https://issuer.url.com"
-				}
+				},
+				"region": "eu-central-1"
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -1118,6 +1180,12 @@ func TestUpdateNotExistingInstance(t *testing.T) {
        }
    }`)
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-west-1",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }
 
 func TestUpdateDefaultAdminNotChanged(t *testing.T) {
