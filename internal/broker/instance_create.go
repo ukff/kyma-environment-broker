@@ -47,7 +47,7 @@ type (
 )
 
 const (
-	ErrMsgModulesBadConfigured = "in `module` configuration section, using default mode (`default`) is set to true , but also in same time the list `List` with custom parameters is provided"
+	ErrMsgModulesBadConfigured = "in `module` configuration section, using only `default` mode as false in not supported. If you want to provide custom modules please use only `list` field"
 )
 
 type ProvisionEndpoint struct {
@@ -267,7 +267,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, err
 	}
 
-	b.config.AllowModulesParameters = true
 	if !b.config.AllowModulesParameters {
 		parameters.Modules = nil
 	} else {
@@ -313,7 +312,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	if !b.kymaVerOnDemand {
-		logger.Infof("Kyma on demand functionality is disabled. UseDefault Kyma version will be used instead %s", parameters.KymaVersion)
+		logger.Infof("Kyma on demand functionality is disabled. Default Kyma version will be used instead %s", parameters.KymaVersion)
 		parameters.KymaVersion = ""
 		parameters.OverridesVersion = ""
 	}
