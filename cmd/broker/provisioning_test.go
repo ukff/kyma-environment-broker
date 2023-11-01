@@ -1261,7 +1261,7 @@ func TestProvisioning_PRVersionWithoutOverrides(t *testing.T) {
 	suite.WaitForProvisioningState(opID, domain.Failed)
 }
 
-func TestProvisioning_Modules1(t *testing.T) {
+func TestProvisioning_ModulesWithGivenCustomModules(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1283,10 +1283,6 @@ func TestProvisioning_Modules1(t *testing.T) {
 					"modules": {
 						"list": [
 							{
-								"name": "btp-operator",
-								"customResourcePolicy": "CreateAndDelete"
-							},
-							{
 								"name": "keda",
 								"channel": "fast"
 							}
@@ -1301,10 +1297,10 @@ func TestProvisioning_Modules1(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected1.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-1.yaml")), op.KymaTemplate)
 }
 
-func TestProvisioning_Modules2(t *testing.T) {
+func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1317,7 +1313,7 @@ func TestProvisioning_Modules2(t *testing.T) {
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				"context": {
 					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-                    "subaccount_id": "test",
+					"subaccount_id": "test",
 					"user_id": "piotr.miskiewicz@sap.com"
 				},
 				"parameters": {
@@ -1335,10 +1331,10 @@ func TestProvisioning_Modules2(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected2.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
 }
 
-func TestProvisioning_Modules3(t *testing.T) {
+func TestProvisioning_ModulesWithGivenOnlyDefaultAsFalseValidationFail(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1351,7 +1347,7 @@ func TestProvisioning_Modules3(t *testing.T) {
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				"context": {
 					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-                    "subaccount_id": "test",
+					"subaccount_id": "test",
 					"user_id": "piotr.miskiewicz@sap.com"
 				},
 				"parameters": {
@@ -1368,7 +1364,7 @@ func TestProvisioning_Modules3(t *testing.T) {
 	assert.Contains(t, errResponse.Description, broker.ErrMsgModulesBadConfigured)
 }
 
-func TestProvisioning_Modules4(t *testing.T) {
+func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1400,10 +1396,10 @@ func TestProvisioning_Modules4(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected3.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-2.yaml")), op.KymaTemplate)
 }
 
-func TestProvisioning_Modules5(t *testing.T) {
+func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
