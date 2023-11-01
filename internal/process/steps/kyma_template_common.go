@@ -3,9 +3,9 @@ package steps
 import (
 	"bytes"
 	"fmt"
-	
+
 	"gopkg.in/yaml.v2"
-	
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
@@ -14,7 +14,7 @@ import (
 
 func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	tmpl := []byte(template)
-	
+
 	decoder := k8syamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
 	var rawObj runtime.RawExtension
 	if err := decoder.Decode(&rawObj); err != nil {
@@ -24,7 +24,7 @@ func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
 	return unstructuredObj, err
