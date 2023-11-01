@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
@@ -19,9 +19,9 @@ type RuntimeVersionConfigurator struct {
 
 func NewRuntimeVersionConfigurator(defaultVersion string, accountMapping *AccountVersionMapping, runtimeStates storage.RuntimeStates) *RuntimeVersionConfigurator {
 	if defaultVersion == "" {
-		panic("UseDefault version not provided")
+		panic("Default version not provided")
 	}
-
+	
 	return &RuntimeVersionConfigurator{
 		defaultVersion: defaultVersion,
 		accountMapping: accountMapping,
@@ -37,14 +37,14 @@ func (rvc *RuntimeVersionConfigurator) ForUpdating(op internal.Operation) (*inte
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return internal.NewRuntimeVersionFromDefaults(r.GetKymaVersion()), nil
 }
 
 func (rvc *RuntimeVersionConfigurator) ForProvisioning(op internal.Operation) (*internal.RuntimeVersionData, error) {
-
+	
 	pp := op.ProvisioningParameters
-
+	
 	if pp.Parameters.KymaVersion == "" {
 		version, found, err := rvc.accountMapping.Get(pp.ErsContext.GlobalAccountID, pp.ErsContext.SubAccountID)
 		if err != nil {
@@ -59,7 +59,7 @@ func (rvc *RuntimeVersionConfigurator) ForProvisioning(op internal.Operation) (*
 		}
 		return internal.NewRuntimeVersionFromDefaults(rvc.defaultVersion), nil
 	}
-
+	
 	majorVer, err := determineMajorVersion(pp.Parameters.KymaVersion, rvc.defaultVersion)
 	if err != nil {
 		return nil, fmt.Errorf("while determining Kyma's major version: %w", err)
@@ -99,6 +99,6 @@ func (rvc *RuntimeVersionConfigurator) ForUpgrade(op internal.UpgradeKymaOperati
 		}
 		return internal.NewRuntimeVersionFromAccountMapping(version, majorVer), nil
 	}
-
+	
 	return internal.NewRuntimeVersionFromDefaults(rvc.defaultVersion), nil
 }
