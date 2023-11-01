@@ -84,7 +84,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes1x_Run(t *testing.T) {
 func TestKymaAppendModulesWithEmptyDefaultOnes111_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(true)
+		modules.UseDefault = ptr.Bool(true)
 		return modules
 	}
 	execTest(t, params(), givenKymaTemplateWithoutModules, "kyma_template_output_0.yaml", false)
@@ -93,7 +93,7 @@ func TestKymaAppendModulesWithEmptyDefaultOnes111_Run(t *testing.T) {
 func TestKymaAppendModulesWithEmptyDefaultOnes11_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(true)
+		modules.UseDefault = ptr.Bool(true)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,
@@ -209,7 +209,7 @@ func TestKymaAppendModulesWithDefaultOnesSet2_Run(t *testing.T) {
 func TestKymaAppendModulesWithDefaultOnesSet3_Run(t *testing.T) {
 	params := func() *internal.ModulesDTO {
 		modules := &internal.ModulesDTO{}
-		modules.Default = ptr.Bool(true)
+		modules.UseDefault = ptr.Bool(true)
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
 			Name:                 technicalNameBtpManager,

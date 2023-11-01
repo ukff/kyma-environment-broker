@@ -1272,29 +1272,23 @@ func TestProvisioning_Modules1(t *testing.T) {
 		`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-		
 				"context": {
 					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-						"subaccount_id": "test",
+					"subaccount_id": "test",
 					"user_id": "piotr.miskiewicz@sap.com"
-					
 				},
 				"parameters": {
 					"name": "test",
-					"networking": {
-						"nodes": "192.168.48.0/20"
-					},
+					"region": "eu-central-1",
 					"modules": {
 						"list": [
 							{
 								"name": "btp-operator",
-								"channel": "regular",
 								"customResourcePolicy": "CreateAndDelete"
 							},
 							{
 								"name": "keda",
-								"channel": "fast",
-								"customResourcePolicy": "Ignore"
+								"channel": "fast"
 							}
 						]
 					}
@@ -1307,7 +1301,7 @@ func TestProvisioning_Modules1(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, op.KymaTemplate, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected1.yaml")))
+	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected1.yaml")), op.KymaTemplate)
 }
 
 func TestProvisioning_Modules2(t *testing.T) {
@@ -1321,18 +1315,14 @@ func TestProvisioning_Modules2(t *testing.T) {
 		`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-		
 				"context": {
 					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-						"subaccount_id": "test",
+                    "subaccount_id": "test",
 					"user_id": "piotr.miskiewicz@sap.com"
-					
 				},
 				"parameters": {
 					"name": "test",
-					"networking": {
-						"nodes": "192.168.48.0/20"
-					},
+					"region": "eu-central-1",
 					"modules": {
 						"list": []
 					}
@@ -1345,7 +1335,7 @@ func TestProvisioning_Modules2(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, op.KymaTemplate, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected2.yaml")))
+	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "expected2.yaml")), op.KymaTemplate)
 }
 
 func TestProvisioning_Modules3(t *testing.T) {
@@ -1359,20 +1349,16 @@ func TestProvisioning_Modules3(t *testing.T) {
 		`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-		
 				"context": {
 					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-						"subaccount_id": "test",
+                    "subaccount_id": "test",
 					"user_id": "piotr.miskiewicz@sap.com"
-					
 				},
 				"parameters": {
 					"name": "test",
-					"networking": {
-						"nodes": "192.168.48.0/20"
-					},
+					"region": "eu-central-1",
 					"modules": {
-						"default": false
+						"useDefault": false
 					}
 				}
 			}`)
@@ -1400,9 +1386,7 @@ func TestProvisioning_Modules4(t *testing.T) {
 				},
 				"parameters": {
 					"name": "test",
-					"networking": {
-						"nodes": "192.168.48.0/20"
-					},
+					"region": "eu-central-1",
 					"modules": {
 						"useDefault": true
 					}
@@ -1430,20 +1414,16 @@ func TestProvisioning_Modules5(t *testing.T) {
 		`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-		
 				"context": {
 					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-						"subaccount_id": "test",
+					"subaccount_id": "test",
 					"user_id": "piotr.miskiewicz@sap.com"
-					
 				},
 				"parameters": {
 					"name": "test",
-					"networking": {
-						"nodes": "192.168.48.0/20"
-					},
+					"region": "eu-central-1",
 					"modules": {
-						"default": false,
+						"useDefault": false,
 						"list": [
 							{
 								"name": "btp-operator",
@@ -1460,5 +1440,5 @@ func TestProvisioning_Modules5(t *testing.T) {
 				}
 			}`)
 
-	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }

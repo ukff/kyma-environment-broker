@@ -313,7 +313,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	if !b.kymaVerOnDemand {
-		logger.Infof("Kyma on demand functionality is disabled. Default Kyma version will be used instead %s", parameters.KymaVersion)
+		logger.Infof("Kyma on demand functionality is disabled. UseDefault Kyma version will be used instead %s", parameters.KymaVersion)
 		parameters.KymaVersion = ""
 		parameters.OverridesVersion = ""
 	}
@@ -551,7 +551,7 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 }
 
 func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	if parameters.Modules != nil && parameters.Modules.Default != nil && !*parameters.Modules.Default {
+	if parameters.Modules != nil && parameters.Modules.UseDefault != nil && !*parameters.Modules.UseDefault {
 		return fmt.Errorf(ErrMsgModulesBadConfigured)
 	}
 	return nil
