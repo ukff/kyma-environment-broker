@@ -115,7 +115,7 @@ type ModulesDefault struct {
 }
 
 type ModulesDefaultProperties struct {
-	UseDefault Type `json:"default,omitempty"`
+	Default Type `json:"default,omitempty"`
 }
 
 type ModulesCustom struct {
