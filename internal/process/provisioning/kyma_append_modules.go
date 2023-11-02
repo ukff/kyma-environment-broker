@@ -36,6 +36,9 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 
 	modules := operation.ProvisioningParameters.Parameters.Modules
 	if modules != nil {
+		// First case -> if 'default' is false, then we don't install any modules
+		// Second case -> if 'list' is given and not empty, we append passed modules to Kyma, if 'list' is given and is empty, then we don't install any modules
+		// Any other case will cause usage of default Kyma modules
 		applyList := (modules.Default != nil && !*modules.Default) || (modules.Default == nil && modules.List != nil)
 		if applyList {
 			k.logger.Info("custom modules parameters are set, the content of list will be applied.")
@@ -97,6 +100,9 @@ func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modul
 	}
 
 	if modules.List == nil || len(modules.List) == 0 {
+		if modules.List == nil {
+			modules.List = make([]*internal.ModuleDTO, 0)
+		}
 		k.logger.Info("empty list with custom modules passed to KEB, 0 modules will be applied - default config will be ignored")
 	} else {
 		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(modules.List))
