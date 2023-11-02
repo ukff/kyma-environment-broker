@@ -48,11 +48,14 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 }
 
 func (k *KymaAppendModules) handleCustomModules(operation internal.Operation, modules *internal.ModulesDTO) (internal.Operation, time.Duration, error) {
-	k.logger.Infof("custom module list provided, with length of items: %d", len(modules.List))
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		k.logger.Errorf("while decoding Kyma template from previous step: %s", err.Error())
 		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step", err, k.logger)
+	}
+	if decodeKymaTemplate == nil {
+		k.logger.Errorf("while decoding Kyma template from previous step: object is nil")
+		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step: ", fmt.Errorf("object is nil"), k.logger)
 	}
 
 	if err := k.appendModules(decodeKymaTemplate, modules); err != nil {
@@ -78,12 +81,7 @@ func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modul
 		specKey    = "spec"
 		modulesKey = "modules"
 	)
-	if kyma == nil {
-		return fmt.Errorf("kyma unstructured object not passed to append modules")
-	}
-	if modules == nil {
-		return fmt.Errorf("modules not passed to append modules")
-	}
+
 	content := kyma.Object
 	specSection, ok := content[specKey]
 	if !ok {
@@ -97,22 +95,17 @@ func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modul
 	if !ok {
 		return fmt.Errorf("getting modules content of kyma template")
 	}
-	var toInsert []interface{}
+
 	if modules.List == nil || len(modules.List) == 0 {
-		k.logger.Info("no modules set for kyma during provisioning")
-		toInsert = make([]interface{}, 0)
+		k.logger.Info("empty list with custom modules passed to KEB, 0 modules will be applied - default config will be ignored")
 	} else {
-		k.logger.Info("modules are set for kyma during provisioning")
-		toInsert = make([]interface{}, len(modules.List))
-		for i := range modules.List {
-			toInsert[i] = modules.List[i]
-		}
+		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(modules.List))
 	}
 
 	modulesSection = modules.List
 	spec[modulesKey] = modulesSection
 	kyma.Object[specKey] = specSection
 
-	k.logger.Info("modules attached to kyma successfully")
+	k.logger.Info("custom modules attached to Kyma successfully")
 	return nil
 }
