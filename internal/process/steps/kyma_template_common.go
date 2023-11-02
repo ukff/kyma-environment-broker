@@ -12,8 +12,8 @@ import (
 	k8syamlutil "k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
-	tmpl := []byte(template)
+func DecodeKymaTemplate(kymaTemplate string) (*unstructured.Unstructured, error) {
+	tmpl := []byte(kymaTemplate)
 
 	decoder := k8syamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
 	var rawObj runtime.RawExtension
@@ -30,8 +30,8 @@ func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
 	return unstructuredObj, err
 }
 
-func EncodeKymaTemplate(tmpl *unstructured.Unstructured) (string, error) {
-	result, err := yaml.Marshal(tmpl.Object)
+func EncodeKymaTemplate(kymaTemplate *unstructured.Unstructured) (string, error) {
+	result, err := yaml.Marshal(kymaTemplate.Object)
 	if err != nil {
 		return "", fmt.Errorf("while marshal unstructured to yaml: %v", err)
 	}

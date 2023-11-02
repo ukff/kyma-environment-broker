@@ -34,35 +34,38 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 		return operation, 0, nil
 	}
 
-	switch modules := operation.ProvisioningParameters.Parameters.Modules; {
-	case modules != nil && ((modules.Default != nil && !*modules.Default) || (modules.Default == nil && modules.List != nil)):
-		k.logger.Info("modules parameters are set, default option is set to false, custom modules will be appended")
-		return k.handleCustomModules(operation, modules)
-	default:
-		k.logger.Info("default Kyma modules will be applied")
-		k.logger.Infof("Template: %v", operation.KymaTemplate)
-		return operation, 0, nil
+	modules := operation.ProvisioningParameters.Parameters.Modules
+	if modules != nil {
+		applyList := (modules.Default != nil && !*modules.Default) || (modules.Default == nil && modules.List != nil)
+		if applyList {
+			k.logger.Info("custom modules parameters are set, the content of list will be applied.")
+			return k.handleCustomModules(operation, modules)
+		}
 	}
+
+	k.logger.Info("default Kyma modules will be applied")
+	return operation, 0, nil
 }
 
 func (k *KymaAppendModules) handleCustomModules(operation internal.Operation, modules *internal.ModulesDTO) (internal.Operation, time.Duration, error) {
-	k.logger.Infof("provisioning kyma: custom module list provided, with number of items: %d", len(modules.List))
+	k.logger.Infof("custom module list provided, with length of items: %d", len(modules.List))
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
-		errMsg := "while decoding kyma template from previous step"
-		return k.operationManager.OperationFailed(operation, errMsg, fmt.Errorf("%s", errMsg), k.logger)
+		k.logger.Errorf("while decoding Kyma template from previous step: %s", err.Error())
+		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step", err, k.logger)
 	}
 
 	if err := k.appendModules(decodeKymaTemplate, modules); err != nil {
-		k.logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
-		return k.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, k.logger)
+		k.logger.Errorf("unable to append modules to Kyma template: %s", err.Error())
+		return k.operationManager.OperationFailed(operation, "unable to append modules to Kyma template:", err, k.logger)
 	}
 	updatedKymaTemplate, err := steps.EncodeKymaTemplate(decodeKymaTemplate)
 	if err != nil {
-		k.logger.Errorf("Unable to create yaml kyma template within added modules: %s", err.Error())
-		return k.operationManager.OperationFailed(operation, "unable to create yaml kyma template within added modules", err, k.logger)
+		k.logger.Errorf("unable to create yaml Kyma template with custom modules: %s", err.Error())
+		return k.operationManager.OperationFailed(operation, "unable to create yaml Kyma template within added modules", err, k.logger)
 	}
-	k.logger.Info("encoded kyma template with modules attached with success")
+
+	k.logger.Info("encoded Kyma template with custom modules with success")
 	return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
 		op.KymaTemplate = updatedKymaTemplate

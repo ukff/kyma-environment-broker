@@ -28,7 +28,7 @@ import (
 const (
 	workersAmount int = 5
 	kymaTemplate      = "kymatemplate"
-	modulesPath       = "modules"
+	testDataPath      = "testdata"
 )
 
 func TestProvisioning_HappyPath(t *testing.T) {
@@ -123,7 +123,7 @@ func TestProvisioning_Preview(t *testing.T) {
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	// t.Skip()
+	t.Skip()
 	var (
 		catalogTestFile     = "catalog-test.json"
 		catalogTestFilePerm = os.FileMode.Perm(0666)
@@ -1297,7 +1297,7 @@ func TestProvisioning_ModulesWithGivenCustomModules(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-1.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-1.yaml")), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
@@ -1331,10 +1331,10 @@ func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
 }
 
-func TestProvisioning_ModulesWithGivenOnlyDefaultAsFalseValidationFail(t *testing.T) {
+func TestProvisioning_ModulesWithGivenDefaultAsFalse(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1366,7 +1366,7 @@ func TestProvisioning_ModulesWithGivenOnlyDefaultAsFalseValidationFail(t *testin
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
@@ -1401,7 +1401,7 @@ func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-2.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-2.yaml")), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {

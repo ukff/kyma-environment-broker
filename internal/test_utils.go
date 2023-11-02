@@ -20,7 +20,7 @@ func NewSchemeForTests() *runtime.Scheme {
 	return sch
 }
 
-func GetFile(t *testing.T, path string) string {
+func GetFileWithTest(t *testing.T, path string) string {
 	file, err := os.ReadFile(path)
 	assert.NoError(t, err)
 	return string(file)
