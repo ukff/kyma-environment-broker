@@ -35,7 +35,7 @@ func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.Fiel
 	}
 
 	switch modules := operation.ProvisioningParameters.Parameters.Modules; {
-	case modules != nil && modules.UseDefault == nil && modules.List != nil:
+	case modules != nil && ((modules.Default != nil && !*modules.Default) || (modules.Default == nil && modules.List != nil)):
 		k.logger.Info("modules parameters are set, default option is set to false, custom modules will be appended")
 		return k.handleCustomModules(operation, modules)
 	default:

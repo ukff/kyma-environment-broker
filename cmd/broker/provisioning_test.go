@@ -127,8 +127,8 @@ func TestCatalog(t *testing.T) {
 	var (
 		catalogTestFile     = "catalog-test.json"
 		catalogTestFilePerm = os.FileMode.Perm(0666)
-		outputToFile        = false
-		prettyJson          = false
+		outputToFile        = true
+		prettyJson          = true
 		prettify            = func(content []byte) *bytes.Buffer {
 			var prettyJSON bytes.Buffer
 			err := json.Indent(&prettyJSON, content, "", "    ")
@@ -1354,14 +1354,19 @@ func TestProvisioning_ModulesWithGivenOnlyDefaultAsFalseValidationFail(t *testin
 					"name": "test",
 					"region": "eu-central-1",
 					"modules": {
-						"useDefault": false
+						"default": false
 					}
 				}
 			}`)
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	errResponse := suite.DecodeErrorResponse(resp)
-	fmt.Println(errResponse.Description)
-	assert.Contains(t, errResponse.Description, broker.ErrMsgModulesBadConfigured)
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processProvisioningAndReconcilingByOperationID(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	assert.NoError(t, err)
+	assert.YAMLEq(t, internal.GetFile(t, fmt.Sprintf("%s/%s/%s", "testdata", kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
@@ -1384,7 +1389,7 @@ func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
 					"name": "test",
 					"region": "eu-central-1",
 					"modules": {
-						"useDefault": true
+						"default": true
 					}
 				}
 			}`)
@@ -1419,7 +1424,7 @@ func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {
 					"name": "test",
 					"region": "eu-central-1",
 					"modules": {
-						"useDefault": false,
+						"default": false,
 						"list": [
 							{
 								"name": "btp-operator",

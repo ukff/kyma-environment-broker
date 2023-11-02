@@ -115,7 +115,7 @@ type ModulesDefault struct {
 }
 
 type ModulesDefaultProperties struct {
-	UseDefault Type `json:"useDefault,omitempty"`
+	UseDefault Type `json:"default,omitempty"`
 }
 
 type ModulesCustom struct {
@@ -149,19 +149,19 @@ func NewModulesSchema() *Modules {
 			Type:        "object",
 			Description: "Use default modules or provide your custom list of modules.",
 		},
-		ControlsOrder: []string{"useDefault", "list"},
+		ControlsOrder: []string{"default", "list"},
 		OneOf: []any{
 			ModulesDefault{
 				Type: Type{
 					Type:                 "object",
 					Title:                "Default",
-					Description:          "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.\n",
+					Description:          "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
 					AdditionalProperties: false,
 				},
 				Properties: ModulesDefaultProperties{
 					Type{
 						Type:        "boolean",
-						Description: "Select a modules technical key from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical key once.",
+						Description: "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
 						Default:     true,
 						ReadOnly:    true,
 					},
@@ -171,7 +171,7 @@ func NewModulesSchema() *Modules {
 				Type: Type{
 					Type:                 "object",
 					Title:                "Custom",
-					Description:          "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.\n",
+					Description:          "Define custom module list",
 					AdditionalProperties: false,
 				},
 				Properties: ModulesCustomProperties{
@@ -179,7 +179,7 @@ func NewModulesSchema() *Modules {
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Select a modules technical key from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical key once.",
+							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
 						},
 						Items: ModulesCustomListItems{
 							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
@@ -188,15 +188,15 @@ func NewModulesSchema() *Modules {
 									Type:        "string",
 									Title:       "name",
 									MinLength:   1,
-									Description: "Select a modules technical key from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical key once.",
+									Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
 								},
 								Channel: Type{
 									Type:        "string",
 									Default:     "regular",
-									Description: "Select your preferred release channel.\n",
+									Description: "Select your preferred release channel.",
 									Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
 									EnumDisplayName: map[string]string{
-										"regular": "Regular - default version\n",
+										"regular": "Regular - default version",
 										"fast":    "Fast - latest version",
 									},
 								},

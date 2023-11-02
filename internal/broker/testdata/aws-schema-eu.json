@@ -41,18 +41,18 @@
     },
     "modules": {
       "_controlsOrder": [
-        "useDefault",
+        "default",
         "list"
       ],
       "description": "Use default modules or provide your custom list of modules.",
       "oneOf": [
         {
           "additionalProperties": false,
-          "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.\n",
+          "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
           "properties": {
-            "useDefault": {
+            "default": {
               "default": true,
-              "description": "Select a modules technical key from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical key once.",
+              "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
               "readOnly": true,
               "type": "boolean"
             }
@@ -62,10 +62,10 @@
         },
         {
           "additionalProperties": false,
-          "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.\n",
+          "description": "Define custom module list",
           "properties": {
             "list": {
-              "description": "Select a modules technical key from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical key once.",
+              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
               "items": {
                 "_controlsOrder": [
                   "name",
@@ -76,10 +76,10 @@
                   "channel": {
                     "_enumDisplayName": {
                       "fast": "Fast - latest version",
-                      "regular": "Regular - default version\n"
+                      "regular": "Regular - default version"
                     },
                     "default": "regular",
-                    "description": "Select your preferred release channel.\n",
+                    "description": "Select your preferred release channel.",
                     "enum": [
                       "regular",
                       "fast"
@@ -100,7 +100,7 @@
                     "type": "string"
                   },
                   "name": {
-                    "description": "Select a modules technical key from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical key once.",
+                    "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
                     "minLength": 1,
                     "title": "name",
                     "type": "string"

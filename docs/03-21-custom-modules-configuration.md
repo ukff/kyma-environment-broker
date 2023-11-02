@@ -6,6 +6,7 @@ Configuration is available by setting "modules" object in JSON schema.
 There are two available fields:
 - default (bool)
 - list (array)
+
 API for modules configuration is build on "oneOf" feature from JSON schema. It means if "modules" is passed to API - it must have one and only one valid option, thus to pass JSON API Validator you must set only one field. See examples below.
 
 Correct API calls:
@@ -28,7 +29,16 @@ modules: {
 - custom modules configuration - install only btp-operator module
 ```
 modules: {
-    list: [btp-opertor]
+    "list": [
+            {
+                "name": "btp-operator",
+                "customResourcePolicy": "CreateAndDelete"
+            },
+            {
+                "name": "keda",
+                "channel": "fast",
+            }
+    ]
 }
 ```
 
@@ -45,6 +55,15 @@ modules: {
 ```
 modules: {
     default: false,
-    list: [btp-opertor]
+        "list": [
+        {
+        "name": "btp-operator",
+        "customResourcePolicy": "CreateAndDelete"
+        },
+        {
+        "name": "keda",
+        "channel": "fast",
+        }
+        ]
 }
 ```

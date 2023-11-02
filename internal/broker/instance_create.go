@@ -46,10 +46,6 @@ type (
 	}
 )
 
-const (
-	ErrMsgModulesBadConfigured = "in `module` configuration section, using only `default` mode as false in not supported. If you want to provide custom modules please use only `list` field"
-)
-
 type ProvisionEndpoint struct {
 	config            Config
 	operationsStorage storage.Operations
@@ -269,10 +265,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	if !b.config.AllowModulesParameters {
 		parameters.Modules = nil
-	} else {
-		if err := b.validateModules(parameters); err != nil {
-			return ersContext, parameters, err
-		}
 	}
 
 	var autoscalerMin, autoscalerMax int
@@ -546,12 +538,5 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 		return fmt.Errorf("%s overlaps %s", n1.String(), n2.String())
 	}
 
-	return nil
-}
-
-func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	if parameters.Modules != nil && parameters.Modules.UseDefault != nil && !*parameters.Modules.UseDefault {
-		return fmt.Errorf(ErrMsgModulesBadConfigured)
-	}
 	return nil
 }
