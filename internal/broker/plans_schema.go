@@ -155,7 +155,7 @@ func NewModulesSchema() *Modules {
 				Type: Type{
 					Type:                 "object",
 					Title:                "Default",
-					Description:          "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
+					Description:          "Default modules",
 					AdditionalProperties: false,
 				},
 				Properties: ModulesDefaultProperties{
