@@ -8,7 +8,7 @@ There are two available fields, full JSON Schema can be found on bottom of docum
 
 API for modules configuration is build on "oneOf" feature from JSON schema. It means if "modules" is passed to API - it must have one and only one valid option, thus to pass JSON API Validator you must set only one field. See examples below.
 
-Correct API calls:
+# Correct API calls:
 
 - default mode, if set to true, then modules will be selected by Kyma, also same happens when "modules" section is not set at all (mapped to nil) in payload
 
@@ -49,7 +49,7 @@ modules: {
 }
 ```
 
-Incorrect API calls:
+# Incorrect API calls:
 
 Any call with "modules" section not set will fail, it is due usage of "oneOf" feature in JSON Schema.
 
@@ -61,17 +61,17 @@ Any call with "modules" section and filled with both params will fail, it is due
 
 ```
 modules: {
-        default: false,
-        "list": [
-                {
-                    "name": "btp-operator",
-                    "customResourcePolicy": "CreateAndDelete"
-                },
-                {
-                    "name": "keda",
-                    "channel": "fast",
-                }
-        ]
+    default: false,
+    "list": [
+        {
+            "name": "btp-operator",
+            "customResourcePolicy": "CreateAndDelete"
+        },
+        {
+            "name": "keda",
+            "channel": "fast",
+        }
+    ]
 }
 ```
 
