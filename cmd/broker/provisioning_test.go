@@ -1271,15 +1271,15 @@ func TestProvisioning_ModulesWithGivenCustomModules(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
 				"context": {
-					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-					"subaccount_id": "test",
-					"user_id": "piotr.miskiewicz@sap.com"
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
 				},
 				"parameters": {
 					"name": "test",
-					"region": "eu-central-1",
+					"region": "eastus",
 					"modules": {
 						"list": [
 							{
@@ -1312,9 +1312,9 @@ func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				"context": {
-					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-					"subaccount_id": "test",
-					"user_id": "piotr.miskiewicz@sap.com"
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
 				},
 				"parameters": {
 					"name": "test",
@@ -1346,9 +1346,9 @@ func TestProvisioning_ModulesWithGivenDefaultAsFalse(t *testing.T) {
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				"context": {
-					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-					"subaccount_id": "test",
-					"user_id": "piotr.miskiewicz@sap.com"
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
 				},
 				"parameters": {
 					"name": "test",
@@ -1379,15 +1379,14 @@ func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
 				"context": {
-					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-					"subaccount_id": "test",
-					"user_id": "piotr.miskiewicz@sap.com"
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
 				},
 				"parameters": {
 					"name": "test",
-					"region": "eu-central-1",
 					"modules": {
 						"default": true
 					}
@@ -1416,9 +1415,9 @@ func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				"context": {
-					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
-					"subaccount_id": "test",
-					"user_id": "piotr.miskiewicz@sap.com"
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
 				},
 				"parameters": {
 					"name": "test",
