@@ -133,6 +133,7 @@ type ModulesCustomList struct {
 }
 
 type ModulesCustomListItems struct {
+	Type
 	ControlsOrder []string                         `json:"_controlsOrder,omitempty"`
 	Properties    ModulesCustomListItemsProperties `json:"properties,omitempty"`
 }
@@ -161,6 +162,7 @@ func NewModulesSchema() *Modules {
 				Properties: ModulesDefaultProperties{
 					Type{
 						Type:        "boolean",
+						Title:       "Use Default",
 						Description: "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
 						Default:     true,
 						ReadOnly:    true,
@@ -183,10 +185,13 @@ func NewModulesSchema() *Modules {
 						},
 						Items: ModulesCustomListItems{
 							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
+							Type: Type{
+								Type: "object",
+							},
 							Properties: ModulesCustomListItemsProperties{
 								Name: Type{
 									Type:        "string",
-									Title:       "name",
+									Title:       "Name",
 									MinLength:   1,
 									Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
 								},

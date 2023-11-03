@@ -56,6 +56,7 @@
               "default": true,
               "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
               "readOnly": true,
+              "title": "Use Default",
               "type": "boolean"
             }
           },
@@ -104,10 +105,11 @@
                   "name": {
                     "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
                     "minLength": 1,
-                    "title": "name",
+                    "title": "Name",
                     "type": "string"
                   }
-                }
+                },
+                "type": "object"
               },
               "type": "array",
               "uniqueItems": true

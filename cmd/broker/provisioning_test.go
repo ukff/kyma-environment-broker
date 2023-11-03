@@ -31,6 +31,48 @@ const (
 	testDataPath      = "testdata"
 )
 
+func TestCatalog(t *testing.T) {
+	// this test is used for human-testing the catalog response
+	//  t.Skip()
+	catalogTestFile := "catalog-test.json"
+	catalogTestFilePerm := os.FileMode.Perm(0666)
+	outputToFile := true
+	prettyJson := true
+	prettify := func(content []byte) *bytes.Buffer {
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, content, "", "    ")
+		assert.NoError(t, err)
+		return &prettyJSON
+	}
+
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+
+	// when
+	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/catalog"), ``)
+
+	content, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	if outputToFile {
+		if prettyJson {
+			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), catalogTestFilePerm)
+			assert.NoError(t, err)
+		} else {
+			err = os.WriteFile(catalogTestFile, content, catalogTestFilePerm)
+			assert.NoError(t, err)
+		}
+	} else {
+		if prettyJson {
+			fmt.Println(prettify(content).String())
+		} else {
+			fmt.Println(string(content))
+		}
+	}
+}
+
 func TestProvisioning_HappyPath(t *testing.T) {
 	// given
 	suite := NewProvisioningSuite(t, false, "")
@@ -119,49 +161,6 @@ func TestProvisioning_Preview(t *testing.T) {
 	})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
-}
-
-func TestCatalog(t *testing.T) {
-	// this test is used for human-testing the catalog response
-	t.Skip()
-	var (
-		catalogTestFile     = "catalog-test.json"
-		catalogTestFilePerm = os.FileMode.Perm(0666)
-		outputToFile        = true
-		prettyJson          = true
-		prettify            = func(content []byte) *bytes.Buffer {
-			var prettyJSON bytes.Buffer
-			err := json.Indent(&prettyJSON, content, "", "    ")
-			assert.NoError(t, err)
-			return &prettyJSON
-		}
-	)
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-
-	// when
-	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/catalog"), ``)
-
-	content, err := io.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	defer resp.Body.Close()
-
-	if outputToFile {
-		if prettyJson {
-			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), catalogTestFilePerm)
-			assert.NoError(t, err)
-		} else {
-			err = os.WriteFile(catalogTestFile, content, catalogTestFilePerm)
-			assert.NoError(t, err)
-		}
-	} else {
-		if prettyJson {
-			fmt.Println(prettify(content).String())
-		} else {
-			fmt.Println(string(content))
-		}
-	}
 }
 
 func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
@@ -1297,7 +1296,7 @@ func TestProvisioning_ModulesWithGivenCustomModules(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-1.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, getExpected(t, "kyma-with-keda.yaml"), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
@@ -1331,7 +1330,7 @@ func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, getExpected(t, "kyma-no-modules.yaml"), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesWithGivenDefaultAsFalse(t *testing.T) {
@@ -1366,7 +1365,7 @@ func TestProvisioning_ModulesWithGivenDefaultAsFalse(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-0.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, getExpected(t, "kyma-no-modules.yaml"), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
@@ -1400,7 +1399,7 @@ func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	assert.NoError(t, err)
-	assert.YAMLEq(t, internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, "kyma-expected-output-2.yaml")), op.KymaTemplate)
+	assert.YAMLEq(t, getExpected(t, "kyma-with-keda-and-btp-manager.yaml"), op.KymaTemplate)
 }
 
 func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {
@@ -1441,4 +1440,35 @@ func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {
 			}`)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestProvisioning_ModulesOneOfValidationFailWhenEmpty(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+						"name": "test",
+						"region": "eu-central-1",
+						"modules": {}
+					}
+				}
+			}`)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func getExpected(t *testing.T, name string) string {
+	return internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, name))
 }

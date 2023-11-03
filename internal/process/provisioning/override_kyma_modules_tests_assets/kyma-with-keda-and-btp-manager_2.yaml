@@ -9,8 +9,8 @@ spec:
   channel: stable
   modules:
     - name: btp-operator
-      customResourcePolicy: CreateAndDelete
       channel: fast
+      customResourcePolicy: CreateAndDelete
     - name: keda
-      customResourcePolicy: Ignore
       channel: regular
+      customResourcePolicy: Ignore

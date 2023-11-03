@@ -59,7 +59,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewKymaAppendModules(db.Operations()),
+			step:  provisioning.NewOverrideKymaModules(db.Operations()),
 		},
 		{
 			stage:     createRuntimeStageName,

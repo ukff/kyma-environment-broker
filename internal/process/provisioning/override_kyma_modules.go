@@ -12,45 +12,51 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type KymaAppendModules struct {
+type OverrideKymaModules struct {
 	operationManager *process.OperationManager
 	logger           logrus.FieldLogger
 }
 
-var _ process.Step = &KymaAppendModules{}
+var _ process.Step = &OverrideKymaModules{}
 
-func (k *KymaAppendModules) Name() string {
-	return "Kyma_Append_Modules"
+func (k *OverrideKymaModules) Name() string {
+	return "Override_Kyma_Modules"
 }
 
-func NewKymaAppendModules(os storage.Operations) *KymaAppendModules {
-	return &KymaAppendModules{operationManager: process.NewOperationManager(os)}
+func NewOverrideKymaModules(os storage.Operations) *OverrideKymaModules {
+	return &OverrideKymaModules{operationManager: process.NewOperationManager(os)}
 }
 
-func (k *KymaAppendModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+// Cases:
+// 1 case -> if 'default' is false, then we don't install anything, no modules
+// 2 case -> if 'list' is given and not empty, we override passed modules
+// 3 case -> if 'list' is given and is empty, then we don't install anything, no modules
+// default behaviour is when default = true, then default modules will be installed, also it applies to all other scenarios than mentioned in 1,2,3 point.
+
+func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	k.logger = logger
 	if operation.Type != internal.OperationTypeProvision {
 		k.logger.Infof("%s is supposed to run only for Provisioning, skipping logic.", k.Name())
 		return operation, 0, nil
 	}
 
-	modules := operation.ProvisioningParameters.Parameters.Modules
-	if modules != nil {
-		// First case -> if 'default' is false, then we don't install any modules
-		// Second case -> if 'list' is given and not empty, we append passed modules to Kyma, if 'list' is given and is empty, then we don't install any modules
-		// Any other case will cause usage of default Kyma modules
-		applyList := (modules.Default != nil && !*modules.Default) || (modules.Default == nil && modules.List != nil)
-		if applyList {
-			k.logger.Info("custom modules parameters are set, the content of list will be applied.")
-			return k.handleCustomModules(operation, modules)
+	modulesParams := operation.ProvisioningParameters.Parameters.Modules
+	if modulesParams != nil {
+		defaultModulesSetToFalse := modulesParams.Default != nil && !*modulesParams.Default  // 1 case
+		customModulesListPassed := modulesParams.Default == nil && modulesParams.List != nil // 2 & 3 case
+		overrideModules := defaultModulesSetToFalse || customModulesListPassed
+		if overrideModules {
+			k.logger.Info("custom modules parameters are set, the content of list will replace current modules section. Default settings will be overrided.")
+			return k.handleModulesOverride(operation, *modulesParams)
 		}
 	}
 
-	k.logger.Info("default Kyma modules will be applied")
+	// default behaviour
+	k.logger.Infof("Kyma will be created with default modules. %s didnt perform any action. %s", k.Name())
 	return operation, 0, nil
 }
 
-func (k *KymaAppendModules) handleCustomModules(operation internal.Operation, modules *internal.ModulesDTO) (internal.Operation, time.Duration, error) {
+func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation, modulesParams internal.ModulesDTO) (internal.Operation, time.Duration, error) {
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		k.logger.Errorf("while decoding Kyma template from previous step: %s", err.Error())
@@ -61,7 +67,7 @@ func (k *KymaAppendModules) handleCustomModules(operation internal.Operation, mo
 		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step: ", fmt.Errorf("object is nil"), k.logger)
 	}
 
-	if err := k.appendModules(decodeKymaTemplate, modules); err != nil {
+	if err := k.replaceModulesSpec(decodeKymaTemplate, modulesParams); err != nil {
 		k.logger.Errorf("unable to append modules to Kyma template: %s", err.Error())
 		return k.operationManager.OperationFailed(operation, "unable to append modules to Kyma template:", err, k.logger)
 	}
@@ -79,13 +85,13 @@ func (k *KymaAppendModules) handleCustomModules(operation internal.Operation, mo
 }
 
 // To consider using -> unstructured.SetNestedSlice()
-func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modules *internal.ModulesDTO) error {
+func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, modulesParams internal.ModulesDTO) error {
 	const (
 		specKey    = "spec"
 		modulesKey = "modules"
 	)
 
-	content := kyma.Object
+	content := kymaTemplate.Object
 	specSection, ok := content[specKey]
 	if !ok {
 		return fmt.Errorf("getting spec content of kyma template")
@@ -99,19 +105,19 @@ func (k *KymaAppendModules) appendModules(kyma *unstructured.Unstructured, modul
 		return fmt.Errorf("getting modules content of kyma template")
 	}
 
-	if modules.List == nil || len(modules.List) == 0 {
-		if modules.List == nil {
-			modules.List = make([]*internal.ModuleDTO, 0)
+	if modulesParams.List == nil || len(modulesParams.List) == 0 {
+		if modulesParams.List == nil {
+			modulesParams.List = make([]*internal.ModuleDTO, 0)
 		}
-		k.logger.Info("empty list with custom modules passed to KEB, 0 modules will be applied - default config will be ignored")
+		k.logger.Info("empty list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 	} else {
-		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(modules.List))
+		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(modulesParams.List))
 	}
 
-	modulesSection = modules.List
+	modulesSection = modulesParams.List
 	spec[modulesKey] = modulesSection
-	kyma.Object[specKey] = specSection
+	kymaTemplate.Object[specKey] = specSection
 
-	k.logger.Info("custom modules attached to Kyma successfully")
+	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
