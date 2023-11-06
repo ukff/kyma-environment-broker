@@ -1,10 +1,10 @@
 # Modules
 
 By default, Kyma Environment Broker applies the Kyma CR, including the default modules selected by Kyma, to a cluster.
-Configuration is available by setting "modules" object in JSON schema.
+Modules configuration is available by setting "modules" object in JSON schema.
 There are two available fields, full JSON Schema can be found on bottom of document.
-- default (bool)
-- list (array)
+- default (bool) - Defines if use default module settings
+- list (array) - Defines a custom list of modules
 
 API for module configuration is built on the "oneOf" feature from the JSON schema. If the "modules" object is passed to API, it must have only one valid option. Thus, to pass JSON API Validator, you must set only one field. See examples below.
 
