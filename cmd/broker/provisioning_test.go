@@ -31,11 +31,11 @@ const (
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	t.Skip()
+	// t.Skip()
 	catalogTestFile := "catalog-test.json"
 	catalogTestFilePerm := os.FileMode.Perm(0666)
-	outputToFile := false
-	prettyJson := false
+	outputToFile := true
+	prettyJson := true
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")
@@ -1262,7 +1262,7 @@ func TestProvisioning_Modules(t *testing.T) {
 
 	const defaultModules = "kyma-with-keda-and-btp-operator.yaml"
 
-	t.Run("with given custom list of modules (btp-operator, keda)", func(t *testing.T) {
+	t.Run("with given custom list of modules [btp-operator, ked]", func(t *testing.T) {
 		// given
 		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()

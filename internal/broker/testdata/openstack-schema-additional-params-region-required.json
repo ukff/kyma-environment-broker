@@ -68,7 +68,7 @@
           "description": "Define custom module list",
           "properties": {
             "list": {
-              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
+              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
               "items": {
                 "_controlsOrder": [
                   "name",
@@ -103,7 +103,7 @@
                     "type": "string"
                   },
                   "name": {
-                    "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
+                    "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
                     "minLength": 1,
                     "title": "Name",
                     "type": "string"

@@ -181,7 +181,7 @@ func NewModulesSchema() *Modules {
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
+							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
 						},
 						Items: ModulesCustomListItems{
 							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
@@ -193,7 +193,7 @@ func NewModulesSchema() *Modules {
 									Type:        "string",
 									Title:       "Name",
 									MinLength:   1,
-									Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a modules technical name once.",
+									Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
 								},
 								Channel: Type{
 									Type:        "string",

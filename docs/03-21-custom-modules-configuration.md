@@ -1,16 +1,16 @@
-# Module configuration
+# Modules
 
-By default, KEB will apply to cluster the Kyma CR with default modules selected by Kyma.
+By default, Kyma Environment Broker applies the Kyma CR, including the default modules selected by Kyma, to a cluster.
 Configuration is available by setting "modules" object in JSON schema.
 There are two available fields, full JSON Schema can be found on bottom of document.
 - default (bool)
 - list (array)
 
-API for modules configuration is build on "oneOf" feature from JSON schema. It means if "modules" is passed to API - it must have one and only one valid option, thus to pass JSON API Validator you must set only one field. See examples below.
+API for module configuration is built on the "oneOf" feature from the JSON schema. If the "modules" object is passed to API, it must have only one valid option. Thus, to pass JSON API Validator, you must set only one field. See examples below.
 
-# Correct API calls:
+Correct API calls:
 
-- default mode, if set to true, then modules will be selected by Kyma, also same happens when "modules" section is not set at all (mapped to nil) in payload
+- In the default mode, the "modules" object is set to `default: true` and modules are pre-selected by Kyma. The same happens when the "modules" section is not set at all (mapped to nil) in the payload.
 
 ```
 modules: {
@@ -18,7 +18,7 @@ modules: {
 }
 ```
 
-- if you want to use your custom modules configuration, you need pass 'list' with modules which you want install
+- If you want to use your custom modules configuration, you must pass "list" with the modules you want installed.
 
 ```
 "modules": {
@@ -35,7 +35,7 @@ modules: {
 }
 ```
 
-- these calls will cause installation Kyma without any modules
+- The following calls result in Kyma runtime installation without any modules.
 
 ```
 "modules": {
@@ -49,15 +49,15 @@ modules: {
 }
 ```
 
-# Incorrect API calls:
+Incorrect API calls:
 
-Any call with "modules" section not set will fail, it is due usage of "oneOf" feature in JSON Schema.
+A call with the "modules" section not set fails due to using the "oneOf" feature in the JSON Schema.
 
 ```
 modules: {}
 ```
 
-Any call with "modules" section and filled with both params will fail, it is due usage of "oneOf" feature in JSON Schema.
+A call with the "modules" section with both parameters filled in fails due to using the "oneOf" feature in the JSON Schema.
 
 ```
 modules: {
@@ -75,7 +75,7 @@ modules: {
 }
 ```
 
-# JSON Schema
+JSON Schema
 
 ```
 "modules": {
