@@ -1259,7 +1259,9 @@ func TestProvisioning_PRVersionWithoutOverrides(t *testing.T) {
 }
 
 func TestProvisioning_Modules(t *testing.T) {
+
 	const defaultModules = "kyma-with-keda-and-btp-operator.yaml"
+
 	t.Run("with given custom list of modules (btp-manager, keda)", func(t *testing.T) {
 		// given
 		suite := NewBrokerSuiteTest(t)
@@ -1300,7 +1302,7 @@ func TestProvisioning_Modules(t *testing.T) {
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)
 		assert.NoError(t, err)
-		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, defaultModules), op.KymaTemplate)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, "kyma-with-keda-and-btp-operator.yaml"), op.KymaTemplate)
 	})
 
 	t.Run("with given empty list of modules", func(t *testing.T) {
