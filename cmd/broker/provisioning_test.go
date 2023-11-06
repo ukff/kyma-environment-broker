@@ -1262,7 +1262,7 @@ func TestProvisioning_Modules(t *testing.T) {
 
 	const defaultModules = "kyma-with-keda-and-btp-operator.yaml"
 
-	t.Run("with given custom list of modules (btp-manager, keda)", func(t *testing.T) {
+	t.Run("with given custom list of modules (btp-operator, keda)", func(t *testing.T) {
 		// given
 		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
