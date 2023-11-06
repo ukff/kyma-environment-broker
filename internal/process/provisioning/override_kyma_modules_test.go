@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -17,17 +16,17 @@ import (
 const (
 	technicalNameBtpManager         = "btp-operator"
 	technicalNameKeda               = "keda"
-	givenKymaTemplateWithModules    = "given_kyma_with_modules.yaml"
-	givenKymaTemplateWithoutModules = "given_kyma_without_modules.yaml"
+	givenKymaTemplateWithModules    = "kyma-with-keda-and-btp-operator.yaml"
+	defaultModules                  = givenKymaTemplateWithModules
+	givenKymaTemplateWithoutModules = "kyma-no-modules.yaml"
 	kymaExpectedNamespace           = "kyma-system"
-	overrideKymaModulesPath         = "override_kyma_modules_tests_assets"
 )
 
 func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string) {
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation(uuid.NewString(), uuid.NewString(), internal.OperationTypeProvision)
-	operation.KymaTemplate = internal.GetFileWithTest(t, fmt.Sprintf("%s/%s", overrideKymaModulesPath, in))
-	expectedKymaTemplate := internal.GetFileWithTest(t, fmt.Sprintf("%s/%s", overrideKymaModulesPath, out))
+	operation.KymaTemplate = internal.GetKymaTemplateForTests(t, in)
+	expectedKymaTemplate := internal.GetKymaTemplateForTests(t, out)
 	operation.ProvisioningParameters.Parameters.Modules = parameters
 	err := db.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -41,149 +40,64 @@ func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string) {
 	require.NoError(t, err)
 }
 
-// when given kyma template without any default modules set
+func TestOverrideKymaModules(t *testing.T) {
+	t.Run("default modules are installed when default is true", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.Default = ptr.Bool(true)
+		execTest(t, modules, givenKymaTemplateWithModules, defaultModules)
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
+	})
 
-func TestKymaAppendModulesWithEmptyDefaultOnes1_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.List = make([]*internal.ModuleDTO, 0)
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	m2 := internal.ModuleDTO{
-		Name:    technicalNameKeda,
-		Channel: internal.Regular,
-	}
-	modules.List = append(modules.List, &m1, &m2)
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-keda-and-btp-manager_1.yaml")
-}
+	t.Run("no modules are installed when default is false", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.Default = ptr.Bool(false)
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-no-modules.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
+	})
 
-func TestKymaAppendModulesWithEmptyDefaultOnes2_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.List = make([]*internal.ModuleDTO, 0)
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	modules.List = append(modules.List, &m1)
+	t.Run("custom list of modules are installed when given custom list not empty", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.List = make([]*internal.ModuleDTO, 0)
+		m1 := internal.ModuleDTO{
+			Name:                 technicalNameBtpManager,
+			CustomResourcePolicy: internal.CreateAndDelete,
+		}
+		m2 := internal.ModuleDTO{
+			Name:    technicalNameKeda,
+			Channel: internal.Fast,
+		}
+		modules.List = append(modules.List, &m1, &m2)
+		execTest(t, modules, givenKymaTemplateWithModules, defaultModules)
+		execTest(t, modules, givenKymaTemplateWithoutModules, defaultModules)
+	})
 
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-btp-manager-2.yaml")
-}
+	t.Run("custom list of modules are installed when given custom list not empty", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.List = make([]*internal.ModuleDTO, 0)
+		m1 := internal.ModuleDTO{
+			Name:                 technicalNameBtpManager,
+			Channel:              internal.Fast,
+			CustomResourcePolicy: internal.CreateAndDelete,
+		}
+		modules.List = append(modules.List, &m1)
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-btp-manager.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-btp-manager.yaml")
+	})
 
-func TestKymaAppendModulesWithEmptyDefaultOnes3_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.Default = ptr.Bool(true)
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
-}
+	t.Run("no modules are installed when given custom list is empty", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.List = make([]*internal.ModuleDTO, 0)
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-no-modules.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
+	})
 
-func TestKymaAppendModulesWithEmptyDefaultOnes4_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.Default = ptr.Bool(true)
-	modules.List = make([]*internal.ModuleDTO, 0)
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		Channel:              internal.Fast,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	m2 := internal.ModuleDTO{
-		Name:                 technicalNameKeda,
-		Channel:              internal.Regular,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	modules.List = append(modules.List, &m1, &m2)
-	execTest(t, modules, givenKymaTemplateWithoutModules, givenKymaTemplateWithoutModules)
-}
+	t.Run("default modules are installed when modules are empty", func(t *testing.T) {
+		execTest(t, &internal.ModulesDTO{}, givenKymaTemplateWithModules, defaultModules)
+		execTest(t, &internal.ModulesDTO{}, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
+	})
 
-func TestKymaAppendModulesWithEmptyDefaultOnes5_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.List = make([]*internal.ModuleDTO, 0)
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		Channel:              internal.Fast,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	modules.List = append(modules.List, &m1)
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-btp-manager.yaml")
-}
-
-func TestKymaAppendModulesWithEmptyDefaultOnes6_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{
-		Default: nil,
-		List:    make([]*internal.ModuleDTO, 0),
-	}
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		Channel:              internal.Fast,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	modules.List = append(modules.List, &m1)
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-btp-manager.yaml")
-}
-
-func TestKymaAppendModulesWithEmptyDefaultOnes7_Run(t *testing.T) {
-	execTest(t, &internal.ModulesDTO{}, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
-}
-
-func TestKymaAppendModulesWithEmptyDefaultOnes8_Run(t *testing.T) {
-	execTest(t, nil, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
-}
-
-func TestKymaAppendModulesWithEmptyDefaultOnes9_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.List = make([]*internal.ModuleDTO, 0)
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
-}
-
-func TestKymaAppendModulesWithEmptyDefaultOnes10_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.List = nil
-	execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
-}
-
-func TestKymaAppendModulesWithEmptyDefaultOnes11_Run(t *testing.T) {
-	execTest(t, nil, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
-}
-
-// when given kyma template have default modules set
-
-func TestKymaAppendModulesWithDefaultOnesSet1_Run(t *testing.T) {
-	execTest(t, nil, givenKymaTemplateWithModules, givenKymaTemplateWithModules)
-}
-
-func TestKymaAppendModulesWithDefaultOnesSet2_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.List = make([]*internal.ModuleDTO, 0)
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		Channel:              internal.Fast,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	m2 := internal.ModuleDTO{
-		Name:                 technicalNameKeda,
-		Channel:              internal.Regular,
-		CustomResourcePolicy: internal.Ignore,
-	}
-	modules.List = append(modules.List, &m1, &m2)
-	execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-keda-and-btp-manager_2.yaml")
-}
-
-func TestKymaAppendModulesWithDefaultOnesSet3_Run(t *testing.T) {
-	modules := &internal.ModulesDTO{}
-	modules.Default = ptr.Bool(true)
-	modules.List = make([]*internal.ModuleDTO, 0)
-	m1 := internal.ModuleDTO{
-		Name:                 technicalNameBtpManager,
-		Channel:              internal.Regular,
-		CustomResourcePolicy: internal.CreateAndDelete,
-	}
-	modules.List = append(modules.List, &m1)
-	execTest(t, modules, givenKymaTemplateWithModules, givenKymaTemplateWithModules)
-}
-
-func TestKymaAppendModulesWithDefaultOnesSet4_Run(t *testing.T) {
-	execTest(t, &internal.ModulesDTO{}, givenKymaTemplateWithModules, givenKymaTemplateWithModules)
-}
-
-func TestKymaAppendModulesWithDefaultOnesSet5_Run(t *testing.T) {
-	execTest(t, nil, givenKymaTemplateWithModules, givenKymaTemplateWithModules)
+	t.Run("default modules are installed when modules are not set", func(t *testing.T) {
+		execTest(t, nil, givenKymaTemplateWithModules, defaultModules)
+		execTest(t, nil, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
+	})
 }

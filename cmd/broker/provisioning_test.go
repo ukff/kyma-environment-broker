@@ -27,8 +27,6 @@ import (
 
 const (
 	workersAmount int = 5
-	kymaTemplate      = "kymatemplate"
-	testDataPath      = "testdata"
 )
 
 func TestCatalog(t *testing.T) {
@@ -1260,215 +1258,218 @@ func TestProvisioning_PRVersionWithoutOverrides(t *testing.T) {
 	suite.WaitForProvisioningState(opID, domain.Failed)
 }
 
-func TestProvisioning_ModulesWithGivenCustomModules(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
+func TestProvisioning_Modules(t *testing.T) {
+	const defaultModules = "kyma-with-keda-and-btp-operator.yaml"
+	t.Run("with given custom list of modules (btp-manager, keda)", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
 
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-				"context": {
-						"globalaccount_id": "whitelisted-global-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-				},
-				"parameters": {
-					"name": "test",
-					"region": "eastus",
-					"modules": {
-						"list": [
-							{
-								"name": "keda",
-								"channel": "fast"
-							}
-						]
-					}
-				}
-			}`)
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processProvisioningAndReconcilingByOperationID(opID)
-
-	suite.WaitForOperationState(opID, domain.Succeeded)
-	op, err := suite.db.Operations().GetOperationByID(opID)
-	assert.NoError(t, err)
-	assert.YAMLEq(t, getExpected(t, "kyma-with-keda.yaml"), op.KymaTemplate)
-}
-
-func TestProvisioning_ModulesWithGivenNoModules(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-				"context": {
-						"globalaccount_id": "whitelisted-global-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-				},
-				"parameters": {
-					"name": "test",
-					"region": "eu-central-1",
-					"modules": {
-						"list": []
-					}
-				}
-			}`)
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processProvisioningAndReconcilingByOperationID(opID)
-
-	suite.WaitForOperationState(opID, domain.Succeeded)
-	op, err := suite.db.Operations().GetOperationByID(opID)
-	assert.NoError(t, err)
-	assert.YAMLEq(t, getExpected(t, "kyma-no-modules.yaml"), op.KymaTemplate)
-}
-
-func TestProvisioning_ModulesWithGivenDefaultAsFalse(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-				"context": {
-						"globalaccount_id": "whitelisted-global-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-				},
-				"parameters": {
-					"name": "test",
-					"region": "eu-central-1",
-					"modules": {
-						"default": false
-					}
-				}
-			}`)
-
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processProvisioningAndReconcilingByOperationID(opID)
-
-	suite.WaitForOperationState(opID, domain.Succeeded)
-	op, err := suite.db.Operations().GetOperationByID(opID)
-	assert.NoError(t, err)
-	assert.YAMLEq(t, getExpected(t, "kyma-no-modules.yaml"), op.KymaTemplate)
-}
-
-func TestProvisioning_ModulesWithSetModulesAsDefault(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-				"context": {
-						"globalaccount_id": "whitelisted-global-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-				},
-				"parameters": {
-					"name": "test",
-					"modules": {
-						"default": true
-					}
-				}
-			}`)
-
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processProvisioningAndReconcilingByOperationID(opID)
-
-	suite.WaitForOperationState(opID, domain.Succeeded)
-	op, err := suite.db.Operations().GetOperationByID(opID)
-	assert.NoError(t, err)
-	assert.YAMLEq(t, getExpected(t, "kyma-with-keda-and-btp-manager.yaml"), op.KymaTemplate)
-}
-
-func TestProvisioning_ModulesOneOfValidationFail(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-				"context": {
-						"globalaccount_id": "whitelisted-global-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-				},
-				"parameters": {
-					"name": "test",
-					"region": "eu-central-1",
-					"modules": {
-						"default": false,
-						"list": [
-							{
-								"name": "btp-operator",
-								"channel": "regular",
-								"customResourcePolicy": "CreateAndDelete"
-							},
-							{
-								"name": "keda",
-								"channel": "fast",
-								"customResourcePolicy": "Ignore"
-							}
-						]
-					}
-				}
-			}`)
-
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-}
-
-func TestProvisioning_ModulesOneOfValidationFailWhenEmpty(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-				"context": {
-						"globalaccount_id": "whitelisted-global-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-				},
-				"parameters": {
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
 						"name": "test",
 						"region": "eu-central-1",
-						"modules": {}
+						"modules": {
+							"list": [
+								{
+									"name": "btp-operator",
+									"customResourcePolicy": "CreateAndDelete"
+								},
+								{
+									"name": "keda",
+									"channel": "fast"
+								}
+							]
+						}
 					}
+				}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, defaultModules), op.KymaTemplate)
+	})
+
+	t.Run("with given empty list of modules", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"region": "eu-central-1",
+						"modules": {
+							"list": []
+						}
+					}
+				}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, "kyma-no-modules.yaml"), op.KymaTemplate)
+	})
+
+	t.Run("with given default as false", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"region": "eu-central-1",
+						"modules": {
+							"default": false
+						}
+					}
+				}`)
+
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, "kyma-no-modules.yaml"), op.KymaTemplate)
+	})
+
+	t.Run("with given default as true", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"modules": {
+							"default": true
+						}
+					}
+				}`)
+
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, defaultModules), op.KymaTemplate)
+	})
+
+	t.Run("oneOf validation fail when two params are set", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+					"globalaccount_id": "whitelisted-global-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "test",
+				"region": "eu-central-1",
+				"modules": {
+					"default": false,
+					"list": [
+						{
+							"name": "btp-operator",
+							"channel": "regular",
+							"customResourcePolicy": "CreateAndDelete"
+						},
+						{
+							"name": "keda",
+							"channel": "fast",
+							"customResourcePolicy": "Ignore"
+						}
+					]
 				}
-			}`)
+			}
+		}`)
 
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-}
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 
-func getExpected(t *testing.T, name string) string {
-	return internal.GetFileWithTest(t, fmt.Sprintf("%s/%s/%s", testDataPath, kymaTemplate, name))
+	t.Run("oneOf validation fail when no any modules param is set", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+							"name": "test",
+							"region": "eu-central-1",
+							"modules": {}
+						}
+					}
+				}`)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 }

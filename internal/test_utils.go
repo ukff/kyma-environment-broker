@@ -1,7 +1,8 @@
 package internal
 
 import (
-	"os"
+	"embed"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,8 +21,11 @@ func NewSchemeForTests() *runtime.Scheme {
 	return sch
 }
 
-func GetFileWithTest(t *testing.T, path string) string {
-	file, err := os.ReadFile(path)
+//go:embed testdata/kymatemplate
+var content embed.FS
+
+func GetKymaTemplateForTests(t *testing.T, path string) string {
+	file, err := content.ReadFile(fmt.Sprintf("%s/%s/%s", "testdata", "kymatemplate", path))
 	assert.NoError(t, err)
 	return string(file)
 }
