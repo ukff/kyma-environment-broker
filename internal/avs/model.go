@@ -146,6 +146,13 @@ func providerCodeByPlan(planID string) string {
 	}
 }
 
+func convertAZR(code string) string {
+	if code == "AZR" {
+		return "Azure"
+	}
+	return code
+}
+
 func truncateString(input string, num int) string {
 	output := input
 	if len(input) > num {
