@@ -67,8 +67,8 @@ func TestOverrideKymaModules(t *testing.T) {
 			Channel: internal.Fast,
 		}
 		modules.List = append(modules.List, &m1, &m2)
-		execTest(t, modules, givenKymaTemplateWithModules, defaultModules)
-		execTest(t, modules, givenKymaTemplateWithoutModules, defaultModules)
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-keda-and-btp-operator.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-keda-and-btp-operator.yaml")
 	})
 
 	t.Run("custom list of modules are installed when given custom list not empty", func(t *testing.T) {
