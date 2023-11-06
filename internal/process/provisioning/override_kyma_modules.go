@@ -73,7 +73,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 	}
 	updatedKymaTemplate, err := steps.EncodeKymaTemplate(decodeKymaTemplate)
 	if err != nil {
-		k.logger.Errorf("unable to create yaml Kyma template with custom modules: %s", err.Error())
+		k.logger.Errorf("unable to create yaml Kyma template with custom custom modules: %s", err.Error())
 		return k.operationManager.OperationFailed(operation, "unable to create yaml Kyma template within added modules", err, k.logger)
 	}
 

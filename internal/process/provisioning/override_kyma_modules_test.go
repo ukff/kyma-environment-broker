@@ -80,8 +80,8 @@ func TestOverrideKymaModules(t *testing.T) {
 			CustomResourcePolicy: internal.CreateAndDelete,
 		}
 		modules.List = append(modules.List, &m1)
-		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-btp-manager.yaml")
-		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-btp-manager.yaml")
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-btp-operator.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-btp-operator.yaml")
 	})
 
 	t.Run("no modules are installed when given custom list is empty", func(t *testing.T) {
