@@ -35,7 +35,7 @@ modules: {
 }
 ```
 
-- this calls will cause installation Kyma without any modules
+- these calls will cause installation Kyma without any modules
 
 ```
 "modules": {
