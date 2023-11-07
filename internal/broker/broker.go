@@ -44,6 +44,7 @@ type Config struct {
 
 	AllowNetworkingParameters bool `envconfig:"default=false"`
 	RegionParameterIsRequired bool `envconfig:"default=false"`
+	ExposeSchemaWithRegionRequired bool `envconfig:"default=false"`
 	AllowModulesParameters    bool `envconfig:"default=false"`
 }
 
