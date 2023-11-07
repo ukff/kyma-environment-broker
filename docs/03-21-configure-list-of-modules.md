@@ -13,8 +13,8 @@ API for module configuration is built on the "oneOf" feature from the JSON schem
 - In the default mode, the "modules" object is set to `default: true` and modules are pre-selected by Kyma. The same happens when the "modules" section is not set at all (mapped to nil) in the payload.
 
 ```
-modules: {
-    default: true
+"modules": {
+    "default": true
 }
 ```
 
@@ -54,14 +54,14 @@ modules: {
 - A call with the "modules" section empty fails due to using the "oneOf" feature in the JSON schema.
 
 ```
-modules: {}
+"modules": {}
 ```
 
 - A call with the "modules" section with both parameters filled in fails due to using the "oneOf" feature in the JSON schema.
 
 ```
-modules: {
-    default: false,
+"modules": {
+    "default": false,
     "list": [
         {
             "name": "btp-operator",
