@@ -539,7 +539,11 @@ kyma-template: |-
       sync:
           strategy: secret
       channel: stable
-      modules: []
+      modules:
+          - name: btp-operator
+            customResourcePolicy: CreateAndDelete
+          - name: keda
+            channel: fast
 
 additional-components:
   - name: "btp-operator"
@@ -1001,6 +1005,7 @@ func fixConfig() *Config {
 			AllowNetworkingParameters:      true,
 			RegionParameterIsRequired:      true,
 			ExposeSchemaWithRegionRequired: true,
+			AllowModulesParameters:         true,
 		},
 		Avs: avs.Config{},
 		IAS: ias.Config{
