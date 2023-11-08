@@ -144,7 +144,10 @@ type ModulesCustomListItemsProperties struct {
 	CustomResourcePolicy Type `json:"customResourcePolicy,omitempty"`
 }
 
-func NewModulesSchema() *Modules {
+func NewModulesSchema(modulesEnabled bool) *Modules {
+	if !modulesEnabled {
+		return nil
+	}
 	return &Modules{
 		Type: Type{
 			Type:        "object",
@@ -264,7 +267,7 @@ func ShootDomainProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTypes, regions []string, update bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTypes, regions []string, update, modulesEnabled bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -293,7 +296,7 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 			Enum: ToInterfaceSlice(regions),
 		},
 		Networking: NewNetworkingSchema(),
-		Modules:    NewModulesSchema(),
+		Modules:    NewModulesSchema(modulesEnabled),
 	}
 
 	if update {

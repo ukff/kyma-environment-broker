@@ -14,6 +14,7 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
+	modulesEnabled := true
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, []string, bool, bool) *map[string]interface{}
@@ -27,7 +28,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, false, false)
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, false, false, modulesEnabled)
 			},
 			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
 			file:           "aws-schema.json",
@@ -38,7 +39,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, false, true)
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, false, true, modulesEnabled)
 			},
 			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
 			file:           "aws-schema-region-required.json",
@@ -49,7 +50,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, true, false)
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, true, false, modulesEnabled)
 			},
 			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
 			file:           "aws-schema-eu.json",
@@ -60,7 +61,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema with region required and EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, true, true)
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, true, true, modulesEnabled)
 			},
 			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
 			file:           "aws-schema-eu-region-required.json",
@@ -71,7 +72,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, machines, additionalParams, update, false, false)
+				return AzureSchema(machinesDisplay, machines, additionalParams, update, false, false, modulesEnabled)
 			},
 			machineTypes:   []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"},
 			file:           "azure-schema.json",
@@ -82,7 +83,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, machines, additionalParams, update, false, true)
+				return AzureSchema(machinesDisplay, machines, additionalParams, update, false, true, modulesEnabled)
 			},
 			machineTypes:   []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"},
 			file:           "azure-schema-region-required.json",
@@ -93,7 +94,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, machines, additionalParams, update, true, false)
+				return AzureSchema(machinesDisplay, machines, additionalParams, update, true, false, modulesEnabled)
 			},
 			machineTypes:   []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"},
 			file:           "azure-schema-eu.json",
@@ -104,7 +105,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema with region required and EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, machines, additionalParams, update, true, true)
+				return AzureSchema(machinesDisplay, machines, additionalParams, update, true, true, modulesEnabled)
 			},
 			machineTypes:   []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"},
 			file:           "azure-schema-eu-region-required.json",
@@ -115,7 +116,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false, false)
+				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false, false, modulesEnabled)
 			},
 			machineTypes:        []string{"Standard_D4_v3"},
 			machineTypesDisplay: map[string]string{"Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"},
@@ -127,7 +128,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false, true)
+				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false, true, modulesEnabled)
 			},
 			machineTypes:        []string{"Standard_D4_v3"},
 			machineTypesDisplay: map[string]string{"Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"},
@@ -139,7 +140,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true, false)
+				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true, false, modulesEnabled)
 			},
 			machineTypes:        []string{"Standard_D4_v3"},
 			machineTypesDisplay: map[string]string{"Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"},
@@ -151,7 +152,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema with region required and EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true, true)
+				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true, true, modulesEnabled)
 			},
 			machineTypes:        []string{"Standard_D4_v3"},
 			machineTypesDisplay: map[string]string{"Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"},
@@ -163,7 +164,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, additionalParams, update, false, false)
+				return FreemiumSchema(internal.Azure, additionalParams, update, false, false, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-azure-schema.json",
@@ -174,7 +175,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, additionalParams, update, false, true)
+				return FreemiumSchema(internal.Azure, additionalParams, update, false, true, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-azure-schema-region-required.json",
@@ -185,7 +186,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: " Freemium schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, additionalParams, update, false, false)
+				return FreemiumSchema(internal.AWS, additionalParams, update, false, false, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-aws-schema.json",
@@ -196,7 +197,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: " Freemium schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, additionalParams, update, false, true)
+				return FreemiumSchema(internal.AWS, additionalParams, update, false, true, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-aws-schema-region-required.json",
@@ -207,7 +208,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, additionalParams, update, true, false)
+				return FreemiumSchema(internal.Azure, additionalParams, update, true, false, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-azure-schema-eu.json",
@@ -218,7 +219,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with region required and EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, additionalParams, update, true, true)
+				return FreemiumSchema(internal.Azure, additionalParams, update, true, true, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-azure-schema-eu-region-required.json",
@@ -229,7 +230,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: " Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, additionalParams, update, true, false)
+				return FreemiumSchema(internal.AWS, additionalParams, update, true, false, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-aws-schema-eu.json",
@@ -240,7 +241,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: " Freemium schema with region required and EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, additionalParams, update, true, true)
+				return FreemiumSchema(internal.AWS, additionalParams, update, true, true, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "free-aws-schema-eu-region-required.json",
@@ -251,7 +252,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, machines, additionalParams, update, false)
+				return GCPSchema(machinesDisplay, machines, additionalParams, update, false, modulesEnabled)
 			},
 			machineTypes:   []string{"n2-standard-4", "n2-standard-8", "n2-standard-16", "n2-standard-32", "n2-standard-48"},
 			file:           "gcp-schema.json",
@@ -262,7 +263,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, machines, additionalParams, update, true)
+				return GCPSchema(machinesDisplay, machines, additionalParams, update, true, modulesEnabled)
 			},
 			machineTypes:   []string{"n2-standard-4", "n2-standard-8", "n2-standard-16", "n2-standard-32", "n2-standard-48"},
 			file:           "gcp-schema-region-required.json",
@@ -273,7 +274,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "OpenStack schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, false)
+				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, false, modulesEnabled)
 			},
 			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
 			file:           "openstack-schema.json",
@@ -284,7 +285,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "OpenStack schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, true)
+				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, true, modulesEnabled)
 			},
 			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
 			file:           "openstack-schema-region-required.json",
@@ -295,7 +296,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Trial schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return TrialSchema(additionalParams, update)
+				return TrialSchema(additionalParams, update, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "azure-trial-schema.json",
@@ -306,7 +307,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Own cluster schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return OwnClusterSchema(update)
+				return OwnClusterSchema(update, modulesEnabled)
 			},
 			machineTypes:   []string{},
 			file:           "own-cluster-schema.json",
