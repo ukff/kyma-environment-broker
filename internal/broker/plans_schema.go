@@ -366,7 +366,6 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 			panic(err)
 		}
 	}
-
 	return to
 }
 
