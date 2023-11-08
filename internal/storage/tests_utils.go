@@ -423,10 +423,6 @@ func createDbContainer(log func(format string, args ...interface{}), hostname st
 	}
 
 	ports := container.Ports
-	if len(ports) != 1 {
-		log("more or less then one binding found")
-		return cleanupFunc, Config{}, fmt.Errorf("while searching for a container: %w", err)
-	}
 
 	dbCfg := makeConnectionString(hostname, fmt.Sprint(ports[0].PublicPort))
 
