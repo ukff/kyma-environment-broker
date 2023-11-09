@@ -1,0 +1,169 @@
+name: "Create release"
+
+env:
+  IMAGE_REPO: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker
+#  KYMA_BTP_MANAGER_REPO: ${{ github.repository_owner }}/btp-manager
+#  GIT_EMAIL: team-gopher+1@sap.com
+#  GIT_NAME: kyma-btp-manager-bot
+#  BRANCH_NAME: sec-scanners-config-${{ inputs.name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Create release'
+        default: ""
+        required: true
+
+# TODO: enable sec. scanners
+#      sec-scanners-config:
+#        type: boolean
+#        description: 'Create PR with sec-scanners-config bump'
+#        default: true
+
+jobs:
+  validate-release:
+    name: Validate release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag already exists
+        run: |
+          if [ $(git tag -l ${{ inputs.name }}) ]; then
+            echo "::error ::Tag ${{ inputs.name }} already exists"
+            exit 1
+          fi
+
+      - name: Check for existing artifacts from previous release runs
+        env:
+          IMAGE_REPO: ${{ env.IMAGE_REPO }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: "./scripts/check_artifacts_existence.sh ${{ inputs.name }}"
+
+# TODO: uncomment - labels validation
+#      - name: Validate Labels
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: ./scripts/label_validator.sh "RELEASE"
+
+# TODO: uncomment - sec. scanning
+#  bump-sec-scanners-config:
+#    name: Bump sec-scanners-config
+#    needs: validate-release
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout code
+#        if: ${{ inputs.sec-scanners-config }}
+#        uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Update sec-scanners-config.yaml
+#        if: ${{ inputs.sec-scanners-config }}
+#        run: scripts/create_scan_config.sh ${{env.IMAGE_REPO}}:${{ inputs.name }} "sec-scanners-config.yaml" ${{ inputs.name }}
+#
+#      - name: Create PR if anything changed
+#        if: ${{ inputs.sec-scanners-config }}
+#        env:
+#          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+#        run: |
+#          prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
+#          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BRANCH_NAME }}; then
+#            echo "PR already exists, no need to create a new one"
+#            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BRANCH_NAME }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
+#          elif [ -z "$(git status --porcelain)" ]; then
+#            echo "Nothing changed, no need to create PR"
+#            echo "PR_NUMBER=-1" >> $GITHUB_ENV
+#          else
+#            PR_STATUS=$(scripts/create_sec_scanner_bump_pr.sh ${{ inputs.name }})
+#            echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
+#          fi
+#
+#      - name: Await PR merge
+#        if: ${{ inputs.sec-scanners-config }}
+#        timeout-minutes: 10
+#        env:
+#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          if [ "$PR_NUMBER" -gt 0 ]; then
+#            scripts/await_pr_merge.sh
+#            sleep 15
+#          else
+#            echo "Step skipped"
+#          fi
+
+  run-unit-tests:
+    name: Unit tests, go mod tidy
+    needs: create-draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up go environment
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+
+      - name: go mod check
+        run: make go-mod-check
+
+      - name: Run make test
+        run: make test
+
+  create-draft:
+    name: Create draft release
+#    needs: bump-sec-scanners-config
+    needs: validate-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Create draft release
+        id: create-draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: piotrmiskiewicz/kyma-environment-broker
+        run: |
+          RELEASE_ID=$(./scripts/create_draft_release.sh ${{ github.event.inputs.name }})
+          echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
+
+      - name: Create lightweight tag
+        run: |
+          git pull
+          git tag ${{ github.event.inputs.name }}
+
+# Push the tag requires permissions on the repo: Settings -> Actions -> General -> "Read and write permissions"
+      - name: Push the tag
+        run: |
+          git push origin ${{ github.event.inputs.name }}
+
+    outputs:
+      release_id: ${{ steps.create-draft.outputs.release_id }}
+
+  publish-release:
+    name: Publish release
+    needs: [ create-draft, run-unit-tests ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Publish release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # TODO: remove
+          # REPOSITORY: piotrmiskiewicz/kyma-environment-broker
+        run: ./scripts/publish_release.sh ${{ needs.create-draft.outputs.release_id }}
