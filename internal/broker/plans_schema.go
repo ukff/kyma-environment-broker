@@ -151,7 +151,7 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 	return &Modules{
 		Type: Type{
 			Type:        "object",
-			Description: "Use default modules or provide your custom list of modules.",
+			Description: "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
 		},
 		ControlsOrder: []string{"default", "list"},
 		OneOf: []any{
@@ -184,7 +184,7 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
 						},
 						Items: ModulesCustomListItems{
 							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
@@ -200,20 +200,22 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 								},
 								Channel: Type{
 									Type:        "string",
-									Default:     "regular",
-									Description: "Select your preferred release channel.",
-									Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
+									Default:     "",
+									Description: "Select your preferred release channel or leave this field empty.",
+									Enum:        ToInterfaceSlice([]string{"", "regular", "fast"}),
 									EnumDisplayName: map[string]string{
+										"":        "",
 										"regular": "Regular - default version",
 										"fast":    "Fast - latest version",
 									},
 								},
 								CustomResourcePolicy: Type{
 									Type:        "string",
-									Description: "Select your preferred CustomResourcePolicy setting.",
-									Default:     "CreateAndDelete",
-									Enum:        ToInterfaceSlice([]string{"CreateAndDelete", "Ignore"}),
+									Description: "Select your preferred CustomResourcePolicy setting or leave this field empty.",
+									Default:     "",
+									Enum:        ToInterfaceSlice([]string{"", "CreateAndDelete", "Ignore"}),
 									EnumDisplayName: map[string]string{
+										"":                "",
 										"CreateAndDelete": "CreateAndDelete - default module resource is created or deleted.",
 										"Ignore":          "Ignore - module resource is not created.",
 									},

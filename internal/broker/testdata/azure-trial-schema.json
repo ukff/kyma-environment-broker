@@ -11,7 +11,7 @@
         "default",
         "list"
       ],
-      "description": "Use default modules or provide your custom list of modules.",
+      "description": "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
       "oneOf": [
         {
           "additionalProperties": false,
@@ -33,7 +33,7 @@
           "description": "Define custom module list",
           "properties": {
             "list": {
-              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
               "items": {
                 "_controlsOrder": [
                   "name",
@@ -43,12 +43,14 @@
                 "properties": {
                   "channel": {
                     "_enumDisplayName": {
+                      "": "",
                       "fast": "Fast - latest version",
                       "regular": "Regular - default version"
                     },
-                    "default": "regular",
-                    "description": "Select your preferred release channel.",
+                    "default": "",
+                    "description": "Select your preferred release channel or leave this field empty.",
                     "enum": [
+                      "",
                       "regular",
                       "fast"
                     ],
@@ -56,12 +58,14 @@
                   },
                   "customResourcePolicy": {
                     "_enumDisplayName": {
+                      "": "",
                       "CreateAndDelete": "CreateAndDelete - default module resource is created or deleted.",
                       "Ignore": "Ignore - module resource is not created."
                     },
-                    "default": "CreateAndDelete",
-                    "description": "Select your preferred CustomResourcePolicy setting.",
+                    "default": "",
+                    "description": "Select your preferred CustomResourcePolicy setting or leave this field empty.",
                     "enum": [
+                      "",
                       "CreateAndDelete",
                       "Ignore"
                     ],

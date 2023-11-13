@@ -55,7 +55,25 @@ func TestOverrideKymaModules(t *testing.T) {
 		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
 	})
 
-	t.Run("custom list of modules are installed when given custom list not empty", func(t *testing.T) {
+	t.Run("custom list of modules are installed when given custom list is not empty", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.List = make([]*internal.ModuleDTO, 0)
+		m1 := internal.ModuleDTO{
+			Name:                 technicalNameBtpManager,
+			CustomResourcePolicy: internal.Ignore,
+			Channel:              internal.Fast,
+		}
+		m2 := internal.ModuleDTO{
+			Name:                 technicalNameKeda,
+			CustomResourcePolicy: internal.CreateAndDelete,
+			Channel:              internal.Regular,
+		}
+		modules.List = append(modules.List, &m1, &m2)
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-keda-and-btp-operator-all-params-set.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-keda-and-btp-operator-all-params-set.yaml")
+	})
+
+	t.Run("custom list of modules are installed when given custom list is not empty", func(t *testing.T) {
 		modules := &internal.ModulesDTO{}
 		modules.List = make([]*internal.ModuleDTO, 0)
 		m1 := internal.ModuleDTO{
@@ -69,6 +87,21 @@ func TestOverrideKymaModules(t *testing.T) {
 		modules.List = append(modules.List, &m1, &m2)
 		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-keda-and-btp-operator.yaml")
 		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-keda-and-btp-operator.yaml")
+	})
+
+	t.Run("custom list of modules are installed when given custom list is not empty and not given channel and crPolicy", func(t *testing.T) {
+		modules := &internal.ModulesDTO{}
+		modules.List = make([]*internal.ModuleDTO, 0)
+		m1 := internal.ModuleDTO{
+			Name: technicalNameBtpManager,
+		}
+		m2 := internal.ModuleDTO{
+			Name:    technicalNameKeda,
+			Channel: ptr.String(""),
+		}
+		modules.List = append(modules.List, &m1, &m2)
+		execTest(t, modules, givenKymaTemplateWithModules, "kyma-with-keda-and-btp-operator-only-name.yaml")
+		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-with-keda-and-btp-operator-only-name.yaml")
 	})
 
 	t.Run("custom list of modules are installed when given custom list not empty", func(t *testing.T) {
