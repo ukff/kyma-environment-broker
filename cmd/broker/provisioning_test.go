@@ -1597,4 +1597,73 @@ func TestProvisioning_Modules(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
+
+	t.Run("validation fail when name not passed", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+							"name": "test",
+							"region": "eu-central-1",
+							"modules": {
+								"list": [
+									{
+										"channel": "regularWrong",
+										"customResourcePolicy": "CreateAndDeleteWrong"
+									}
+								]
+							}
+						}
+					}
+				}`)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("validation fail when name empty", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+							"name": "test",
+							"region": "eu-central-1",
+							"modules": {
+								"list": [
+									{
+										"name": "",
+										"channel": "regularWrong",
+										"customResourcePolicy": "CreateAndDeleteWrong"
+									}
+								]
+							}
+						}
+					}
+				}`)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 }

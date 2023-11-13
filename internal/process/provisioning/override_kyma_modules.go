@@ -113,24 +113,23 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 	return nil
 }
 func (k *OverrideKymaModules) prepareModulesSection(customList []*internal.ModuleDTO) []internal.ModuleDTO {
+	mapIfNeeded := func(field *string) *string {
+		if field != nil && *field == "" {
+			return nil
+		}
+		return field
+	}
+
 	var overridedModules []internal.ModuleDTO
 	if customList == nil || len(customList) == 0 {
 		overridedModules = make([]internal.ModuleDTO, 0)
 		k.logger.Info("empty(0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 	} else {
-		overridedModules = make([]internal.ModuleDTO, len(customList))
+		overridedModules = make([]internal.ModuleDTO, 0)
 		for _, customModule := range customList {
 			module := internal.ModuleDTO{Name: customModule.Name}
-			if customModule.CustomResourcePolicy != nil && *customModule.CustomResourcePolicy == "" {
-				module.CustomResourcePolicy = nil
-			} else {
-				module.CustomResourcePolicy = customModule.CustomResourcePolicy
-			}
-			if customModule.Channel != nil && *customModule.Channel == "" {
-				module.Channel = nil
-			} else {
-				module.Channel = customModule.Channel
-			}
+			module.CustomResourcePolicy = mapIfNeeded(customModule.CustomResourcePolicy)
+			module.Channel = mapIfNeeded(customModule.Channel)
 			overridedModules = append(overridedModules, module)
 		}
 		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(customList))

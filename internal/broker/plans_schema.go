@@ -202,7 +202,7 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 									Type:        "string",
 									Default:     "",
 									Description: "Select your preferred release channel or leave this field empty.",
-									Enum:        ToInterfaceSlice([]string{"", "regular", "fast"}),
+									Enum:        ToInterfaceSlice([]string{"regular", "fast", ""}),
 									EnumDisplayName: map[string]string{
 										"regular": "Regular - default version",
 										"fast":    "Fast - latest version",
@@ -213,11 +213,11 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 									Type:        "string",
 									Description: "Select your preferred CustomResourcePolicy setting or leave this field empty.",
 									Default:     "",
-									Enum:        ToInterfaceSlice([]string{"", "CreateAndDelete", "Ignore"}),
+									Enum:        ToInterfaceSlice([]string{"CreateAndDelete", "Ignore", ""}),
 									EnumDisplayName: map[string]string{
-										"":                "",
 										"CreateAndDelete": "CreateAndDelete - default module resource is created or deleted.",
 										"Ignore":          "Ignore - module resource is not created.",
+										"":                "",
 									},
 								},
 							},
