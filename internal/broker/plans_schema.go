@@ -204,9 +204,9 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 									Description: "Select your preferred release channel or leave this field empty.",
 									Enum:        ToInterfaceSlice([]string{"", "regular", "fast"}),
 									EnumDisplayName: map[string]string{
-										"":        "",
 										"regular": "Regular - default version",
 										"fast":    "Fast - latest version",
+										"":        "",
 									},
 								},
 								CustomResourcePolicy: Type{

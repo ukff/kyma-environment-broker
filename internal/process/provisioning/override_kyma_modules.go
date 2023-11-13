@@ -118,7 +118,7 @@ func (k *OverrideKymaModules) prepareModulesSection(customList []*internal.Modul
 		overridedModules = make([]internal.ModuleDTO, 0)
 		k.logger.Info("empty(0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 	} else {
-		overridedModules = make([]internal.ModuleDTO, 0)
+		overridedModules = make([]internal.ModuleDTO, len(customList))
 		for _, customModule := range customList {
 			module := internal.ModuleDTO{Name: customModule.Name}
 			if customModule.CustomResourcePolicy != nil && *customModule.CustomResourcePolicy == "" {
