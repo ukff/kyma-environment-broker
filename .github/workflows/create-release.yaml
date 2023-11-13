@@ -132,7 +132,7 @@ jobs:
         id: create-draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: piotrmiskiewicz/kyma-environment-broker
+          REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
           RELEASE_ID=$(./scripts/create_draft_release.sh ${{ github.event.inputs.name }})
           echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
