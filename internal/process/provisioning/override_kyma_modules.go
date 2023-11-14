@@ -67,7 +67,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step: ", fmt.Errorf("object is nil"), k.logger)
 	}
 
-	if err := k.replaceModulesSpec(decodeKymaTemplate, modulesParams); err != nil {
+	if err := k.replaceModulesSpec(decodeKymaTemplate, modulesParams.List); err != nil {
 		k.logger.Errorf("unable to append modules to Kyma template: %s", err.Error())
 		return k.operationManager.OperationFailed(operation, "unable to append modules to Kyma template:", err, k.logger)
 	}
@@ -85,7 +85,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 }
 
 // To consider using -> unstructured.SetNestedSlice()
-func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, modulesParams internal.ModulesDTO) error {
+func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []*internal.ModuleDTO) error {
 	const (
 		specKey    = "spec"
 		modulesKey = "modules"
@@ -105,19 +105,35 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 		return fmt.Errorf("getting modules content of kyma template")
 	}
 
-	if modulesParams.List == nil || len(modulesParams.List) == 0 {
-		if modulesParams.List == nil {
-			modulesParams.List = make([]*internal.ModuleDTO, 0)
-		}
-		k.logger.Info("empty list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
-	} else {
-		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(modulesParams.List))
-	}
-
-	modulesSection = modulesParams.List
+	modulesSection = k.prepareModulesSection(customModuleList)
 	spec[modulesKey] = modulesSection
 	kymaTemplate.Object[specKey] = specSection
 
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
+}
+func (k *OverrideKymaModules) prepareModulesSection(customModuleList []*internal.ModuleDTO) []internal.ModuleDTO {
+	// if field is "" convert it to nil to field will be not present in yaml
+	mapIfNeeded := func(field *string) *string {
+		if field != nil && *field == "" {
+			return nil
+		}
+		return field
+	}
+
+	overridedModules := make([]internal.ModuleDTO, 0)
+	if customModuleList == nil || len(customModuleList) == 0 {
+		k.logger.Info("empty (0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
+		return overridedModules
+	}
+
+	for _, customModule := range customModuleList {
+		module := internal.ModuleDTO{Name: customModule.Name}
+		module.CustomResourcePolicy = mapIfNeeded(customModule.CustomResourcePolicy)
+		module.Channel = mapIfNeeded(customModule.Channel)
+		overridedModules = append(overridedModules, module)
+	}
+
+	k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
+	return overridedModules
 }
