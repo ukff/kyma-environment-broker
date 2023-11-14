@@ -85,7 +85,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 }
 
 // To consider using -> unstructured.SetNestedSlice()
-func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customList []*internal.ModuleDTO) error {
+func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []*internal.ModuleDTO) error {
 	const (
 		specKey    = "spec"
 		modulesKey = "modules"
@@ -105,14 +105,15 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 		return fmt.Errorf("getting modules content of kyma template")
 	}
 
-	modulesSection = k.prepareModulesSection(customList)
+	modulesSection = k.prepareModulesSection(customModuleList)
 	spec[modulesKey] = modulesSection
 	kymaTemplate.Object[specKey] = specSection
 
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
-func (k *OverrideKymaModules) prepareModulesSection(customList []*internal.ModuleDTO) []internal.ModuleDTO {
+func (k *OverrideKymaModules) prepareModulesSection(customModuleList []*internal.ModuleDTO) []internal.ModuleDTO {
+	// if field is "" convert it to nil to field will be not present in yaml
 	mapIfNeeded := func(field *string) *string {
 		if field != nil && *field == "" {
 			return nil
@@ -121,18 +122,18 @@ func (k *OverrideKymaModules) prepareModulesSection(customList []*internal.Modul
 	}
 
 	var overridedModules []internal.ModuleDTO
-	if customList == nil || len(customList) == 0 {
+	if customModuleList == nil || len(customModuleList) == 0 {
 		overridedModules = make([]internal.ModuleDTO, 0)
 		k.logger.Info("empty(0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 	} else {
 		overridedModules = make([]internal.ModuleDTO, 0)
-		for _, customModule := range customList {
+		for _, customModule := range customModuleList {
 			module := internal.ModuleDTO{Name: customModule.Name}
 			module.CustomResourcePolicy = mapIfNeeded(customModule.CustomResourcePolicy)
 			module.Channel = mapIfNeeded(customModule.Channel)
 			overridedModules = append(overridedModules, module)
 		}
-		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(customList))
+		k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
 	}
 	return overridedModules
 }
