@@ -3,7 +3,7 @@ package provisioning
 import (
 	"fmt"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -39,7 +39,7 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 		k.logger.Infof("%s is supposed to run only for Provisioning, skipping logic.", k.Name())
 		return operation, 0, nil
 	}
-	
+
 	modulesParams := operation.ProvisioningParameters.Parameters.Modules
 	if modulesParams != nil {
 		defaultModulesSetToFalse := modulesParams.Default != nil && !*modulesParams.Default  // 1 case
@@ -50,7 +50,7 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 			return k.handleModulesOverride(operation, *modulesParams)
 		}
 	}
-	
+
 	// default behaviour
 	k.logger.Infof("Kyma will be created with default modules. %s didn't perform any action. %s", k.Name())
 	return operation, 0, nil
@@ -66,7 +66,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 		k.logger.Errorf("while decoding Kyma template from previous step: object is nil")
 		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step: ", fmt.Errorf("object is nil"), k.logger)
 	}
-	
+
 	if err := k.replaceModulesSpec(decodeKymaTemplate, modulesParams.List); err != nil {
 		k.logger.Errorf("unable to append modules to Kyma template: %s", err.Error())
 		return k.operationManager.OperationFailed(operation, "unable to append modules to Kyma template:", err, k.logger)
@@ -76,7 +76,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 		k.logger.Errorf("unable to create yaml Kyma template with custom custom modules: %s", err.Error())
 		return k.operationManager.OperationFailed(operation, "unable to create yaml Kyma template within added modules", err, k.logger)
 	}
-	
+
 	k.logger.Info("encoded Kyma template with custom modules with success")
 	return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
@@ -90,7 +90,7 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 		specKey    = "spec"
 		modulesKey = "modules"
 	)
-	
+
 	content := kymaTemplate.Object
 	specSection, ok := content[specKey]
 	if !ok {
@@ -104,11 +104,11 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 	if !ok {
 		return fmt.Errorf("getting modules content of kyma template")
 	}
-	
+
 	modulesSection = k.prepareModulesSection(customModuleList)
 	spec[modulesKey] = modulesSection
 	kymaTemplate.Object[specKey] = specSection
-	
+
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
@@ -120,20 +120,20 @@ func (k *OverrideKymaModules) prepareModulesSection(customModuleList []*internal
 		}
 		return field
 	}
-	
+
 	overridedModules := make([]internal.ModuleDTO, 0)
 	if customModuleList == nil || len(customModuleList) == 0 {
 		k.logger.Info("empty (0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 		return overridedModules
 	}
-	
+
 	for _, customModule := range customModuleList {
 		module := internal.ModuleDTO{Name: customModule.Name}
 		module.CustomResourcePolicy = mapIfNeeded(customModule.CustomResourcePolicy)
 		module.Channel = mapIfNeeded(customModule.Channel)
 		overridedModules = append(overridedModules, module)
 	}
-	
+
 	k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
 	return overridedModules
 }
