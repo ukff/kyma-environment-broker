@@ -77,9 +77,9 @@
                     "default": "",
                     "description": "Select your preferred release channel or leave this field empty.",
                     "enum": [
+                      "",
                       "regular",
-                      "fast",
-                      ""
+                      "fast"
                     ],
                     "type": "string"
                   },
@@ -92,9 +92,9 @@
                     "default": "",
                     "description": "Select your preferred CustomResourcePolicy setting or leave this field empty.",
                     "enum": [
+                      "",
                       "CreateAndDelete",
-                      "Ignore",
-                      ""
+                      "Ignore"
                     ],
                     "type": "string"
                   },
