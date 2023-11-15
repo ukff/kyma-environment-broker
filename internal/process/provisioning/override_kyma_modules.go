@@ -48,8 +48,9 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 		fmt.Println(fmt.Sprintf("obj: %v", modulesParams))
 		fmt.Println(fmt.Sprintf("default nil?: %t", modulesParams.Default == nil))
 		fmt.Println(fmt.Sprintf("default true?: %t", modulesParams.Default != nil && *modulesParams.Default))
-		fmt.Println(fmt.Sprintf("default true?: %t", modulesParams.Default != nil && !*modulesParams.Default))
-		fmt.Println(fmt.Sprintf("list nil? %t", modulesParams.List != nil && modulesParams.List == nil))
+		fmt.Println(fmt.Sprintf("default false?: %t", modulesParams.Default != nil && !*modulesParams.Default))
+		fmt.Println(fmt.Sprintf("list nil? %t", modulesParams.List == nil))
+		fmt.Println(fmt.Sprintf("list not nil? %t", modulesParams.List != nil))
 		fmt.Println(fmt.Sprintf("list len? %d", len(modulesParams.List)))
 		fmt.Println("=== Override ===")
 
