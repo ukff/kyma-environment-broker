@@ -96,7 +96,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 	}, k.logger)
 }
 
-func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []*internal.ModuleDTO) error {
+func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []internal.ModuleDTO) error {
 	toInsert := k.prepareModulesSection(customModuleList)
 	toInsertMarshaled, err := json.Marshal(toInsert)
 	if err != nil {
@@ -111,7 +111,7 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
-func (k *OverrideKymaModules) prepareModulesSection(customModuleList []*internal.ModuleDTO) []internal.ModuleDTO {
+func (k *OverrideKymaModules) prepareModulesSection(customModuleList []internal.ModuleDTO) []internal.ModuleDTO {
 	// if field is "" convert it to nil to field will be not present in yaml
 	mapIfNeeded := func(field *string) *string {
 		if field != nil && *field == "" {
