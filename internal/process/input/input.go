@@ -72,7 +72,6 @@ type RuntimeInput struct {
 	shootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
 	clusterName       string
-	modules           internal.ModulesDTO
 }
 
 func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
@@ -256,10 +255,6 @@ func (r *RuntimeInput) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntime
 		{
 			name:    "configure networking",
 			execute: r.configureNetworking,
-		},
-		{
-			name:    "configure modules",
-			execute: r.configureModules,
 		},
 	} {
 		if err := step.execute(); err != nil {
@@ -789,23 +784,6 @@ func (r *RuntimeInput) setOIDCDefaultValuesIfEmpty(oidcConfig *gqlschema.OIDCCon
 	if oidcConfig.UsernamePrefix == "" {
 		oidcConfig.UsernamePrefix = r.oidcDefaultValues.UsernamePrefix
 	}
-}
-
-func (r *RuntimeInput) configureModules() error {
-	fmt.Println("configure modules called.")
-	if r.provisioningParameters.Parameters.Modules != nil {
-		fmt.Println("modules ->")
-		fmt.Println(*r.provisioningParameters.Parameters.Modules)
-		r.modules = *r.provisioningParameters.Parameters.Modules
-		fmt.Println(r.modules)
-	}
-	fmt.Println("configure modules set:")
-
-	fmt.Println(fmt.Sprintf("set is %v", r.modules))
-	fmt.Println(fmt.Sprintf("Is nil: %t", r.modules.List != nil))
-	fmt.Println(fmt.Sprintf("Len?: %d", len(r.modules.List)))
-
-	return nil
 }
 
 func updateString(toUpdate *string, value *string) {
