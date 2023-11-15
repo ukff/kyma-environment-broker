@@ -268,12 +268,12 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		parameters.Modules = nil
 	}
 
-	fmt.Println("===")
+	fmt.Println("=== Instance Create ===")
 	fmt.Println(fmt.Sprintf("modules -> %p", &parameters.Modules))
-	fmt.Println(fmt.Sprintf("modules nil? %t", parameters.Modules != nil))
-	fmt.Println(fmt.Sprintf("list nil? %t", parameters.Modules != nil && parameters.Modules.List != nil))
+	fmt.Println(fmt.Sprintf("modules nil? %t", parameters.Modules == nil))
+	fmt.Println(fmt.Sprintf("list nil? %t", parameters.Modules != nil && parameters.Modules.List == nil))
 	fmt.Println(fmt.Sprintf("list len? %d", len(parameters.Modules.List)))
-	fmt.Println("===")
+	fmt.Println("=== Instance Create ===")
 
 	var autoscalerMin, autoscalerMax int
 	if defaults.GardenerConfig != nil {
