@@ -41,25 +41,14 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 		return operation, 0, nil
 	}
 
-	fmt.Println(fmt.Sprintf("modules -> %p", &operation.ProvisioningParameters.Parameters.Modules))
-	if operation.ProvisioningParameters.Parameters.Modules != nil {
-		modulesParams := *operation.ProvisioningParameters.Parameters.Modules
-		fmt.Println("=== Override ===")
-		fmt.Println(fmt.Sprintf("obj: %v", modulesParams))
-		fmt.Println(fmt.Sprintf("default nil?: %t", modulesParams.Default == nil))
-		fmt.Println(fmt.Sprintf("default true?: %t", modulesParams.Default != nil && *modulesParams.Default))
-		fmt.Println(fmt.Sprintf("default false?: %t", modulesParams.Default != nil && !*modulesParams.Default))
-		fmt.Println(fmt.Sprintf("list nil? %t", modulesParams.List == nil))
-		fmt.Println(fmt.Sprintf("list not nil? %t", modulesParams.List != nil))
-		fmt.Println(fmt.Sprintf("list len? %d", len(modulesParams.List)))
-		fmt.Println("=== Override ===")
-
+	modulesParams := operation.ProvisioningParameters.Parameters.Modules
+	if modulesParams != nil {
 		defaultModulesSetToFalse := modulesParams.Default != nil && !*modulesParams.Default  // 1 case
 		customModulesListPassed := modulesParams.Default == nil && modulesParams.List != nil // 2 & 3 case
 		overrideModules := defaultModulesSetToFalse || customModulesListPassed
 		if overrideModules {
 			k.logger.Info("custom modules parameters are set, the content of list will replace current modules section. Default settings will be overriden.")
-			return k.handleModulesOverride(operation, modulesParams)
+			return k.handleModulesOverride(operation, *modulesParams)
 		}
 	}
 

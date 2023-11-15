@@ -207,6 +207,14 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
+	fmt.Println("=== Instance Create 2 ===")
+	fmt.Println(fmt.Sprintf("modules -> %p", &instance.Parameters.Parameters.Modules))
+	fmt.Println(fmt.Sprintf("modules nil? %t", instance.Parameters.Parameters.Modules == nil))
+	fmt.Println(fmt.Sprintf("list is nil? %t", instance.Parameters.Parameters.Modules != nil && instance.Parameters.Parameters.Modules == nil))
+	fmt.Println(fmt.Sprintf("list is set? %t", instance.Parameters.Parameters.Modules != nil && instance.Parameters.Parameters.Modules != nil))
+	fmt.Println(fmt.Sprintf("list len? %d", len(instance.Parameters.Parameters.Modules.List)))
+	fmt.Println("=== Instance Create 2 ===")
+
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
@@ -269,16 +277,8 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	if parameters.Modules != nil && parameters.Modules.Default == nil && parameters.Modules.List != nil && len(parameters.Modules.List) == 0 {
-		// parameters.Modules.Default = ptr.Bool(false)
+		parameters.Modules.Default = ptr.Bool(false)
 	}
-
-	fmt.Println("=== Instance Create ===")
-	fmt.Println(fmt.Sprintf("modules -> %p", &parameters.Modules))
-	fmt.Println(fmt.Sprintf("modules nil? %t", parameters.Modules == nil))
-	fmt.Println(fmt.Sprintf("list nil? %t", parameters.Modules != nil && parameters.Modules.List == nil))
-	fmt.Println(fmt.Sprintf("list set? %t", parameters.Modules != nil && parameters.Modules.List != nil))
-	fmt.Println(fmt.Sprintf("list len? %d", len(parameters.Modules.List)))
-	fmt.Println("=== Instance Create ===")
 
 	var autoscalerMin, autoscalerMax int
 	if defaults.GardenerConfig != nil {
