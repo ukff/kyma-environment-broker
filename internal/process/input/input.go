@@ -799,7 +799,12 @@ func (r *RuntimeInput) configureModules() error {
 		r.modules = *r.provisioningParameters.Parameters.Modules
 		fmt.Println(r.modules)
 	}
-	fmt.Println("configure modules not set")
+	fmt.Println("configure modules set:")
+
+	fmt.Println(fmt.Sprintf("set is %v", r.modules))
+	fmt.Println(fmt.Sprintf("Is nil: %t", r.modules.List != nil))
+	fmt.Println(fmt.Sprintf("Len?: %d", len(r.modules.List)))
+
 	return nil
 }
 
