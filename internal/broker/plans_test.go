@@ -14,7 +14,7 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
-	modulesEnabled := true
+	modulesEnabled := false
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, []string, bool, bool) *map[string]interface{}

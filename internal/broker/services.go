@@ -54,7 +54,7 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
 	regionRequired := b.cfg.ExposeSchemaWithRegionRequired || b.cfg.RegionParameterIsRequired
-	modulesEnabled := b.cfg.AllowModulesParameters
+	modulesEnabled := false
 	for _, plan := range Plans(class.Plans, provider, b.cfg.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), regionRequired, modulesEnabled) {
 		// filter out not enabled plans
 		if _, exists := b.enabledPlanIDs[plan.ID]; !exists {
