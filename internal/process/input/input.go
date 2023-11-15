@@ -792,9 +792,13 @@ func (r *RuntimeInput) setOIDCDefaultValuesIfEmpty(oidcConfig *gqlschema.OIDCCon
 }
 
 func (r *RuntimeInput) configureModules() error {
+	fmt.Println("configure modules called.")
 	if r.provisioningParameters.Parameters.Modules != nil {
+		fmt.Println("modules ->")
+		fmt.Println(r.provisioningParameters.Parameters.Modules)
 		r.modules = *r.provisioningParameters.Parameters.Modules
 	}
+	fmt.Println("configure modules not set")
 	return nil
 }
 
