@@ -207,14 +207,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
-	fmt.Println("=== Instance Create 2 ===")
-	fmt.Println(fmt.Sprintf("modules -> %p", &instance.Parameters.Parameters.Modules))
-	fmt.Println(fmt.Sprintf("modules nil? %t", instance.Parameters.Parameters.Modules == nil))
-	fmt.Println(fmt.Sprintf("list is nil? %t", instance.Parameters.Parameters.Modules != nil && instance.Parameters.Parameters.Modules == nil))
-	fmt.Println(fmt.Sprintf("list is set? %t", instance.Parameters.Parameters.Modules != nil && instance.Parameters.Parameters.Modules != nil))
-	fmt.Println(fmt.Sprintf("list len? %d", len(instance.Parameters.Parameters.Modules.List)))
-	fmt.Println("=== Instance Create 2 ===")
-
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
