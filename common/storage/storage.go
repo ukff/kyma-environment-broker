@@ -1,8 +1,13 @@
 package storage
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 func StringToSQLNullString(input string) sql.NullString {
+	fmt.Println("==StringToSQLNullString==")
+	fmt.Println(input)
 	result := sql.NullString{}
 
 	if input != "" {
@@ -10,6 +15,8 @@ func StringToSQLNullString(input string) sql.NullString {
 		result.Valid = true
 	}
 
+	fmt.Println(result.String)
+	fmt.Println("==StringToSQLNullString==")
 	return result
 }
 
