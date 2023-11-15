@@ -122,6 +122,6 @@ func (k *OverrideKymaModules) prepareModulesSection(customModuleList []internal.
 		overridedModules = append(overridedModules, module)
 	}
 
-	k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
+	k.logger.Infof("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
 	return overridedModules
 }

@@ -270,6 +270,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	if parameters.Modules != nil && parameters.Modules.Default == nil && parameters.Modules.List != nil && len(parameters.Modules.List) == 0 {
 		parameters.Modules.Default = ptr.Bool(false)
+		parameters.Modules.List = nil
 	}
 
 	var autoscalerMin, autoscalerMax int
