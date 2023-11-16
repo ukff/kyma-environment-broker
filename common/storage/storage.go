@@ -1,6 +1,8 @@
 package storage
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 func StringToSQLNullString(input string) sql.NullString {
 	result := sql.NullString{}

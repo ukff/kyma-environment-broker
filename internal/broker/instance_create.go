@@ -263,7 +263,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, err
 	}
 
-	if !b.config.AllowModulesParameters {
+	if !b.config.AllowModulesParameters && parameters.Modules != nil {
 		b.log.Infof("modules section passed to API, but AllowModulesParameters is set to false. Parameters will be reset to nil")
 		parameters.Modules = nil
 	}

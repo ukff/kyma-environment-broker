@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -52,7 +53,7 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 	}
 
 	// default behaviour
-	k.logger.Infof("Kyma will be created with default modules. %s didn't perform any action. %s", k.Name())
+	k.logger.Infof("Kyma will be created with default modules. %s didn't perform any action.", k.Name())
 	return operation, 0, nil
 }
 
@@ -84,35 +85,22 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 	}, k.logger)
 }
 
-// To consider using -> unstructured.SetNestedSlice()
-func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []*internal.ModuleDTO) error {
-	const (
-		specKey    = "spec"
-		modulesKey = "modules"
-	)
-
-	content := kymaTemplate.Object
-	specSection, ok := content[specKey]
-	if !ok {
-		return fmt.Errorf("getting spec content of kyma template")
+func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []internal.ModuleDTO) error {
+	toInsert := k.prepareModulesSection(customModuleList)
+	toInsertMarshaled, err := json.Marshal(toInsert)
+	if err != nil {
+		return err
 	}
-	spec, ok := specSection.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("converting spec of kyma template")
+	var toInsertUnmarshaled interface{}
+	err = json.Unmarshal(toInsertMarshaled, &toInsertUnmarshaled)
+	if err != nil {
+		return err
 	}
-	modulesSection, ok := spec[modulesKey]
-	if !ok {
-		return fmt.Errorf("getting modules content of kyma template")
-	}
-
-	modulesSection = k.prepareModulesSection(customModuleList)
-	spec[modulesKey] = modulesSection
-	kymaTemplate.Object[specKey] = specSection
-
+	unstructured.SetNestedField(kymaTemplate.Object, toInsertUnmarshaled, "spec", "modules")
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
-func (k *OverrideKymaModules) prepareModulesSection(customModuleList []*internal.ModuleDTO) []internal.ModuleDTO {
+func (k *OverrideKymaModules) prepareModulesSection(customModuleList []internal.ModuleDTO) []internal.ModuleDTO {
 	// if field is "" convert it to nil to field will be not present in yaml
 	mapIfNeeded := func(field *string) *string {
 		if field != nil && *field == "" {
@@ -134,6 +122,6 @@ func (k *OverrideKymaModules) prepareModulesSection(customModuleList []*internal
 		overridedModules = append(overridedModules, module)
 	}
 
-	k.logger.Info("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
+	k.logger.Infof("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
 	return overridedModules
 }

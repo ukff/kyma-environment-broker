@@ -342,7 +342,7 @@ func main() {
 	// metrics collectors
 	metrics.RegisterAll(eventBroker, db.Operations(), db.Instances())
 	metrics.StartOpsMetricService(ctx, db.Operations(), logs)
-	//setup runtime overrides appender
+	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 
 	// define steps
@@ -473,7 +473,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	fatalOnError(err)
 	logger.RegisterSink(errorSink)
 
-	//EU Access whitelisting
+	// EU Access whitelisting
 	whitelistedGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
