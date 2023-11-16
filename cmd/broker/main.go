@@ -240,7 +240,6 @@ func main() {
 	logs.Infof("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout)
 	logs.Infof("Setting reconciler timeout: provisioning=%s", cfg.Reconciler.ProvisioningTimeout)
 	logs.Infof("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update)
-	logs.Infof("Debug: %d", 2)
 
 	// create provisioner client
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)
