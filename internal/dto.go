@@ -360,7 +360,7 @@ var (
 
 type ModulesDTO struct {
 	Default *bool       `json:"default,omitempty" yaml:"default,omitempty"`
-	List    []ModuleDTO `json:"list,omitempty" yaml:"list,omitempty"`
+	List    []ModuleDTO `json:"list" yaml:"list"`
 }
 
 type ModuleDTO struct {
