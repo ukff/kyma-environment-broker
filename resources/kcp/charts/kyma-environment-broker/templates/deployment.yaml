@@ -11,14 +11,14 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
   strategy:
     {{- toYaml .Values.deployment.strategy | nindent 4 }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/instance: {{ .Values.namePrefix }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app-config.yaml") . | sha256sum }}
     spec:
@@ -310,8 +310,6 @@ spec:
               value: "{{ .Values.avs.providerTagClassId }}"
             - name: APP_AVS_SHOOT_NAME_TAG_CLASS_ID
               value: "{{ .Values.avs.shootNameTagClassId }}"
-            - name: APP_AVS_EXTERNAL_TESTER_DISABLED
-              value: "{{ .Values.avs.externalTesterDisabled }}"
             - name: APP_AVS_MAINTENANCE_MODE_DURING_UPGRADE_DISABLED
               value: "{{ .Values.avs.maintenanceModeDuringUpgrade.disabled }}"
             - name: APP_AVS_MAINTENANCE_MODE_DURING_UPGRADE_ALWAYS_DISABLED_GLOBAL_ACCOUNTS_FILE_PATH

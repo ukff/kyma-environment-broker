@@ -26,13 +26,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: istio-monitoring
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -43,13 +45,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: istio-info-runtimes
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -70,13 +74,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: istio-oauth2-local
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -93,6 +99,8 @@ kind: AuthorizationPolicy
 metadata:
   name: istio-oauth2
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -116,13 +124,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: istio-runtimes
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -157,13 +167,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: istio-events
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -197,13 +209,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: istio-orchestrations
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -226,7 +240,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
       
 ---
 apiVersion: security.istio.io/v1beta1
@@ -234,6 +248,8 @@ kind: AuthorizationPolicy
 metadata:
   name: istio-upgrade
   namespace: kcp-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   action: ALLOW
   rules:
@@ -254,4 +270,4 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}

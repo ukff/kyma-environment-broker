@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "fullname" . }}-dashboard
+  name: {{ include "kyma-env-broker.fullname" . }}-dashboard
   namespace: kyma-system
   labels:
     grafana_dashboard: "1"
@@ -9,5 +9,5 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 data:
-  {{ template "fullname" . }}-dashboard.json: |-
+  {{ include "kyma-env-broker.fullname" . }}-dashboard.json: |-
 {{ .Files.Get "files/dashboard.json" | indent 4 }}
