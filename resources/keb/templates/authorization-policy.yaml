@@ -91,7 +91,7 @@ spec:
             namespaces: ["kcp-system"]
   selector:
     matchLabels:
-      app.kubernetes.io/instance: kcp
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
       app.kubernetes.io/name: kyma-environment-broker
 ---
 apiVersion: security.istio.io/v1beta1
