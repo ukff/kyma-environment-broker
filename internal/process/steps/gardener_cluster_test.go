@@ -3,6 +3,9 @@ package steps
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/pivotal-cf/brokerapi/v8/domain"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -43,7 +46,7 @@ spec:
 	assert.YAMLEq(t, expectedYaml, string(d))
 }
 
-func TestSyncGardenerCluster_RunWithExistingREsource(t *testing.T) {
+func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
@@ -83,6 +86,8 @@ spec:
 	err = k8sClient.Get(context.Background(), client.ObjectKeyFromObject(existingAsUnstructured), got)
 	assert.NoError(t, err)
 	assert.Equal(t, "01234", got.GetLabels()["my-label"])
+	gc := NewGardenerClusterFromUnstructured(got)
+	assert.Equal(t, "", gc.GetState())
 }
 
 func TestSyncGardenerCluster_Run(t *testing.T) {
@@ -117,6 +122,74 @@ spec:
       name: kubeconfig-runtime-id-000
       namespace: kcp-system
 `, k8sClient)
+}
+
+func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
+	// given
+	os := storage.NewMemoryStorage().Operations()
+	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
+	existingGC.SetState("Ready")
+	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
+	step := NewCheckGardenerCluster(os, k8sClient)
+	operation := fixture.FixProvisioningOperation("op", "instance-id")
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeID = "runtime-id-000"
+	operation.ShootName = "c-12345"
+	os.InsertOperation(operation)
+
+	// when
+	_, backoff, err := step.Run(operation, logrus.New())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+}
+
+func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
+	// given
+	os := storage.NewMemoryStorage().Operations()
+	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
+	existingGC.SetState("In progress")
+	existingGC.SetStatusConditions("some condition")
+	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
+	step := NewCheckGardenerCluster(os, k8sClient)
+	operation := fixture.FixProvisioningOperation("op", "instance-id")
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeID = "runtime-id-000"
+	operation.ShootName = "c-12345"
+	operation.UpdatedAt = time.Now().Add(-1 * time.Hour)
+	os.InsertOperation(operation)
+
+	// when
+	op, backoff, err := step.Run(operation, logrus.New())
+
+	// then
+	assert.Error(t, err)
+	assert.Zero(t, backoff)
+	assert.Equal(t, domain.Failed, op.State)
+}
+
+func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
+	// given
+	os := storage.NewMemoryStorage().Operations()
+	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
+	existingGC.SetState("In progress")
+	existingGC.SetStatusConditions("some condition")
+	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
+	step := NewCheckGardenerCluster(os, k8sClient)
+	operation := fixture.FixProvisioningOperation("op", "instance-id")
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeID = "runtime-id-000"
+	operation.ShootName = "c-12345"
+	operation.UpdatedAt = time.Now()
+	os.InsertOperation(operation)
+
+	// when
+	_, backoff, err := step.Run(operation, logrus.New())
+
+	// then
+	assert.NoError(t, err)
+	assert.NotZero(t, backoff)
 }
 
 func assertGardenerClusterSpec(t *testing.T, s string, k8sClient client.Client) {
