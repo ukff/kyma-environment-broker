@@ -124,6 +124,7 @@ type Config struct {
 	UpdateSubAccountMovementEnabled                                     bool   `envconfig:"default=false"`
 	LifecycleManagerIntegrationDisabled                                 bool   `envconfig:"default=true"`
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
+	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
 
 	Broker          broker.Config
@@ -240,6 +241,7 @@ func main() {
 	logs.Infof("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout)
 	logs.Infof("Setting reconciler timeout: provisioning=%s", cfg.Reconciler.ProvisioningTimeout)
 	logs.Infof("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update)
+	logs.Infof("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled)
 
 	// create provisioner client
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)

@@ -144,6 +144,9 @@ reconciler:
   provisioningTimeout: "2h"
   disabled: "false"
 
+infrastructureManager:
+  disabled: "true"
+
 lifecycleManager:
   disabled: "true"
 

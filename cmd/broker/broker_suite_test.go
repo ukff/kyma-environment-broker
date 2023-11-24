@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -298,6 +300,25 @@ func defaultOIDCConfig() *gqlschema.OIDCConfigInput {
 	}
 }
 
+func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningByRuntimeID(runtimeID string) {
+	err := s.poller.Invoke(func() (bool, error) {
+		gardenerCluster := &unstructured.Unstructured{}
+		gardenerCluster.SetGroupVersionKind(steps.GardenerClusterGVK())
+		err := s.k8sKcp.Get(context.Background(), client.ObjectKey{
+			Namespace: "kyma-system",
+			Name:      runtimeID,
+		}, gardenerCluster)
+		if err != nil {
+			return false, nil
+		}
+
+		unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		err = s.k8sKcp.Update(context.Background(), gardenerCluster)
+		return err == nil, nil
+	})
+	assert.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) ChangeDefaultTrialProvider(provider internal.CloudProvider) {
 	s.inputBuilderFactory.(*input.InputBuilderFactory).SetDefaultTrialProvider(provider)
 }
@@ -417,7 +438,7 @@ func (s *BrokerSuiteTest) LastOperation(iid string) *internal.Operation {
 	return op
 }
 
-func (s *BrokerSuiteTest) FinishProvisioningOperationByProvisioner(operationID string, operationState gqlschema.OperationState) {
+func (s *BrokerSuiteTest) FinishProvisioningOperationByProvisionerAndInfrastructureManager(operationID string, operationState gqlschema.OperationState) {
 	var op *internal.ProvisioningOperation
 	err := s.poller.Invoke(func() (done bool, err error) {
 		op, _ = s.db.Operations().GetProvisioningOperationByID(operationID)
@@ -429,6 +450,9 @@ func (s *BrokerSuiteTest) FinishProvisioningOperationByProvisioner(operationID s
 	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
 
 	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, operationState, op.RuntimeID)
+	if operationState == gqlschema.OperationStateSucceeded {
+		s.ProcessInfrastructureManagerProvisioningByRuntimeID(op.RuntimeID)
+	}
 }
 
 func (s *BrokerSuiteTest) FailProvisioningOperationByProvisioner(operationID string) {
@@ -1147,7 +1171,7 @@ func (s *BrokerSuiteTest) processProvisioningByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 	s.AssertProvisionerStartedProvisioning(opID)
 
-	s.FinishProvisioningOperationByProvisioner(opID, gqlschema.OperationStateSucceeded)
+	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateSucceeded)
 	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
 	require.NoError(s.t, err)
 
@@ -1168,7 +1192,7 @@ func (s *BrokerSuiteTest) failProvisioningByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 	s.AssertProvisionerStartedProvisioning(opID)
 
-	s.FinishProvisioningOperationByProvisioner(opID, gqlschema.OperationStateFailed)
+	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateFailed)
 
 	// provisioner finishes the operation
 	s.WaitForOperationState(opID, domain.Failed)
@@ -1210,7 +1234,7 @@ func (s *BrokerSuiteTest) processProvisioningAndReconcilingByOperationID(opID st
 	// Provisioner part
 	s.WaitForProvisioningState(opID, domain.InProgress)
 	s.AssertProvisionerStartedProvisioning(opID)
-	s.FinishProvisioningOperationByProvisioner(opID, gqlschema.OperationStateSucceeded)
+	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateSucceeded)
 	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
 	require.NoError(s.t, err)
 
@@ -1230,7 +1254,7 @@ func (s *BrokerSuiteTest) processProvisioningAndFailReconcilingByOperationID(opI
 	// Provisioner part
 	s.WaitForProvisioningState(opID, domain.InProgress)
 	s.AssertProvisionerStartedProvisioning(opID)
-	s.FinishProvisioningOperationByProvisioner(opID, gqlschema.OperationStateSucceeded)
+	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateSucceeded)
 	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
 	require.NoError(s.t, err)
 

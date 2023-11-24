@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 
@@ -570,6 +573,7 @@ type ProvisioningSuite struct {
 	t                *testing.T
 	avsServer        *avs.MockAvsServer
 	reconcilerClient *reconciler.FakeClient
+	k8sKcpCli        client.Client
 }
 
 func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string) *ProvisioningSuite {
@@ -656,6 +660,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		directorClient:      directorClient,
 		avsServer:           server,
 		reconcilerClient:    reconcilerClient,
+		k8sKcpCli:           cli,
 
 		t: t,
 	}
@@ -761,6 +766,25 @@ func (s *ProvisioningSuite) WaitForProvisioningState(operationID string, state d
 	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s. The existing operation %+v", state, op)
 }
 
+func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(runtimeID string) {
+	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (bool, error) {
+		gardenerCluster := &unstructured.Unstructured{}
+		gardenerCluster.SetGroupVersionKind(steps.GardenerClusterGVK())
+		err := s.k8sKcpCli.Get(context.Background(), client.ObjectKey{
+			Namespace: "kyma-system",
+			Name:      runtimeID,
+		}, gardenerCluster)
+		if err != nil {
+			return false, nil
+		}
+
+		unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		err = s.k8sKcpCli.Update(context.Background(), gardenerCluster)
+		return err == nil, nil
+	})
+	assert.NoError(s.t, err)
+}
+
 func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconciler(operationID string) {
 	var op *internal.Operation
 	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
@@ -774,6 +798,7 @@ func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconcile
 
 	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, op.RuntimeID)
 
+	s.ProcessInfrastructureManagerProvisioningByRuntimeID(op.RuntimeID)
 	err = wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
 		if op.ClusterConfigurationVersion != 0 {

@@ -97,6 +97,8 @@ spec:
               value: "{{ .Values.lifecycleManager.disabled}}"
             - name: APP_RECONCILER_INTEGRATION_DISABLED
               value: "{{ .Values.reconciler.disabled }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_INTEGRATION_DISABLED
+              value: "{{ .Values.infrastructureManager.disabled}}"
             - name: APP_RECONCILER_PROVISIONING_TIMEOUT
               value: "{{ .Values.reconciler.provisioningTimeout }}"
             - name: APP_PROVISIONER_URL

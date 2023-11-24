@@ -104,6 +104,18 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
+			stage:     createRuntimeStageName,
+			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
+			step:      steps.NewSyncGardenerCluster(db.Operations(), cli),
+			condition: provisioning.SkipForOwnClusterPlan,
+		},
+		{
+			stage:     createRuntimeStageName,
+			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
+			step:      steps.NewCheckGardenerCluster(db.Operations(), cli),
+			condition: provisioning.SkipForOwnClusterPlan,
+		},
+		{
 			stage: createRuntimeStageName,
 			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient, k8sClientProvider),
 		},
