@@ -357,15 +357,15 @@ func (e *Environment) createTestData() {
 	}
 }
 
-func (e *Environment) createClusters(count int) {
-	tempSkrs := make([]*envtest.Environment, 0)
+func (e *Environment) createClusters(skrCount int) {
+	tempSkrs := make([]*envtest.Environment, skrCount)
 	wg := &sync.WaitGroup{}
-	for i := 0; i <= count; i++ {
+	for i := 0; i <= skrCount; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if i == count {
-				// KCP
+			// means we create always one KCP additional to requested number of SKRs.
+			if i == skrCount {
 				testEnv := &envtest.Environment{
 					CRDDirectoryPaths: []string{"testdata/crds/kyma.yaml"},
 				}
@@ -396,13 +396,19 @@ func (e *Environment) createClusters(count int) {
 					e.logs.Errorf("%e", err)
 					return
 				}
-				tempSkrs = append(tempSkrs, testEnv)
+
+				tempSkrs[i] = testEnv
 			}
 		}(i)
 	}
 	wg.Wait()
 	e.skrs = append(e.skrs, tempSkrs...)
-	require.Equal(e.t, len(e.skrs), count)
+	require.Equal(e.t, len(e.skrs), skrCount)
+	for _, skr := range e.skrs {
+		require.NotNil(e.t, skr)
+		require.NotEmpty(e.t, skr)
+	}
+	require.NotZero(e.t, e.skrs)
 	require.NotNil(e.t, e.kcp)
 }
 
