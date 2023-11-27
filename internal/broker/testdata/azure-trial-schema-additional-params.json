@@ -2,7 +2,6 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "_controlsOrder": [
     "name",
-    "modules",
     "oidc",
     "administrators"
   ],
