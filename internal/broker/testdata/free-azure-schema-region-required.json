@@ -3,6 +3,7 @@
   "_controlsOrder": [
     "name",
     "region",
+    "modules",
     "networking"
   ],
   "_show_form_view": true,
