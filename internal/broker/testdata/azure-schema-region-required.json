@@ -6,7 +6,6 @@
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
-    "modules",
     "networking"
   ],
   "_show_form_view": true,
@@ -48,7 +47,7 @@
           "properties": {
             "default": {
               "default": true,
-              "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
+              "description": "Check the default modules in the <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>default modules table</a>.",
               "readOnly": true,
               "title": "Use Default",
               "type": "boolean"
@@ -62,7 +61,7 @@
           "description": "Define custom module list",
           "properties": {
             "list": {
-              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+              "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
               "items": {
                 "_controlsOrder": [
                   "name",
@@ -101,7 +100,7 @@
                     "type": "string"
                   },
                   "name": {
-                    "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+                    "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once.",
                     "minLength": 1,
                     "title": "Name",
                     "type": "string"
