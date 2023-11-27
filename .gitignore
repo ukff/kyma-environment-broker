@@ -10,3 +10,4 @@ testing/e2e/skr/junit_keb-e2e-skr.xml
 cmd/broker/catalog-test.json
 
 bin
+bin/
