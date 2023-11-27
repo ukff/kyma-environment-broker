@@ -166,7 +166,7 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 					Type{
 						Type:        "boolean",
 						Title:       "Use Default",
-						Description: "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
+						Description: "Check the default modules in the <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>default modules table</a>.",
 						Default:     true,
 						ReadOnly:    true,
 					},
@@ -184,8 +184,7 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
-						},
+							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled."},
 						Items: ModulesCustomListItems{
 							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
 							Type: Type{
@@ -196,7 +195,7 @@ func NewModulesSchema(modulesEnabled bool) *Modules {
 									Type:        "string",
 									Title:       "Name",
 									MinLength:   1,
-									Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+									Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once.",
 								},
 								Channel: Type{
 									Type:        "string",
