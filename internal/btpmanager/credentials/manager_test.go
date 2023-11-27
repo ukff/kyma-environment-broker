@@ -359,11 +359,10 @@ func (e *Environment) createTestData() {
 
 func (e *Environment) createClusters(skrCount int) {
 	tempSkrs := make([]*envtest.Environment, skrCount)
-	
 	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	
-	// Create KCP cluster
+	// Create KCP
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		testEnv := &envtest.Environment{
