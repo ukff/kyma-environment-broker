@@ -357,52 +357,62 @@ func (e *Environment) createTestData() {
 	}
 }
 
-func (e *Environment) createClusters(count int) {
-	tempSkrs := make([]*envtest.Environment, 0)
+func (e *Environment) createClusters(skrCount int) {
+	tempSkrs := make([]*envtest.Environment, skrCount)
 	wg := &sync.WaitGroup{}
-	for i := 0; i <= count; i++ {
+
+	// Create KCP
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		testEnv := &envtest.Environment{
+			CRDDirectoryPaths: []string{"testdata/crds/kyma.yaml"},
+		}
+		cfg, err := testEnv.Start()
+		if err != nil {
+			e.logs.Errorf("%e", err)
+			return
+		}
+		k8sClient, err := client.New(cfg, client.Options{})
+		if err != nil {
+			e.logs.Errorf("%e", err)
+			return
+		}
+		e.kcp = k8sClient
+
+		namespace := &apicorev1.Namespace{}
+		namespace.ObjectMeta = metav1.ObjectMeta{Name: kcpNamespace}
+		err = e.kcp.Create(context.Background(), namespace)
+		if err != nil {
+			e.logs.Errorf("while creating KCP cluster: %e", err)
+			return
+		}
+	}()
+
+	// Create SKR Clusters
+	for i := 0; i < skrCount; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if i == count {
-				// KCP
-				testEnv := &envtest.Environment{
-					CRDDirectoryPaths: []string{"testdata/crds/kyma.yaml"},
-				}
-				cfg, err := testEnv.Start()
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-				k8sClient, err := client.New(cfg, client.Options{})
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-				e.kcp = k8sClient
-
-				namespace := &apicorev1.Namespace{}
-				namespace.ObjectMeta = metav1.ObjectMeta{Name: kcpNamespace}
-				err = e.kcp.Create(context.Background(), namespace)
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-			} else {
-				// SKR
-				testEnv := &envtest.Environment{}
-				_, err := testEnv.Start()
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-				tempSkrs = append(tempSkrs, testEnv)
+			testEnv := &envtest.Environment{}
+			_, err := testEnv.Start()
+			if err != nil {
+				e.logs.Errorf("while creating SKR cluster %e", err)
+				return
 			}
+
+			tempSkrs[i] = testEnv
 		}(i)
 	}
+
 	wg.Wait()
 	e.skrs = append(e.skrs, tempSkrs...)
-	require.Equal(e.t, len(e.skrs), count)
+	require.Equal(e.t, len(e.skrs), skrCount)
+	for _, skr := range e.skrs {
+		require.NotNil(e.t, skr)
+		require.NotEmpty(e.t, skr)
+	}
+	require.NotZero(e.t, e.skrs)
 	require.NotNil(e.t, e.kcp)
 }
 
