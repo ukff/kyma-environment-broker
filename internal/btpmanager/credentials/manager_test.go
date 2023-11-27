@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 	"time"
-
+	
 	"k8s.io/apimachinery/pkg/api/errors"
-
+	
 	uuid2 "github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
@@ -75,7 +75,7 @@ func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
 		ctx:   ctx,
 		t:     t,
 	}
-
+	
 	newEnvironment.createTestData()
 	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.kebDb.Instances(), logs, false, provisioner.NewFakeClient())
 	newEnvironment.watcher = NewWatcher(ctx, "3333", "btp-manager-secret-watcher", newEnvironment.manager, logs)
@@ -91,11 +91,11 @@ func TestBtpManagerReconciler(t *testing.T) {
 		path := strings.Replace(string(out), "\n", "", -1)
 		os.Setenv(envTestAssets, path)
 	}
-
+	
 	t.Run("btp manager credentials tests", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		environment := InitEnvironment(ctx, t)
-
+		
 		t.Run("reconcile, when all secrets are not set", func(t *testing.T) {
 			environment.assertAllSecretsNotExists()
 			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, err := environment.manager.ReconcileAll(jobReconciliationDelay)
@@ -106,7 +106,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
-
+		
 		t.Run("reconcile, when all secrets are correct", func(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, err := environment.manager.ReconcileAll(jobReconciliationDelay)
@@ -118,7 +118,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
-
+		
 		t.Run("reconcile, when some secrets are incorrect (dynamic selected)", func(t *testing.T) {
 			skrs := environment.getSkrsForSimulateChange([]int{})
 			environment.simulateSecretChangeOnSkr(skrs)
@@ -132,7 +132,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
-
+		
 		t.Run("reconcile, when some secrets are incorrect (static selected)", func(t *testing.T) {
 			max := max(testDataIndexes)
 			assert.GreaterOrEqual(t, expectedTakenInstancesCount-1, max)
@@ -148,7 +148,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
-
+		
 		t.Run("change one instance", func(t *testing.T) {
 			skrs := environment.getSkrsForSimulateChange([]int{0})
 			environment.simulateSecretChangeOnSkr(skrs)
@@ -165,7 +165,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			time.Sleep(time.Millisecond * 100)
 			environment.assureConsistency()
 		})
-
+		
 		t.Run("change many instances", func(t *testing.T) {
 			assert.GreaterOrEqual(t, expectedTakenInstancesCount, 1)
 			skrs := environment.getSkrsForSimulateChange([]int{1, expectedTakenInstancesCount - 1})
@@ -187,7 +187,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 					},
 				})}
 			}()
-
+			
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -201,7 +201,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			time.Sleep(time.Millisecond * 100)
 			environment.assureConsistency()
 		})
-
+		
 		t.Cleanup(func() {
 			cancel()
 		})
@@ -221,7 +221,7 @@ func TestManager(t *testing.T) {
 			XSAppName:         "a",
 		}, "a")
 		assert.NoError(t, err)
-
+		
 		expected, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "b",
 			ClientSecret:      "b",
@@ -230,14 +230,14 @@ func TestManager(t *testing.T) {
 			XSAppName:         "b",
 		}, "b")
 		assert.NoError(t, err)
-
+		
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.NoError(t, err)
 		assert.NotNil(t, notMatchingKeys)
 		assert.Greater(t, len(notMatchingKeys), 0)
 		assert.Equal(t, notMatchingKeys, []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId})
 	})
-
+	
 	t.Run("compare secrets with partially different data", func(t *testing.T) {
 		current, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "a",
@@ -247,7 +247,7 @@ func TestManager(t *testing.T) {
 			XSAppName:         "a",
 		}, "a")
 		assert.NoError(t, err)
-
+		
 		expected, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "b",
 			ClientSecret:      "b",
@@ -256,14 +256,14 @@ func TestManager(t *testing.T) {
 			XSAppName:         "a",
 		}, "a")
 		assert.NoError(t, err)
-
+		
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.NoError(t, err)
 		assert.NotNil(t, notMatchingKeys)
 		assert.Greater(t, len(notMatchingKeys), 0)
 		assert.Equal(t, notMatchingKeys, []string{secretClientSecret, secretClientId})
 	})
-
+	
 	t.Run("compare secrets with the same data", func(t *testing.T) {
 		current, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "a1",
@@ -273,7 +273,7 @@ func TestManager(t *testing.T) {
 			XSAppName:         "a5",
 		}, "a6")
 		assert.NoError(t, err)
-
+		
 		expected, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "a1",
 			ClientSecret:      "a2",
@@ -282,13 +282,13 @@ func TestManager(t *testing.T) {
 			XSAppName:         "a5",
 		}, "a6")
 		assert.NoError(t, err)
-
+		
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.NoError(t, err)
 		assert.NotNil(t, notMatchingKeys)
 		assert.Equal(t, len(notMatchingKeys), 0)
 	})
-
+	
 	t.Run("compare secrets where some of data is missing and data is same", func(t *testing.T) {
 		current, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "a",
@@ -299,7 +299,7 @@ func TestManager(t *testing.T) {
 		}, "a")
 		assert.NoError(t, err)
 		delete(current.Data, secretClientSecret)
-
+		
 		expected, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "a",
 			ClientSecret:      "a",
@@ -307,12 +307,12 @@ func TestManager(t *testing.T) {
 			URL:               "a",
 			XSAppName:         "a",
 		}, "a")
-
+		
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.Nil(t, notMatchingKeys)
 		assert.Error(t, err)
 	})
-
+	
 	t.Run("compare secrets where some of data is missing and data are different", func(t *testing.T) {
 		current, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "a",
@@ -323,7 +323,7 @@ func TestManager(t *testing.T) {
 		}, "a")
 		assert.NoError(t, err)
 		delete(current.Data, secretClientSecret)
-
+		
 		expected, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
 			ClientID:          "b",
 			ClientSecret:      "b",
@@ -332,7 +332,7 @@ func TestManager(t *testing.T) {
 			XSAppName:         "b",
 		}, "b")
 		assert.NoError(t, err)
-
+		
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.Nil(t, notMatchingKeys)
 		assert.Error(t, err)
@@ -351,7 +351,7 @@ func (e *Environment) createTestData() {
 		e.createKyma(runtimeId, instanceId)
 		e.skrRuntimeId[clusterId] = runtimeId
 	}
-
+	
 	for i := 0; i < expectedRejectedInstancesCount; i++ {
 		e.createInstance("", generateServiceManagerCredentials(), "")
 	}
@@ -359,48 +359,53 @@ func (e *Environment) createTestData() {
 
 func (e *Environment) createClusters(skrCount int) {
 	tempSkrs := make([]*envtest.Environment, skrCount)
+	
 	wg := &sync.WaitGroup{}
-	for i := 0; i <= skrCount; i++ {
+	wg.Add(1)
+	
+	// Create KCP cluster
+	go func() {
+		defer wg.Done()
+		testEnv := &envtest.Environment{
+			CRDDirectoryPaths: []string{"testdata/crds/kyma.yaml"},
+		}
+		cfg, err := testEnv.Start()
+		if err != nil {
+			e.logs.Errorf("%e", err)
+			return
+		}
+		k8sClient, err := client.New(cfg, client.Options{})
+		if err != nil {
+			e.logs.Errorf("%e", err)
+			return
+		}
+		e.kcp = k8sClient
+		
+		namespace := &apicorev1.Namespace{}
+		namespace.ObjectMeta = metav1.ObjectMeta{Name: kcpNamespace}
+		err = e.kcp.Create(context.Background(), namespace)
+		if err != nil {
+			e.logs.Errorf("while creating KCP cluster: %e", err)
+			return
+		}
+	}()
+	
+	// Create SKR Clusters
+	for i := 0; i < skrCount; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			// means we create always one KCP additional to requested number of SKRs.
-			if i == skrCount {
-				testEnv := &envtest.Environment{
-					CRDDirectoryPaths: []string{"testdata/crds/kyma.yaml"},
-				}
-				cfg, err := testEnv.Start()
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-				k8sClient, err := client.New(cfg, client.Options{})
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-				e.kcp = k8sClient
-
-				namespace := &apicorev1.Namespace{}
-				namespace.ObjectMeta = metav1.ObjectMeta{Name: kcpNamespace}
-				err = e.kcp.Create(context.Background(), namespace)
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-			} else {
-				// SKR
-				testEnv := &envtest.Environment{}
-				_, err := testEnv.Start()
-				if err != nil {
-					e.logs.Errorf("%e", err)
-					return
-				}
-
-				tempSkrs[i] = testEnv
+			testEnv := &envtest.Environment{}
+			_, err := testEnv.Start()
+			if err != nil {
+				e.logs.Errorf("while creating SKR cluster %e", err)
+				return
 			}
+			
+			tempSkrs[i] = testEnv
 		}(i)
 	}
+	
 	wg.Wait()
 	e.skrs = append(e.skrs, tempSkrs...)
 	require.Equal(e.t, len(e.skrs), skrCount)
@@ -415,7 +420,7 @@ func (e *Environment) createClusters(skrCount int) {
 func (e *Environment) createInstance(kubeConfig string, credentials *internal.ServiceManagerOperatorCredentials, clusterId string) (string, string) {
 	instanceId, err := uuid2.NewUUID()
 	require.NoError(e.t, err)
-
+	
 	runtimeId := ""
 	reconcilable := false
 	if kubeConfig != "" && clusterId != "" {
@@ -425,7 +430,7 @@ func (e *Environment) createInstance(kubeConfig string, credentials *internal.Se
 		e.createKubeConfigSecret(kubeConfig, runtimeId)
 		reconcilable = true
 	}
-
+	
 	instance := &internal.Instance{
 		InstanceID: instanceId.String(),
 		RuntimeID:  runtimeId,
@@ -442,7 +447,7 @@ func (e *Environment) createInstance(kubeConfig string, credentials *internal.Se
 		},
 	}
 	instance.Reconcilable = reconcilable
-
+	
 	err = e.kebDb.Instances().Insert(*instance)
 	require.NoError(e.t, err)
 	return instanceId.String(), runtimeId
@@ -520,7 +525,7 @@ func (e *Environment) getSkrsForSimulateChange(skrIndexes []int) []*envtest.Envi
 				indexSet[random] = struct{}{}
 			}
 		}
-
+		
 		for index, _ := range indexSet {
 			testEnv := e.skrs[index]
 			result = append(result, testEnv)
@@ -564,13 +569,13 @@ func (e *Environment) assertAllSecretDataAreSet() {
 	for _, skr := range e.skrs {
 		skrSecret := e.getSecretFromSkr(skr.Config)
 		require.NotNil(e.t, skrSecret)
-
+		
 		require.NotEmpty(e.t, getString(skrSecret.Data, secretClientId))
 		require.NotEmpty(e.t, getString(skrSecret.Data, secretClientSecret))
 		require.NotEmpty(e.t, getString(skrSecret.Data, secretSmUrl))
 		require.NotEmpty(e.t, getString(skrSecret.Data, secretTokenUrl))
 		require.NotEmpty(e.t, getString(skrSecret.Data, secretClusterId))
-
+		
 	}
 }
 
@@ -578,14 +583,14 @@ func (e *Environment) assureConsistency() {
 	takenInstances, err := e.manager.GetReconcileCandidates()
 	require.NoError(e.t, err)
 	require.Equal(e.t, expectedTakenInstancesCount, len(takenInstances))
-
+	
 	for _, instance := range takenInstances {
 		skrK8sCfg, credentials := []byte(instance.Parameters.Parameters.Kubeconfig), instance.Parameters.ErsContext.SMOperatorCredentials
 		restCfg, err := clientcmd.RESTConfigFromKubeConfig(skrK8sCfg)
 		require.NoError(e.t, err)
 		skrSecret := e.getSecretFromSkr(restCfg)
 		require.NotNil(e.t, skrSecret)
-
+		
 		require.Equal(e.t, getString(skrSecret.Data, secretClientId), credentials.ClientID)
 		require.Equal(e.t, getString(skrSecret.Data, secretClientSecret), credentials.ClientSecret)
 		require.Equal(e.t, getString(skrSecret.Data, secretSmUrl), credentials.ServiceManagerURL)
@@ -598,7 +603,7 @@ func (e *Environment) assureThatClusterIsInIncorrectState() int {
 	takenInstances, err := e.manager.GetReconcileCandidates()
 	require.NoError(e.t, err)
 	require.Equal(e.t, expectedTakenInstancesCount, len(takenInstances))
-
+	
 	incorrectClusters := 0
 	for _, instance := range takenInstances {
 		require.NoError(e.t, err)
@@ -607,7 +612,7 @@ func (e *Environment) assureThatClusterIsInIncorrectState() int {
 		require.NoError(e.t, err)
 		skrSecret := e.getSecretFromSkr(restCfg)
 		require.NotNil(e.t, skrSecret)
-
+		
 		if getString(skrSecret.Data, secretClientSecret) != credentials.ClientSecret {
 			incorrectClusters++
 			continue
@@ -625,7 +630,7 @@ func (e *Environment) assureThatClusterIsInIncorrectState() int {
 			continue
 		}
 	}
-
+	
 	return incorrectClusters
 }
 
