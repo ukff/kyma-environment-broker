@@ -3,7 +3,6 @@
   "_controlsOrder": [
     "name",
     "region",
-    "modules",
     "networking",
     "oidc",
     "administrators"

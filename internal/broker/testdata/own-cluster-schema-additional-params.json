@@ -4,8 +4,7 @@
     "name",
     "kubeconfig",
     "shootName",
-    "shootDomain",
-    "modules"
+    "shootDomain"
   ],
   "_show_form_view": true,
   "properties": {

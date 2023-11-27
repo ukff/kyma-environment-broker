@@ -6,7 +6,6 @@
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
-    "modules",
     "networking",
     "oidc",
     "administrators"
