@@ -239,8 +239,8 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 		componentProvider:   decoratedComponentListProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
-		poller:              &broker.DefaultPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 2 * time.Second},
 	}
+	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 5 * time.Second, Log: ts.t.Log}
 
 	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs)
 

@@ -43,3 +43,18 @@ func (p *PassthroughPoller) Invoke(logic func() (bool, error)) error {
 	}
 	return err
 }
+
+type TimerPoller struct {
+	PollInterval time.Duration
+	PollTimeout  time.Duration
+	Log          func(args ...any)
+}
+
+func (p *TimerPoller) Invoke(logic func() (bool, error)) error {
+	var start = time.Now()
+	result := wait.PollImmediate(p.PollInterval, p.PollTimeout, func() (bool, error) {
+		return logic()
+	})
+	p.Log(fmt.Sprintf("Waiting for the logic execution took: %v", time.Since(start)))
+	return result
+}
