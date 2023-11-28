@@ -24,6 +24,9 @@ rules:
   - apiGroups: [ "operator.kyma-project.io" ]
     resources: [ "kymas" ]
     verbs: [ "*" ]
+  - apiGroups: [ "infrastructuremanager.kyma-project.io" ]
+    resources: [ "gardenerclusters" ]
+    verbs: [ "*" ]
 
 ---
 kind: RoleBinding
