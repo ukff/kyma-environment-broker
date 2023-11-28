@@ -58,6 +58,7 @@ func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
+	os.InsertOperation(operation)
 	svc := NewSyncGardenerCluster(os, k8sClient)
 
 	// when
@@ -100,6 +101,7 @@ func TestSyncGardenerCluster_Run(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
+	os.InsertOperation(operation)
 
 	// when
 	_, backoff, err := svc.Run(operation, logrus.New())

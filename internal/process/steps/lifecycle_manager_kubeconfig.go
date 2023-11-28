@@ -46,11 +46,7 @@ func (_ deleteKubeconfig) Name() string {
 func (s syncKubeconfig) Run(o internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	secret := initSecret(o)
 	if err := s.k8sClient.Create(context.Background(), secret); errors.IsAlreadyExists(err) {
-		if err := s.k8sClient.Update(context.Background(), secret); err != nil {
-			msg := fmt.Sprintf("failed to update kubeconfig secret %v/%v for lifecycle manager: %v", secret.Namespace, secret.Name, err)
-			log.Error(msg)
-			return s.operationManager.RetryOperation(o, msg, err, time.Minute, time.Minute*5, log)
-		}
+		log.Infof("Kubeconfig already exists in the secret %s, skipping", secret.Name)
 	} else if err != nil {
 		msg := fmt.Sprintf("failed to create kubeconfig secret %v/%v for lifecycle manager: %v", secret.Namespace, secret.Name, err)
 		log.Error(msg)

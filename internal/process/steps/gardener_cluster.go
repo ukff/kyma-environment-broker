@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -53,13 +54,14 @@ func (s *checkGardenerCluster) Run(operation internal.Operation, log logrus.Fiel
 	state := gc.GetState()
 	log.Infof("GardenerCluster state: %s", state)
 	if state != GardenerClusterStateReady {
-		if time.Since(operation.UpdatedAt) > 15*time.Second {
+		// TODO: extract the timeout as a configuration setting
+		if time.Since(operation.UpdatedAt) > 2*time.Minute {
 			description := fmt.Sprintf("Waiting for GardenerCluster (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
 			log.Infof("GardenerCluster status: %s", gc.StatusAsString())
 			return s.operationManager.OperationFailed(operation, description, nil, log)
 		}
-		return operation, 200 * time.Millisecond, nil
+		return operation, 500 * time.Millisecond, nil
 	}
 	return operation, 0, nil
 }
@@ -90,6 +92,16 @@ func (_ *syncGardenerCluster) Name() string {
 }
 
 func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if operation.GardenerClusterName == "" {
+		modifiedOperation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+			op.GardenerClusterName = GardenerClusterName(op)
+		}, log)
+		if backoff != 0 {
+			log.Errorf("cannot save the operation")
+			return operation, 5 * time.Second, nil
+		}
+		operation = modifiedOperation
+	}
 	gardenerCluster, err := s.GetOrCreateNewGardenerCluster(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
 		log.Errorf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
@@ -142,6 +154,10 @@ func GardenerClusterGVK() schema.GroupVersionKind {
 		Version: "v1",
 		Kind:    "GardenerCluster",
 	}
+}
+
+func GardenerClusterName(operation *internal.Operation) string {
+	return strings.ToLower(operation.RuntimeID)
 }
 
 type GardenerCluster struct {
