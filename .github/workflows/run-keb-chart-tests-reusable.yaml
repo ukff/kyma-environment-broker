@@ -1,0 +1,98 @@
+name: Validate and deploy keb helm chart (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      last-k3s-versions:
+        description: number of the most recent K3s versions to be used
+        required: false
+        default: 1
+        type: string
+
+jobs:
+  validate-keb-helm-chart:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Validate keb helm chart
+      run: |
+        cd resources/keb
+        helm template .
+  
+  prepare-tests:
+    runs-on: ubuntu-latest
+    needs: validate-keb-helm-chart
+    outputs:
+      versions: ${{ steps.get-versions.outputs.k3s_versions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: get-versions
+        name: Get K3s versions
+        # prepare json representing GitHub matrix:
+        # {"include": [
+        #    {"version":"v1.26.10+k3s1"},
+        #      ...
+        #    {"version":"v1.28.3+k3s1"}
+        # ]
+        # }
+        run: |
+          VERSIONS=($(./scripts/testing/get-latest-k3s-releases.sh ${{ inputs.last-k3s-versions }}))
+          MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
+          echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
+
+  run-keb-chart-matrix:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    timeout-minutes: 5
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+
+      - name: Create namespaces
+        run: |
+          kubectl create namespace kcp-system
+          kubectl create namespace kyma-system
+          kubectl create namespace istio-system
+
+      - name: Install istio
+        run: |
+          helm repo add istio https://istio-release.storage.googleapis.com/charts
+          helm install istio-base istio/base -n istio-system --set defaultRevision=default
+
+      - name: Deploy keb helm chart
+        run: |
+          cd resources/keb
+          helm template . | kubectl apply -f -
+
+  confirm-keb-chart-tests-result:
+    needs: run-keb-chart-matrix
+    runs-on: ubuntu-latest
+    if: success() 
+    outputs:
+      success: ${{ steps.set-output.outputs.success }}
+    steps:
+      - name: Confirm keb chart tests result
+        id: set-output
+        run: echo "success=true" >> "${GITHUB_OUTPUT}"
+
+  finish-keb-chart-tests:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: confirm-keb-chart-tests-result
+    steps:
+      - name: Check keb chart tests result
+        run: |
+          if [ "${{ needs.confirm-keb-chart-tests-result.outputs.success }}" != "true" ]; then
+            echo "keb chart tests failed"
+            exit 1
+          fi
+          echo "keb chart tests passed"
