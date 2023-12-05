@@ -67,6 +67,10 @@ jobs:
         run: |
           helm repo add istio https://istio-release.storage.googleapis.com/charts
           helm install istio-base istio/base -n istio-system --set defaultRevision=default
+          
+      - name: Install Prometheus Operator for ServiceMonitor
+        run: |
+          kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
 
       - name: Deploy KEB helm chart
         run: |

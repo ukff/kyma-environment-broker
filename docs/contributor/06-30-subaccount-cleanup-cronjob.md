@@ -60,4 +60,4 @@ Use the following environment variables to configure the application:
 | **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB. |
 | **APP_BROKER_SCOPE** | Specifies the scope of the OAuth2 authentication in KEB. |
 
-For more details, see the [resource definition](../../resources/kcp/charts/kyma-environment-broker/templates/subaccount-cleanup-job.yaml) file.
+For more details, see the [resource definition](../../resources/keb/templates/subaccount-cleanup-job.yaml) file.
