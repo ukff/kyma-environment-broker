@@ -59,7 +59,7 @@ spec:
               mountPath: /tmp/profiler
               readOnly: false
         {{- end }}
-        - name: {{ .Chart.Name }}
+        - name: {{ include "kyma-env-broker.name" . }}
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
