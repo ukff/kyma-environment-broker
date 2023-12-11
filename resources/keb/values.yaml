@@ -6,6 +6,9 @@ global:
     cloudsql_proxy_image: "europe-docker.pkg.dev/kyma-project/prod/tpi/cloudsql-docker/gce-proxy:v1.33.8-afb993b8"
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/prod
+    schema_migrator:
+      dir: "control-plane"
+      version: "v20230120-865831c1"
     kyma_environment_broker:
       dir:
       version: "v20231211-32d86927"
@@ -396,3 +399,6 @@ runtimeReconciler:
   watcherEnabled: false
   watcherAddress: 8888
   watcherName: btp-manager-secret-watcher
+
+migratorJobs:
+  enabled: true
