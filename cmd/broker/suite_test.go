@@ -466,6 +466,7 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 				"overrides-plan-free":         "true",
 				"overrides-plan-gcp":          "true",
 				"overrides-plan-own_cluster":  "true",
+				"overrides-plan-openstack":    "true",
 				"overrides-version-2.0.0-rc4": "true",
 				"overrides-version-2.0.0":     "true",
 			},
@@ -993,11 +994,11 @@ func (s *ProvisioningSuite) AssertControlPlaneFailureTolerance(level string) {
 }
 
 func regularSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("regular-%s", ht)
+	return fmt.Sprintf("regular-%s", ht.GetKey())
 }
 
 func sharedSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("shared-%s", ht)
+	return fmt.Sprintf("shared-%s", ht.GetKey())
 }
 
 func fixConfig() *Config {
@@ -1026,7 +1027,7 @@ func fixConfig() *Config {
 		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview"},
+			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview", "openstack"},
 			AllowNetworkingParameters:      true,
 			RegionParameterIsRequired:      true,
 			ExposeSchemaWithRegionRequired: true,
@@ -1061,13 +1062,19 @@ func fixAccountProvider() *hyperscalerautomock.AccountProvider {
 	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything).Return(
 		func(ht hyperscaler.Type, tn string, euaccess bool) string { return regularSubscription(ht) }, nil)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure, mock.Anything).Return(
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure(), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.AWS, mock.Anything).Return(
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.AWS(), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
-	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Azure, mock.Anything, mock.Anything).Return(nil)
-	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.AWS, mock.Anything, mock.Anything).Return(nil)
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.Openstack("eu-de-2"), mock.Anything).Return(
+		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
+
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.Openstack("eu-de-1"), mock.Anything).Return(
+		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
+
+	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Azure(), mock.Anything, mock.Anything).Return(nil)
+	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.AWS(), mock.Anything, mock.Anything).Return(nil)
 	return &accountProvider
 }

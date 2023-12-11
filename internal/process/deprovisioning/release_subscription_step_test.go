@@ -29,7 +29,7 @@ func TestReleaseSubscriptionStep_HappyPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
@@ -57,7 +57,7 @@ func TestReleaseSubscriptionStep_TrialPlan(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
@@ -85,7 +85,7 @@ func TestReleaseSubscriptionStep_OwnClusterPlan(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
@@ -110,7 +110,7 @@ func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 	instance := fixGCPInstance(operation.InstanceID)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 	memoryStorage.Operations().InsertOperation(operation)
@@ -140,7 +140,7 @@ func TestReleaseSubscriptionStep_ProviderNotFound(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 	memoryStorage.Operations().InsertOperation(operation)
@@ -169,7 +169,7 @@ func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(fmt.Errorf("failed to release subscription for tenant. Gardener Account pool is not configured"))
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(fmt.Errorf("failed to release subscription for tenant. Gardener Account pool is not configured"))
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
@@ -186,10 +186,9 @@ func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 
 func fixGCPInstance(instanceID string) internal.Instance {
 	instance := fixture.FixInstance(instanceID)
-	instance.Provider = "GCP"
+	instance.Provider = internal.GCP
 	return instance
 }
-
 func fixDeprovisioningOperationWithPlanID(planID string) internal.Operation {
 	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
 	deprovisioningOperation.ProvisioningParameters.PlanID = planID

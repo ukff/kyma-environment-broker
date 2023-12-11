@@ -133,13 +133,23 @@ func (s *BrokerSuiteTest) TearDown() {
 }
 
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
+	cfg := fixConfig()
+	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+}
+
+func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
+	cfg := fixConfig()
+	cfg.Broker.RegionParameterIsRequired = false
+	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+}
+
+func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests()
 	apiextensionsv1.AddToScheme(sch)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
-	cfg := fixConfig()
 	if len(version) == 1 {
 		cfg.KymaVersion = version[0] // overriden to
 	}
@@ -349,6 +359,10 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 				},
 				broker.AWSPlanName: {
 					Description: broker.AWSPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.OpenStackPlanName: {
+					Description: broker.OpenStackPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
 			},
@@ -739,6 +753,7 @@ func (s *BrokerSuiteTest) AssertProvisionerStartedProvisioning(operationID strin
 		return false, nil
 	})
 	assert.NoError(s.t, err)
+	require.NotNil(s.t, provisioningOp, "Provisioning operation should not be nil")
 
 	var status gqlschema.OperationStatus
 	err = s.poller.Invoke(func() (bool, error) {
