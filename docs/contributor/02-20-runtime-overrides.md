@@ -1,10 +1,10 @@
-# Set overrides for SAP BTP, Kyma runtime
+# Set Overrides for SAP BTP, Kyma Runtime
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send overrides to Reconciler and this document will be deprecated as irrelevant.
 
 You can set overrides to customize your SAP BTP, Kyma runtime. To provision a cluster with custom overrides, add a Secret or a ConfigMap with a specific label. Kyma Environment Broker (KEB) uses this Secret and/or ConfigMap to prepare a request to Runtime Provisioner.
 
-> **NOTE:** Create all overrides in the `kcp-system` Namespace.
+> **NOTE:** Create all overrides in the `kcp-system` namespace.
 
 ## ConfigMap
 
@@ -32,7 +32,7 @@ data:
   global.disableLegacyConnectivity: "true"
 ```
 
-### Use Kyma default overrides for specific plan and version
+### Use Kyma Default Overrides for Specific Plan and Version
 
 By default, the overrides lookup mechanism expects at least one ConfigMap present for each plan and version pair. Otherwise, it fails. To allow Kyma installation without providing any additional overrides, create an empty ConfigMap.
 
