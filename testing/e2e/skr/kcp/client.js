@@ -209,7 +209,7 @@ class KCPWrapper {
 
   async getRuntimeStatusOperations(instanceID) {
     await this.login();
-    const runtimeStatus = await this.runtimes({instanceID: instanceID, ops: true});
+    const runtimeStatus = await this.runtimes({instanceID: instanceID, ops: true, state: 'all'});
 
     return JSON.stringify(runtimeStatus, null, '\t');
   }
@@ -373,6 +373,27 @@ class KCPWrapper {
         throw new Error(`failed to process kcp binary output: ${err.toString()}`);
       }
       throw new Error(`kcp command failed: ${err.toString()}`);
+    }
+  }
+
+  async ensureLatestGivenOperationTypeIsInGivenState(instanceID, operationType, operationState, timeout) {
+    debug(`Waiting for "${operationType}" operation to be in state "${operationState}"...`);
+    try {
+      await this.login();
+      const res = await wait(
+          () => this.runtimes({instanceID: instanceID, ops: true}),
+          (res) => res &&
+              res.data.length > 0 &&
+              res.data[0].status.hasOwnProperty(operationType) &&
+              res.data[0].status[operationType].data[0].state === operationState,
+          timeout,
+          1000 * 60, // 1 minute
+      );
+
+      return res;
+    } catch (error) {
+      debug(error);
+      throw new Error('failed during ensureLatestGivenOperationTypeIsInGivenState');
     }
   }
 }
