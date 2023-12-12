@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"reflect"
 	"sort"
 	"testing"
@@ -105,7 +104,7 @@ type BrokerSuiteTest struct {
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
 
-	componentProvider componentProviderDecorated
+	componentProvider input.ComponentListProvider
 
 	k8sKcp client.Client
 	k8sSKR client.Client
@@ -116,16 +115,6 @@ type BrokerSuiteTest struct {
 type componentProviderDecorated struct {
 	componentProvider input.ComponentListProvider
 	decorator         map[string]internal.KymaComponent
-}
-
-func (s componentProviderDecorated) AllComponents(kymaVersion internal.RuntimeVersionData, config *internal.ConfigForPlan) ([]internal.KymaComponent, error) {
-	all, err := s.componentProvider.AllComponents(kymaVersion, config)
-	for i, c := range all {
-		if dc, found := s.decorator[c.Name]; found {
-			all[i] = dc
-		}
-	}
-	return all, err
 }
 
 func (s *BrokerSuiteTest) TearDown() {
@@ -159,24 +148,14 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	disabledComponentsProvider := kebRuntime.NewDisabledComponentsProvider()
 
-	installerYAML := kebRuntime.ReadYAMLFromFile(t, "kyma-installer-cluster.yaml")
-	componentsYAML := kebRuntime.ReadYAMLFromFile(t, "kyma-components.yaml")
-	fakeHTTPClient := kebRuntime.NewTestClient(t, installerYAML, componentsYAML, http.StatusOK)
-
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), defaultKymaVer),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	componentListProvider := kebRuntime.NewComponentsListProvider(
-		path.Join("testdata", "managed-runtime-components.yaml"),
-		path.Join("testdata", "additional-runtime-components.yaml")).WithHTTPClient(fakeHTTPClient)
-	decoratedComponentListProvider := componentProviderDecorated{
-		componentProvider: componentListProvider,
-		decorator:         make(map[string]internal.KymaComponent),
-	}
+	componentProvider := kebRuntime.NewFakeComponentsProvider()
 
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, decoratedComponentListProvider,
+	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentProvider,
 		configProvider, input.Config{
 			MachineImageVersion:         "253",
 			KubernetesVersion:           "1.18",
@@ -224,7 +203,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, logs)
 	rvc := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, nil, db.RuntimeStates())
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory, provisionerClient,
-		eventBroker, rvc, db.RuntimeStates(), decoratedComponentListProvider, reconcilerClient, *cfg, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
+		eventBroker, rvc, db.RuntimeStates(), componentProvider, reconcilerClient, *cfg, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -246,7 +225,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		router:              mux.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
-		componentProvider:   decoratedComponentListProvider,
+		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
 	}
@@ -1366,6 +1345,28 @@ func (s *BrokerSuiteTest) fixExpectedComponentListWithoutSMProxy(opID string) []
 // object is provided: btp-opeartor component should be installed
 func (s *BrokerSuiteTest) fixExpectedComponentListWithSMOperator(opID, smClusterID string) []reconcilerApi.Component {
 	return []reconcilerApi.Component{
+		{
+			URL:       "",
+			Component: "cluster-essentials",
+			Namespace: "kyma-system",
+			Configuration: []reconcilerApi.Configuration{
+				{
+					Key:    "global.domainName",
+					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
+					Secret: false,
+				},
+				{
+					Key:    "foo",
+					Value:  "bar",
+					Secret: false,
+				},
+				{
+					Key:    "global.booleanOverride.enabled",
+					Value:  false,
+					Secret: false,
+				},
+			},
+		},
 		{
 			URL:       "",
 			Component: "ory",

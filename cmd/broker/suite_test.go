@@ -551,7 +551,9 @@ kyma-template: |-
 
 additional-components:
   - name: "btp-operator"
-    namespace: "kyma-system"`,
+    namespace: "kyma-system"
+    source:
+      url: "https://btp-operator"`,
 		},
 	}
 

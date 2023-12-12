@@ -1,5 +1,7 @@
 ---
 defaultNamespace: kyma-system
+prerequisites:
+  - name: "cluster-essentials"
 components:
   - name: "ory"
   - name: "monitoring"
