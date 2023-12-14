@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -42,6 +44,10 @@ func (step *DeleteGardenerClusterStep) Run(operation internal.Operation, logger 
 		logger.Infof("GardenerCluster resource name is empty, using runtime-id")
 		resourceName = steps.GardenerClusterName(&operation)
 	}
+	if resourceName == "" {
+		logger.Infof("Runtime ID is empty, skipping")
+		return operation, 0, nil
+	}
 
 	logger.Infof("Deleting GardenerCluster resource: %s in namespace:%s", operation.GardenerClusterName, operation.KymaResourceNamespace)
 
@@ -54,6 +60,8 @@ func (step *DeleteGardenerClusterStep) Run(operation internal.Operation, logger 
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("no GardenerCluster resource to delete - ignoring")
+		} else if meta.IsNoMatchError(err) {
+			logger.Info("No CRD installed, skipping")
 		} else {
 			logger.Errorf("unable to delete the GardenerCluster resource: %s", err)
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the GardenerCluster resource", backoffForK8SOperation, timeoutForK8sOperation, logger)

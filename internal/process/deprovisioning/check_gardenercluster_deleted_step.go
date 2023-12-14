@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -44,6 +46,10 @@ func (step *CheckGardenerClusterDeletedStep) Run(operation internal.Operation, l
 		logger.Infof("GardenerCluster resource name is empty, using runtime-id")
 		resourceName = steps.GardenerClusterName(&operation)
 	}
+	if resourceName == "" {
+		logger.Infof("Empty runtime ID, skipping")
+		return operation, 0, nil
+	}
 
 	gardenerClusterUnstructured := &unstructured.Unstructured{}
 	gardenerClusterUnstructured.SetGroupVersionKind(steps.GardenerClusterGVK())
@@ -59,6 +65,11 @@ func (step *CheckGardenerClusterDeletedStep) Run(operation internal.Operation, l
 	}
 
 	if !errors.IsNotFound(err) {
+		if meta.IsNoMatchError(err) {
+			logger.Info("No CRD installed, skipping")
+			return operation, 0, nil
+		}
+
 		logger.Errorf("unable to check GardenerCluster resource existence: %s", err)
 		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check GardenerCluster resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger)
 	}
