@@ -19,19 +19,24 @@
     },
     "autoScalerMax": {
       "description": "Specifies the maximum number of virtual machines to create",
-      "maximum": 40,
-      "minimum": 2,
+      "maximum": 80,
+      "minimum": 3,
       "type": "integer"
     },
     "autoScalerMin": {
       "description": "Specifies the minimum number of virtual machines to create",
-      "minimum": 2,
+      "minimum": 3,
       "type": "integer"
     },
     "machineType": {
       "enum": [
         "g_c4_m16",
-        "g_c8_m32"
+        "g_c6_m24",
+        "g_c8_m32",
+        "g_c12_m48",
+        "g_c16_m64",
+        "g_c32_m128",
+        "g_c64_m256"
       ],
       "type": "string"
     },

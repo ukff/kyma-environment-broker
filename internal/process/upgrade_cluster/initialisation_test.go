@@ -1177,8 +1177,8 @@ func fixGetHyperscalerProviderForPlanID(planID string) fixHyperscalerInputProvid
 	switch planID {
 	case broker.GCPPlanID:
 		provider = &cloudProvider.GcpInput{}
-	case broker.OpenStackPlanID:
-		provider = &cloudProvider.OpenStackInput{}
+	case broker.SapConvergedCloudPlanID:
+		provider = &cloudProvider.SapConvergedCloudInput{}
 	case broker.AzurePlanID:
 		provider = &cloudProvider.AzureInput{}
 	case broker.AzureLitePlanID:

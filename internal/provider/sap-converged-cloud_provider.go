@@ -13,30 +13,30 @@ import (
 )
 
 const (
-	DefaultOpenStackRegion = "eu-de-2"
-	DefaultExposureClass   = "converged-cloud-internet"
+	DefaultSapConvergedCloudRegion = "eu-de-1"
+	DefaultExposureClass           = "converged-cloud-internet"
 )
 
-type OpenStackInput struct {
+type SapConvergedCloudInput struct {
 	FloatingPoolName string
 }
 
-func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
+func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:          nil,
 			MachineType:       "g_c4_m16",
-			Region:            DefaultOpenStackRegion,
+			Region:            DefaultSapConvergedCloudRegion,
 			Provider:          "openstack",
 			WorkerCidr:        networking.DefaultNodesCIDR,
-			AutoScalerMin:     4,
-			AutoScalerMax:     8,
+			AutoScalerMin:     3,
+			AutoScalerMax:     20,
 			MaxSurge:          1,
 			MaxUnavailable:    0,
 			ExposureClassName: ptr.String(DefaultExposureClass),
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
-					Zones:                ZonesForOpenStack(DefaultOpenStackRegion),
+					Zones:                ZonesForSapConvergedCloud(DefaultSapConvergedCloudRegion),
 					FloatingPoolName:     p.FloatingPoolName,
 					CloudProfileName:     "converged-cloud-cp",
 					LoadBalancerProvider: "f5",
@@ -46,30 +46,28 @@ func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
 	}
 }
 
-func (p *OpenStackInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
+func (p *SapConvergedCloudInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
 	if pp.Parameters.Region != nil && *pp.Parameters.Region != "" {
-		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForOpenStack(*pp.Parameters.Region)
+		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForSapConvergedCloud(*pp.Parameters.Region)
 	}
 }
 
-func (p *OpenStackInput) Profile() gqlschema.KymaProfile {
+func (p *SapConvergedCloudInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileProduction
 }
 
-func (p *OpenStackInput) Provider() internal.CloudProvider {
-	return internal.Openstack
+func (p *SapConvergedCloudInput) Provider() internal.CloudProvider {
+	return internal.SapConvergedCloud
 }
 
-// openstackZones defines a possible suffixes for given OpenStack regions
+// sapConvergedCloudZones defines a possible suffixes for given OpenStack regions
 // The table is tested in a unit test to check if all necessary regions are covered
-var openstackZones = map[string]string{
+var sapConvergedCloudZones = map[string]string{
 	"eu-de-1": "abd",
-	"eu-de-2": "abd",
-	"ap-sa-1": "a",
 }
 
-func ZonesForOpenStack(region string) []string {
-	zones, found := openstackZones[region]
+func ZonesForSapConvergedCloud(region string) []string {
+	zones, found := sapConvergedCloudZones[region]
 	if !found {
 		zones = "a"
 	}

@@ -32,8 +32,8 @@ func TestHyperscalerTypeWithoutRegion(t *testing.T) {
 	}
 }
 
-func TestOpenstackHyperscalerTypeWithRegion(t *testing.T) {
-	testHypType := Openstack("eu-de-test")
+func TestSapConvergedCloudHyperscalerTypeWithRegion(t *testing.T) {
+	testHypType := SapConvergedCloud("eu-de-test")
 	assert.Equal(t, "openstack", testHypType.GetName())
 	assert.Equal(t, "openstack_eu-de-test", testHypType.GetKey())
 	assert.Equal(t, "eu-de-test", testHypType.GetRegion())

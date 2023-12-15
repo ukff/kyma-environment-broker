@@ -37,7 +37,7 @@ func (s *ResolveCredentialsStep) Name() string {
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 
 	cloudProvider := operation.InputCreator.Provider()
-	effectiveRegion := getEffectiveRegionForOpenstack(operation.ProvisioningParameters.Parameters.Region)
+	effectiveRegion := getEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
 
 	hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion)
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *ResolveCredentialsStep) retryOrFailOperation(operation internal.Operati
 func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log logrus.FieldLogger, hypType hyperscaler.Type, euAccess bool) (string, error) {
 	var secretName string
 	var err error
-	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsOpenstackPlan(operation.ProvisioningParameters.PlanID) {
+	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsSapConvergedCloudPlan(operation.ProvisioningParameters.PlanID) {
 		log.Infof("HAP lookup for shared secret binding")
 		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
 	} else {
@@ -97,10 +97,10 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 	return secretName, err
 }
 
-// TODO: Calculate the region parameter using default Openstack region. This is to be removed when region is mandatory (Jan 2024).
-func getEffectiveRegionForOpenstack(provisioningParametersRegion *string) string {
+// TODO: Calculate the region parameter using default SapConvergedCloud region. This is to be removed when region is mandatory (Jan 2024).
+func getEffectiveRegionForSapConvergedCloud(provisioningParametersRegion *string) string {
 	if provisioningParametersRegion != nil && *provisioningParametersRegion != "" {
 		return *provisioningParametersRegion
 	}
-	return provider.DefaultOpenStackRegion
+	return provider.DefaultSapConvergedCloudRegion
 }

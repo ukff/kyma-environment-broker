@@ -126,7 +126,7 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
-func TestProvisioning_HappyPathOpenstack(t *testing.T) {
+func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -161,7 +161,7 @@ func TestProvisioning_HappyPathOpenstack(t *testing.T) {
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
-func TestProvisioning_HappyPathOpenstackWithDefaultRegion(t *testing.T) {
+func TestProvisioning_HappyPathSapConvergedCloudWithDefaultRegion(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTestWithOptionalRegion(t)
 	defer suite.TearDown()
@@ -190,7 +190,7 @@ func TestProvisioning_HappyPathOpenstackWithDefaultRegion(t *testing.T) {
 
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
-	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-2"})
+	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
 }

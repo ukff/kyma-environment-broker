@@ -268,19 +268,19 @@ func ShootDomainProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTypes, regions []string, update, modulesEnabled bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTypes, regions []string, regionParameterIsRequired, update, modulesEnabled bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
 			AutoScalerMin: &Type{
 				Type:        "integer",
-				Minimum:     2,
+				Minimum:     3,
 				Default:     3,
 				Description: "Specifies the minimum number of virtual machines to create",
 			},
 			AutoScalerMax: &Type{
 				Type:        "integer",
-				Minimum:     2,
+				Minimum:     3,
 				Maximum:     80,
 				Default:     20,
 				Description: "Specifies the maximum number of virtual machines to create",
@@ -303,6 +303,10 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 	if update {
 		properties.AutoScalerMax.Default = nil
 		properties.AutoScalerMin.Default = nil
+	}
+
+	if regionParameterIsRequired {
+		properties.Region.MinLength = 1
 	}
 
 	return properties
