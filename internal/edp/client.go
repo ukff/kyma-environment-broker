@@ -142,6 +142,9 @@ func (c *Client) GetMetadataTenant(name, env string) (_ []MetadataItem, err erro
 	if err != nil {
 		return metadata, kebError.AsTemporaryError(err, "while requesting about dataTenant metadata")
 	}
+	if response.StatusCode == http.StatusNotFound {
+		return []MetadataItem{}, nil
+	}
 
 	err = json.NewDecoder(response.Body).Decode(&metadata)
 	if err != nil {
