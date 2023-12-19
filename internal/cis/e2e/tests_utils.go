@@ -25,7 +25,7 @@ func initTestDBInstancesTables(t *testing.T, connectionURL string) error {
 		return err
 	}
 
-	dirPath := "./../../../resources/keb/files/migrations/"
+	dirPath := "./../../../resources/keb/migrations/"
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		t.Logf("Cannot read files from directory %s", dirPath)
