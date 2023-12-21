@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
@@ -49,23 +51,29 @@ const (
 	secretClusterId    = "cluster_id"
 )
 
+type K8sClientProvider interface {
+	K8sClientForRuntimeID(rid string) (client.Client, error)
+}
+
 type Manager struct {
-	ctx          context.Context
-	instances    storage.Instances
-	kcpK8sClient client.Client
-	dryRun       bool
-	provisioner  provisioner.Client
-	logger       *logrus.Logger
+	ctx               context.Context
+	instances         storage.Instances
+	kcpK8sClient      client.Client
+	dryRun            bool
+	provisioner       provisioner.Client
+	k8sClientProvider K8sClientProvider
+	logger            *logrus.Logger
 }
 
 func NewManager(ctx context.Context, kcpK8sClient client.Client, instanceDb storage.Instances, logs *logrus.Logger, dryRun bool, provisioner provisioner.Client) *Manager {
 	return &Manager{
-		ctx:          ctx,
-		instances:    instanceDb,
-		kcpK8sClient: kcpK8sClient,
-		dryRun:       dryRun,
-		provisioner:  provisioner,
-		logger:       logs,
+		ctx:               ctx,
+		instances:         instanceDb,
+		kcpK8sClient:      kcpK8sClient,
+		dryRun:            dryRun,
+		provisioner:       provisioner,
+		logger:            logs,
+		k8sClientProvider: kubeconfig.NewK8sClientFromSecretProvider(kcpK8sClient),
 	}
 }
 
@@ -211,6 +219,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 }
 
 func (s *Manager) getSkrK8sClient(instance *internal.Instance) (client.Client, error) {
+	s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
 	secretName := getKubeConfigSecretName(instance.RuntimeID)
 	kubeConfigSecret := &v1.Secret{}
 	err := s.kcpK8sClient.Get(s.ctx, client.ObjectKey{Name: secretName, Namespace: kcpNamespace}, kubeConfigSecret)
@@ -252,6 +261,7 @@ func (s *Manager) getSkrK8sClient(instance *internal.Instance) (client.Client, e
 
 	k8sClient, err := CallWithRetry(func() (client.Client, error) {
 		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeConfig)
+
 		if err != nil {
 			return nil, fmt.Errorf("while making REST cfg from kube config string for %s : %s", instance.InstanceID, err)
 		}

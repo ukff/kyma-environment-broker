@@ -30,6 +30,9 @@ const (
 	btpOperatorBinding         = "ServiceBinding"
 )
 
+type KubeconfigProvider interface {
+	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
+}
 type BTPOperatorCleanupStep struct {
 	operationManager  *process.DeprovisionOperationManager
 	provisionerClient provisioner.Client
