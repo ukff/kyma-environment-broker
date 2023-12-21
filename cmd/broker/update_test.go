@@ -1224,21 +1224,23 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
 		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-       "context": {
-           "globalaccount_id": "g-account-id",
+      "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+      "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+      "context": {
+          "globalaccount_id": "g-account-id",
 			"user_id": "jack.anvil@email.com"
-       },
+      },
 		"parameters": {
 		}
-   }`)
+  }`)
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1312,6 +1314,8 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1389,6 +1393,8 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1459,6 +1465,8 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1530,6 +1538,8 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1605,6 +1615,8 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1677,6 +1689,8 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1828,6 +1842,8 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1948,6 +1964,7 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	min, max, surge, unav := 15, 25, 10, 7
@@ -2091,6 +2108,8 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	max := 15
