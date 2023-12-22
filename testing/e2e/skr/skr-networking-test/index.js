@@ -1,7 +1,7 @@
 const {
   gatherOptions,
 } = require('../skr-test');
-const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
+const {provisionSKRAndInitK8sConfig} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {withCustomParams} = require('../skr-test');
 const {expect} = require('chai');
@@ -9,16 +9,14 @@ const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
 const axios = require('axios');
 const keb = new KEBClient(KEBConfig.fromEnv());
 
-const skipProvisioning = process.env.SKIP_PROVISIONING === 'true';
 const provisioningTimeout = 1000 * 60 * 30; // 30m
 const deprovisioningTimeout = 1000 * 60 * 95; // 95m
 let globalTimeout = 1000 * 60 * 30; // 20m
 const slowTime = 5000;
 
 describe('SKR AWS networking test', function() {
-  if (!skipProvisioning) {
-    globalTimeout += provisioningTimeout + deprovisioningTimeout;
-  }
+  globalTimeout += provisioningTimeout + deprovisioningTimeout;
+
   this.timeout(globalTimeout);
   this.slow(slowTime);
 
@@ -65,12 +63,12 @@ describe('SKR AWS networking test', function() {
   });
   it('Perform provisioning', async function() {
     this.timeout(provisioningTimeout);
-    skr = await getOrProvisionSKR(options, skipProvisioning, provisioningTimeout);
+    skr = await provisionSKRAndInitK8sConfig(options, provisioningTimeout);
     options = skr.options;
   });
 
   after('Clean up the resources', async function() {
     this.timeout(deprovisioningTimeout);
-    await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, skipProvisioning, true);
+    await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
   });
 });
