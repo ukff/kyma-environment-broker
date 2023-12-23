@@ -40,7 +40,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewAvsEvaluationsRemovalStep(avsDel, db.Operations(), externalEvalAssistant, internalEvalAssistant),
 		},
 		{
-			step:     deprovisioning.NewEDPDeregistrationStep(db.Operations(), edpClient, cfg.EDP),
+			step:     deprovisioning.NewEDPDeregistrationStep(db.Operations(), db.Instances(), edpClient, cfg.EDP),
 			disabled: cfg.EDP.Disabled,
 		},
 		{

@@ -103,7 +103,7 @@ func (f *FakeClient) DeleteMetadataTenant(name, env, key string) error {
 
 func checkDataTenantPayload(data DataTenantPayload) error {
 	if data.Name == "" || data.Environment == "" || data.Secret == "" {
-		return fmt.Errorf("one of the fields in DataTenantPayload is missing")
+		return fmt.Errorf("one of the fields in DataTenantPayload is missing: %v", data)
 	}
 	return nil
 }
