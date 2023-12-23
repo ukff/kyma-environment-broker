@@ -9,7 +9,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -22,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -219,64 +217,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 }
 
 func (s *Manager) getSkrK8sClient(instance *internal.Instance) (client.Client, error) {
-	s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
-	secretName := getKubeConfigSecretName(instance.RuntimeID)
-	kubeConfigSecret := &v1.Secret{}
-	err := s.kcpK8sClient.Get(s.ctx, client.ObjectKey{Name: secretName, Namespace: kcpNamespace}, kubeConfigSecret)
-	if err != nil && !errors.IsNotFound(err) {
-		return nil, fmt.Errorf("while getting secret from kcp for %s : %w", instance.InstanceID, err)
-	}
-
-	var kubeConfig []byte
-	if errors.IsNotFound(err) {
-		s.logger.Infof("not found secret for %s, now it will be executed try to get kubeConfig from provisioner.", instance.InstanceID)
-		status, err := CallWithRetry(func() (gqlschema.RuntimeStatus, error) {
-			return s.provisioner.RuntimeStatus(instance.Parameters.ErsContext.GlobalAccountID, instance.RuntimeID)
-		}, 5, time.Second*5)
-		if err != nil {
-			return nil, fmt.Errorf("while getting runtime status from provisioner for %s : %s", instance.InstanceID, err)
-		}
-
-		if status.RuntimeConfiguration.Kubeconfig == nil {
-			return nil, fmt.Errorf("kubeconfig empty in provisioner response for %s", instance.InstanceID)
-		}
-
-		s.logger.Infof("found kubeconfig in provisioner for %s", instance.InstanceID)
-		kubeConfig = []byte(*status.RuntimeConfiguration.Kubeconfig)
-	} else {
-		s.logger.Infof("found secret %s on kcp cluster for %s", secretName, instance.InstanceID)
-
-		config, ok := kubeConfigSecret.Data["config"]
-		if !ok {
-			return nil, fmt.Errorf("while getting 'config' from secret from %s for %s", secretName, instance.InstanceID)
-		}
-
-		s.logger.Infof("found kubeconfig in secret %s for %s", secretName, instance.InstanceID)
-		kubeConfig = config
-	}
-
-	if kubeConfig == nil || len(kubeConfig) == 0 {
-		return nil, fmt.Errorf("not found kubeConfig as secret nor in provisioner or is empty for %s", instance.InstanceID)
-	}
-
-	k8sClient, err := CallWithRetry(func() (client.Client, error) {
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeConfig)
-
-		if err != nil {
-			return nil, fmt.Errorf("while making REST cfg from kube config string for %s : %s", instance.InstanceID, err)
-		}
-		k8sClient, err := client.New(restCfg, client.Options{})
-		if err != nil {
-			return nil, fmt.Errorf("while creating k8sClient from REST config for %s : %s", instance.InstanceID, err)
-		}
-		return k8sClient, nil
-	}, 5, time.Second*5)
-
-	if err != nil {
-		return nil, fmt.Errorf("while creating k8sClient from REST config for %s : %s", instance.InstanceID, err)
-	}
-
-	return k8sClient, nil
+	return s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
 }
 
 func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {
