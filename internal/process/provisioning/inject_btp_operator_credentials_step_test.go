@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+
 	btpoperatorcredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -35,7 +37,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		operation := fixProvisioningOperationWithClusterIDAndCredentials(k8sClient)
 		expectedSecretData := createExpectedSecretData(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.ServiceManagerClusterID)
 
-		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), func(k string) (client.Client, error) { return k8sClient, nil })
+		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -68,7 +70,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.RuntimeID = ""
 
-		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), func(k string) (client.Client, error) { return k8sClient, nil })
+		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -106,7 +108,7 @@ func TestInjectBTPOperatorCredentialsWhenSecretAlreadyExistsStep(t *testing.T) {
 		operation := fixProvisioningOperationWithClusterIDAndCredentials(k8sClient)
 		expectedSecretData := createExpectedSecretData(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.ServiceManagerClusterID)
 
-		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), func(k string) (client.Client, error) { return k8sClient, nil })
+		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -119,14 +121,13 @@ func TestInjectBTPOperatorCredentialsWhenSecretAlreadyExistsStep(t *testing.T) {
 }
 
 func fixProvisioningOperationWithClusterIDAndCredentials(k8sClient client.WithWatch) internal.Operation {
-	operation := fixProvisioningOperationWithCredentials(k8sClient)
+	operation := fixProvisioningOperationWithCredentials()
 	operation.InstanceDetails.ServiceManagerClusterID = "cluster-id"
 	return operation
 }
 
-func fixProvisioningOperationWithCredentials(k8sClient client.WithWatch) internal.Operation {
+func fixProvisioningOperationWithCredentials() internal.Operation {
 	operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
-	operation.K8sClient = k8sClient
 	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials = &internal.ServiceManagerOperatorCredentials{
 		ClientID:          "sample-client-id",
 		ClientSecret:      "sample-client-secret",

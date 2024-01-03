@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -55,24 +57,6 @@ spec:
   scope: Namespaced
 `)
 
-func TestProvisionerDoesNotProvideKubeconfig(t *testing.T) {
-	// given
-	log := logrus.New()
-	ms := storage.NewMemoryStorage()
-	fakeProvisionerClient := newEmptyProvisionerClient()
-	step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return nil, nil })
-	op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
-	op.State = "in progress"
-
-	// when
-	_, backoff, err := step.Run(op, log)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, backoff)
-
-}
-
 func TestRemoveServiceInstanceStep(t *testing.T) {
 	t.Run("should remove all service instances and bindings from btp operator as part of trial suspension", func(t *testing.T) {
 		// given
@@ -96,13 +80,13 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		require.NoError(t, err)
 
 		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns).Build()}
+		clientProvider := kubeconfig.NewFakeK8sClientProvider(k8sCli)
 		err = k8sCli.Create(context.TODO(), si)
 		require.NoError(t, err)
 
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.State = "in progress"
-		fakeProvisionerClient := fakeProvisionerClient{}
-		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+		step := NewBTPOperatorCleanupStep(ms.Operations(), clientProvider)
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -151,8 +135,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.ProvisioningParameters.PlanID = broker.AWSPlanID
 		op.State = "in progress"
-		fakeProvisionerClient := fakeProvisionerClient{}
-		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -201,8 +184,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.State = "in progress"
 		op.Temporary = false
-		fakeProvisionerClient := fakeProvisionerClient{}
-		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -241,8 +223,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
-		fakeProvisionerClient := fakeProvisionerClient{}
-		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -281,8 +262,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
-		fakeProvisionerClient := fakeProvisionerClient{}
-		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -321,8 +301,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
-		fakeProvisionerClient := fakeProvisionerClient{}
-		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})

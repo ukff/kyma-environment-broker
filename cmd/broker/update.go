@@ -19,7 +19,7 @@ import (
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage, inputFactory input.CreatorForPlan,
 	provisionerClient provisioner.Client, publisher event.Publisher, runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeStatesDb storage.RuntimeStates,
-	runtimeProvider input.ComponentListProvider, reconcilerClient reconciler.Client, cfg Config, k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, logs logrus.FieldLogger) *process.Queue {
+	runtimeProvider input.ComponentListProvider, reconcilerClient reconciler.Client, cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
 	requiresReconcilerUpdate := update.RequiresReconcilerUpdate
 	if cfg.ReconcilerIntegrationDisabled {
@@ -43,11 +43,6 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		{
 			stage: "btp-operator",
 			step:  update.NewInitKymaVersionStep(db.Operations(), runtimeVerConfigurator, runtimeStatesDb),
-		},
-		{
-			stage:     "btp-operator",
-			step:      update.NewGetKubeconfigStep(db.Operations(), provisionerClient, k8sClientProvider),
-			condition: update.ForBTPOperatorCredentialsProvided,
 		},
 		{
 			stage:     "btp-operator",

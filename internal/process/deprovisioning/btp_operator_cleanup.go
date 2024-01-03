@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -30,19 +29,18 @@ const (
 	btpOperatorBinding         = "ServiceBinding"
 )
 
-type KubeconfigProvider interface {
-	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
-}
-type BTPOperatorCleanupStep struct {
-	operationManager  *process.DeprovisionOperationManager
-	provisionerClient provisioner.Client
-	k8sClientProvider func(kcfg string) (client.Client, error)
+type K8sClientProvider interface {
+	K8sClientForRuntimeID(rid string) (client.Client, error)
 }
 
-func NewBTPOperatorCleanupStep(os storage.Operations, provisionerClient provisioner.Client, k8sClientProvider func(kcfg string) (client.Client, error)) *BTPOperatorCleanupStep {
+type BTPOperatorCleanupStep struct {
+	operationManager  *process.OperationManager
+	k8sClientProvider K8sClientProvider
+}
+
+func NewBTPOperatorCleanupStep(os storage.Operations, k8sClientProvider K8sClientProvider) *BTPOperatorCleanupStep {
 	return &BTPOperatorCleanupStep{
-		operationManager:  process.NewDeprovisionOperationManager(os),
-		provisionerClient: provisionerClient,
+		operationManager:  process.NewOperationManager(os),
 		k8sClientProvider: k8sClientProvider,
 	}
 }
@@ -51,14 +49,10 @@ func (s *BTPOperatorCleanupStep) Name() string {
 	return "BTPOperator_Cleanup"
 }
 
-func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	k8sClient, err := s.getKubeClient(operation, log)
-	if err != nil || k8sClient == nil {
-		return s.retryOnError(operation, err, log, "failed to get kube client")
-	}
+func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sClient client.Client, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	namespaces := corev1.NamespaceList{}
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {
-		return s.retryOnError(operation, err, log, "failed to list namespaces")
+		return s.retryOnError(operation, nil, err, log, "failed to list namespaces")
 	}
 
 	var errors []string
@@ -81,15 +75,19 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, log lo
 	}
 
 	if len(errors) != 0 {
-		return s.retryOnError(operation, fmt.Errorf(strings.Join(errors, ";")), log, "failed to cleanup")
+		return s.retryOnError(operation, nil, fmt.Errorf(strings.Join(errors, ";")), log, "failed to cleanup")
 	}
 	return operation, 0, nil
 }
 
 func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	kclient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
+	if err != nil {
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "failed to get kube client", time.Second, 30*time.Second, log)
+	}
 	if operation.UserAgent == broker.AccountCleanupJob {
 		log.Info("executing soft delete cleanup for accountcleanup-job")
-		return s.softDelete(operation, log)
+		return s.softDelete(operation, kclient, log)
 	}
 	if !operation.Temporary {
 		log.Info("cleanup executed only for suspensions")
@@ -103,18 +101,13 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 		log.Info("instance has been deprovisioned already")
 		return operation, 0, nil
 	}
-
-	kclient, err := s.getKubeClient(operation, log)
-	if err != nil {
-		return s.retryOnError(operation, err, log, "failed to get kube client")
-	}
 	if kclient == nil {
 		log.Infof("Skipping service instance and binding deletion")
 		return operation, 0, nil
 	}
 	if err := s.deleteServiceBindingsAndInstances(kclient, log); err != nil {
 		err = kebError.AsTemporaryError(err, "failed BTP operator resource cleanup")
-		return s.retryOnError(operation, err, log, "could not delete bindings and service instances")
+		return s.retryOnError(operation, kclient, err, log, "could not delete bindings and service instances")
 	}
 	return operation, 0, nil
 }
@@ -190,7 +183,7 @@ func (s *BTPOperatorCleanupStep) isNotFoundErr(err error) bool {
 	return strings.Contains(err.Error(), "not found")
 }
 
-func (s *BTPOperatorCleanupStep) retryOnError(op internal.Operation, err error, log logrus.FieldLogger, msg string) (internal.Operation, time.Duration, error) {
+func (s *BTPOperatorCleanupStep) retryOnError(op internal.Operation, kclient client.Client, err error, log logrus.FieldLogger, msg string) (internal.Operation, time.Duration, error) {
 	if err != nil {
 		// handleError returns retry period if it's retriable error and it's within timeout
 		op, retry, err2 := handleError(s.Name(), op, err, log, msg)
@@ -199,23 +192,13 @@ func (s *BTPOperatorCleanupStep) retryOnError(op internal.Operation, err error, 
 		}
 		// when retry is 0, that means error has been retried defined number of times and as a fallback routine
 		// it was decided that KEB should try to remove finalizers once
-		s.attemptToRemoveFinalizers(op, log)
+		s.attemptToRemoveFinalizers(op, kclient, log)
 		return op, retry, err2
 	}
 	return op, 0, nil
 }
 
-func (s *BTPOperatorCleanupStep) attemptToRemoveFinalizers(op internal.Operation, log logrus.FieldLogger) {
-	k8sClient, err := s.getKubeClient(op, log)
-	if err != nil {
-		log.Errorf("failed to get kube clients to remove finalizers", err)
-		return
-	}
-	if k8sClient == nil {
-		log.Info("Skipping removing finalizers")
-		return
-	}
-
+func (s *BTPOperatorCleanupStep) attemptToRemoveFinalizers(op internal.Operation, k8sClient client.Client, log logrus.FieldLogger) {
 	namespaces := corev1.NamespaceList{}
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {
 		log.Errorf("failed to list namespaces to remove finalizers", err)
@@ -227,30 +210,6 @@ func (s *BTPOperatorCleanupStep) attemptToRemoveFinalizers(op internal.Operation
 	if err := s.removeFinalizers(k8sClient, namespaces, schema.GroupVersionKind{Group: btpOperatorGroup, Version: btpOperatorApiVer, Kind: btpOperatorServiceInstance}); err != nil {
 		log.Errorf("failed to remove finalizers for instances: %v", err)
 	}
-}
-
-func (s *BTPOperatorCleanupStep) getKubeClient(operation internal.Operation, log logrus.FieldLogger) (client.Client, error) {
-	status, err := s.provisionerClient.RuntimeStatus(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.RuntimeID)
-	if err != nil {
-		if s.isNotFoundErr(err) {
-			log.Info("Cannot get kubeconfig: instance not found in provisioner")
-			return nil, nil
-		}
-		return nil, err
-	}
-	if status.RuntimeConfiguration.Kubeconfig == nil {
-		return nil, kebError.NewTemporaryError("empty kubeconfig")
-	}
-	k := *status.RuntimeConfiguration.Kubeconfig
-	log.Infof("kubeconfig length: %v", len(k))
-	if len(k) < 10 {
-		return nil, kebError.NewTemporaryError("kubeconfig suspiciously small, requeuing")
-	}
-	cli, err := s.k8sClientProvider(k)
-	if err != nil {
-		return nil, kebError.AsTemporaryError(err, "failed to create k8s client from the kubeconfig")
-	}
-	return cli, nil
 }
 
 func (s *BTPOperatorCleanupStep) checkCRDExistence(k8sClient client.Client, gvk schema.GroupVersionKind) (bool, error) {

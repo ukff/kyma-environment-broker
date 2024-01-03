@@ -9,8 +9,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -225,7 +223,6 @@ type Operation struct {
 	// UPDATING
 	UpdatingParameters    UpdatingParametersDTO `json:"updating_parameters"`
 	CheckReconcilerStatus bool                  `json:"check_reconciler_status"`
-	K8sClient             client.Client         `json:"-"`
 
 	// following fields are not stored in the storage
 

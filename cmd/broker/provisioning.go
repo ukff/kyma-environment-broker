@@ -22,7 +22,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator,
 	runtimeOverrides provisioning.RuntimeOverridesAppender, edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	reconcilerClient reconciler.Client, k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, logs logrus.FieldLogger) *process.Queue {
+	reconcilerClient reconciler.Client, k8sClientProvider provisioning.K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
 	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
@@ -115,19 +115,19 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      steps.NewCheckGardenerCluster(db.Operations(), cli),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
-		{
+		{ // TODO: this step must be removed when kubeconfig is created by IM only
 			stage: createRuntimeStageName,
-			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient, k8sClientProvider),
+			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient),
 		},
-		{
-			condition: provisioning.WhenBTPOperatorCredentialsProvided,
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
-		},
-		{
+		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
 			stage:    createRuntimeStageName,
 			step:     steps.SyncKubeconfig(db.Operations(), cli),
+		},
+		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig" or "checkGardenerCluster")
+			condition: provisioning.WhenBTPOperatorCredentialsProvided,
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
 		},
 		{
 			disabled:  cfg.ReconcilerIntegrationDisabled,

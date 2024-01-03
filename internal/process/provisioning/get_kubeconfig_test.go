@@ -5,16 +5,13 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 const (
@@ -32,14 +29,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests()
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-		expectedKubeconfig := kubeconfigFromRuntime
-		assertedK8sClientProvider := func(kubeconfig string) (client.Client, error) {
-			assert.Equal(t, expectedKubeconfig, kubeconfig)
-			return k8sCli, nil
-		}
-		step := NewGetKubeconfigStep(st.Operations(), provisionerClient, assertedK8sClientProvider)
+		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		st.Operations().InsertOperation(operation)
@@ -56,7 +46,6 @@ func TestGetKubeconfigStep(t *testing.T) {
 		assert.Zero(t, d)
 		assert.Equal(t, kubeconfigFromRuntime, processedOperation.Kubeconfig)
 		assert.NotEmpty(t, processedOperation.Kubeconfig)
-		assert.NotEmpty(t, processedOperation.K8sClient)
 	})
 	t.Run("should create k8s client for own_cluster plan using kubeconfig from provisioning parameters", func(t *testing.T) {
 		// given
@@ -65,14 +54,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests()
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-		expectedKubeconfig := kubeconfigContentsFromParameters
-		assertedK8sClientProvider := func(kubeconfig string) (client.Client, error) {
-			assert.Equal(t, expectedKubeconfig, kubeconfig)
-			return k8sCli, nil
-		}
-		step := NewGetKubeconfigStep(st.Operations(), nil, assertedK8sClientProvider)
+		step := NewGetKubeconfigStep(st.Operations(), nil)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		operation.ProvisioningParameters.Parameters.Kubeconfig = kubeconfigContentsFromParameters
@@ -86,7 +68,6 @@ func TestGetKubeconfigStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, d)
 		assert.Equal(t, kubeconfigContentsFromParameters, processedOperation.Kubeconfig)
-		assert.NotEmpty(t, processedOperation.K8sClient)
 	})
 	t.Run("should create k8s client using kubeconfig already set in operation", func(t *testing.T) {
 		// given
@@ -95,15 +76,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests()
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-		expectedKubeconfig := kubeconfigFromPreviousOperation
-
-		assertedK8sClientProvider := func(kubeconfig string) (client.Client, error) {
-			assert.Equal(t, expectedKubeconfig, kubeconfig)
-			return k8sCli, nil
-		}
-		step := NewGetKubeconfigStep(st.Operations(), nil, assertedK8sClientProvider)
+		step := NewGetKubeconfigStep(st.Operations(), nil)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = kubeconfigFromPreviousOperation
 		operation.ProvisioningParameters.Parameters.Kubeconfig = ""
@@ -116,7 +89,6 @@ func TestGetKubeconfigStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, d)
 		assert.Equal(t, kubeconfigFromPreviousOperation, processedOperation.Kubeconfig)
-		assert.NotEmpty(t, processedOperation.K8sClient)
 	})
 	t.Run("should fail with error if there is neither kubeconfig nor runtimeID and this is not own_cluster plan", func(t *testing.T) {
 		// given
@@ -126,13 +98,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests()
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-		assertedK8sClientProvider := func(kubeconfig string) (client.Client, error) {
-			assert.Fail(t, "should not call this assertion")
-			return k8sCli, nil
-		}
-		step := NewGetKubeconfigStep(st.Operations(), provisionerClient, assertedK8sClientProvider)
+		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		operation.RuntimeID = ""

@@ -18,12 +18,16 @@ const (
 	updateSecretBackoff = 10 * time.Second
 )
 
-type InjectBTPOperatorCredentialsStep struct {
-	operationManager  *process.OperationManager
-	k8sClientProvider func(kubeconfig string) (client.Client, error)
+type K8sClientProvider interface {
+	K8sClientForRuntimeID(rid string) (client.Client, error)
 }
 
-func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider func(kcfg string) (client.Client, error)) *InjectBTPOperatorCredentialsStep {
+type InjectBTPOperatorCredentialsStep struct {
+	operationManager  *process.OperationManager
+	k8sClientProvider K8sClientProvider
+}
+
+func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider K8sClientProvider) *InjectBTPOperatorCredentialsStep {
 	return &InjectBTPOperatorCredentialsStep{
 		operationManager:  process.NewOperationManager(os),
 		k8sClientProvider: k8sClientProvider,
@@ -40,8 +44,9 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		log.Error("Runtime ID is empty")
 		return s.operationManager.OperationFailed(operation, "Runtime ID is empty", nil, log)
 	}
+	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 
-	if operation.K8sClient == nil {
+	if err != nil {
 		log.Error("kubernetes client not set")
 		return s.operationManager.OperationFailed(operation, "kubernetes client not set", nil, log)
 	}
@@ -66,7 +71,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		return s.operationManager.OperationFailed(operation, "secret preparation failed", err, log)
 	}
 
-	if err := btpmanagercredentials.CreateOrUpdateSecret(operation.K8sClient, secret, log); err != nil {
+	if err := btpmanagercredentials.CreateOrUpdateSecret(k8sClient, secret, log); err != nil {
 		err = kebError.AsTemporaryError(err, "failed create/update of the secret")
 		return operation, updateSecretBackoff, nil
 	}

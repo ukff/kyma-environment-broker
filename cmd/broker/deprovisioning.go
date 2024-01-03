@@ -24,7 +24,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	provisionerClient provisioner.Client, avsDel *avs.Delegator, internalEvalAssistant *avs.InternalEvalAssistant,
 	externalEvalAssistant *avs.ExternalEvalAssistant, bundleBuilder ias.BundleBuilder,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider, reconcilerClient reconciler.Client,
-	k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, configProvider input.ConfigurationProvider, logs logrus.FieldLogger) *process.Queue {
+	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs logrus.FieldLogger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool
@@ -34,7 +34,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewInitStep(db.Operations(), db.Instances(), 12*time.Hour),
 		},
 		{
-			step: deprovisioning.NewBTPOperatorCleanupStep(db.Operations(), provisionerClient, k8sClientProvider),
+			step: deprovisioning.NewBTPOperatorCleanupStep(db.Operations(), k8sClientProvider),
 		},
 		{
 			step: deprovisioning.NewAvsEvaluationsRemovalStep(avsDel, db.Operations(), externalEvalAssistant, internalEvalAssistant),

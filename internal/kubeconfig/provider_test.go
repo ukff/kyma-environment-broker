@@ -5,6 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -95,9 +98,20 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 		os.Setenv(envTestAssets, path)
 	}
 
-	env := envtest.Environment{}
-	config, err := env.Start()
-	assert.NoError(t, err)
+	env := envtest.Environment{
+		ControlPlaneStartTimeout: 40 * time.Second,
+	}
+	var errEnvTest error
+	var config *rest.Config
+	wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
+		config, errEnvTest = env.Start()
+		if err != nil {
+			t.Logf("envtest could not start, retrying: %s", errEnvTest.Error())
+			return false, nil
+		}
+		return true, nil
+	})
+	require.NoError(t, errEnvTest)
 	defer env.Stop()
 	kubeconfig := createKubeconfigFileForRestConfig(*config)
 

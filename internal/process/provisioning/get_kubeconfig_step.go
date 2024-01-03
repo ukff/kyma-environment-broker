@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -18,16 +16,13 @@ type GetKubeconfigStep struct {
 	provisionerClient   provisioner.Client
 	operationManager    *process.OperationManager
 	provisioningTimeout time.Duration
-	k8sClientProvider   func(kubeconfig string) (client.Client, error)
 }
 
 func NewGetKubeconfigStep(os storage.Operations,
-	provisionerClient provisioner.Client,
-	k8sClientProvider func(kubeconfig string) (client.Client, error)) *GetKubeconfigStep {
+	provisionerClient provisioner.Client) *GetKubeconfigStep {
 	return &GetKubeconfigStep{
 		provisionerClient: provisionerClient,
 		operationManager:  process.NewOperationManager(os),
-		k8sClientProvider: k8sClientProvider,
 	}
 }
 
@@ -55,7 +50,7 @@ func (s *GetKubeconfigStep) Run(operation internal.Operation, log logrus.FieldLo
 		}
 	}
 
-	return s.setK8sClientInOperation(operation, log)
+	return operation, 0, nil
 }
 
 func (s *GetKubeconfigStep) getKubeconfigFromRuntimeStatus(operation internal.Operation, log logrus.FieldLogger) (string, time.Duration, error) {
@@ -80,14 +75,4 @@ func (s *GetKubeconfigStep) getKubeconfigFromRuntimeStatus(operation internal.Op
 	}
 
 	return kubeconfig, 0, nil
-}
-
-func (s *GetKubeconfigStep) setK8sClientInOperation(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	k8sClient, err := s.k8sClientProvider(operation.Kubeconfig)
-	if err != nil {
-		log.Errorf("unable to create k8s client from the kubeconfig")
-		return s.operationManager.RetryOperation(operation, "unable to create k8s client from the kubeconfig", err, 5*time.Second, 1*time.Minute, log)
-	}
-	operation.K8sClient = k8sClient
-	return operation, 0, nil
 }

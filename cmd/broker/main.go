@@ -67,7 +67,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -177,6 +176,14 @@ type ProfilerConfig struct {
 	Memory   bool
 }
 
+type K8sClientProvider interface {
+	K8sClientForRuntimeID(rid string) (client.Client, error)
+}
+
+type KubeconfigProvider interface {
+	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
+}
+
 const (
 	createRuntimeStageName      = "create_runtime"
 	checkKymaStageName          = "check_kyma"
@@ -253,6 +260,7 @@ func main() {
 	fatalOnError(err)
 	cli, err := initClient(k8sCfg)
 	fatalOnError(err)
+	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(cli)
 
 	// create storage
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
@@ -355,16 +363,16 @@ func main() {
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
 		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
-		runtimeOverrides, edpClient, accountProvider, reconcilerClient, k8sClientProvider, cli, logs)
+		runtimeOverrides, edpClient, accountProvider, reconcilerClient, skrK8sClientProvider, cli, logs)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
 		avsDel, internalEvalAssistant, externalEvalAssistant, bundleBuilder, edpClient, accountProvider, reconcilerClient,
-		k8sClientProvider, cli, configProvider, logs)
+		skrK8sClientProvider, cli, configProvider, logs)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
-		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, k8sClientProvider, cli, logs)
+		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, skrK8sClientProvider, cli, logs)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err)
@@ -385,7 +393,7 @@ func main() {
 	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
 
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, reconcilerClient, notificationBuilder, logs, cli, 1)
+	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, reconcilerClient, notificationBuilder, skrK8sClientProvider, logs, cli, 1)
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
 		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1)
 
@@ -431,18 +439,6 @@ func main() {
 	})
 
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr))
-}
-
-func k8sClientProvider(kcfg string) (client.Client, error) {
-	restCfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kcfg))
-	if err != nil {
-		return nil, err
-	}
-
-	k8sCli, err := client.New(restCfg, client.Options{
-		Scheme: scheme.Scheme,
-	})
-	return k8sCli, err
 }
 
 func checkDefaultVersions(versions ...string) error {

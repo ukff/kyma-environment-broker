@@ -18,13 +18,19 @@ type ApplyClusterConfigurationStep struct {
 	operationManager    *process.UpgradeKymaOperationManager
 	reconcilerClient    reconciler.Client
 	runtimeStateStorage storage.RuntimeStates
+	kubeconfigProvider  kubeconfigProvider
 }
 
-func NewApplyClusterConfigurationStep(os storage.Operations, rs storage.RuntimeStates, reconcilerClient reconciler.Client) *ApplyClusterConfigurationStep {
+type kubeconfigProvider interface {
+	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
+}
+
+func NewApplyClusterConfigurationStep(os storage.Operations, rs storage.RuntimeStates, reconcilerClient reconciler.Client, kcfgProvider kubeconfigProvider) *ApplyClusterConfigurationStep {
 	return &ApplyClusterConfigurationStep{
 		operationManager:    process.NewUpgradeKymaOperationManager(os),
 		reconcilerClient:    reconcilerClient,
 		runtimeStateStorage: rs,
+		kubeconfigProvider:  kcfgProvider,
 	}
 }
 
@@ -37,7 +43,17 @@ func (s *ApplyClusterConfigurationStep) Run(operation internal.UpgradeKymaOperat
 		log.Infof("Cluster configuration already applied")
 		return operation, 0, nil
 	}
+	if operation.RuntimeID == "" {
+		log.Warn("RuntimeID is empty, skipping")
+		return operation, 0, nil
+	}
+	kcfg, err := s.kubeconfigProvider.KubeconfigForRuntimeID(operation.RuntimeID)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "unable to get kubeconfig", err, time.Second, time.Minute, log)
+	}
+
 	operation.InputCreator.SetRuntimeID(operation.InstanceDetails.RuntimeID).
+		SetKubeconfig(string(kcfg)).
 		SetInstanceID(operation.InstanceID).
 		SetShootName(operation.InstanceDetails.ShootName).
 		SetShootDomain(operation.ShootDomain).

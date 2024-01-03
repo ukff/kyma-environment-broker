@@ -60,3 +60,22 @@ func (p *SecretProvider) K8sClientForRuntimeID(runtimeID string) (client.Client,
 	})
 	return k8sCli, err
 }
+
+type FakeProvider struct {
+	c client.Client
+}
+
+func NewFakeK8sClientProvider(c client.Client) *FakeProvider {
+	return &FakeProvider{c: c}
+}
+
+func (p *FakeProvider) K8sClientForRuntimeID(_ string) (client.Client, error) {
+	if p.c == nil {
+		return nil, fmt.Errorf("unable to get client")
+	}
+	return p.c, nil
+}
+
+func (p *FakeProvider) KubeconfigForRuntimeID(runtimeId string) ([]byte, error) {
+	return []byte("fake kubeconfig"), nil
+}

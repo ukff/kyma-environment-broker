@@ -170,7 +170,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		return false, err
 	}
 
-	k8sClient, err := s.getSkrK8sClient(instance)
+	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
 	if err != nil {
 		return false, fmt.Errorf("while getting k8sClient for %s : %w", instance.InstanceID, err)
 	}
@@ -214,10 +214,6 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	}
 
 	return false, nil
-}
-
-func (s *Manager) getSkrK8sClient(instance *internal.Instance) (client.Client, error) {
-	return s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
 }
 
 func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {

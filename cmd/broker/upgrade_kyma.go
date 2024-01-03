@@ -26,7 +26,7 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 	inputFactory input.CreatorForPlan, icfg *upgrade_kyma.TimeSchedule, pollingInterval time.Duration,
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeResolver orchestrationExt.RuntimeResolver,
 	upgradeEvalManager *avs.EvaluationManager, cfg *Config, internalEvalAssistant *avs.InternalEvalAssistant,
-	reconcilerClient reconciler.Client, notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger,
+	reconcilerClient reconciler.Client, notificationBuilder notification.BundleBuilder, k8sClientProvider KubeconfigProvider, logs logrus.FieldLogger,
 	cli client.Client, speedFactor int) *process.Queue {
 
 	upgradeKymaManager := upgrade_kyma.NewManager(db.Operations(), pub, logs.WithField("upgradeKyma", "manager"))
@@ -54,15 +54,6 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 			step:   steps.InitKymaTemplateUpgradeKyma(db.Operations()),
 		},
 		{
-			weight: 2,
-			step:   upgrade_kyma.NewGetKubeconfigStep(db.Operations(), provisionerClient),
-		},
-		{
-			weight:   2,
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     steps.SyncKubeconfigUpgradeKyma(db.Operations(), cli),
-		},
-		{
 			weight:   2,
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
 			step:     upgrade_kyma.NewApplyKymaStep(db.Operations(), cli),
@@ -83,7 +74,7 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 		{
 			weight:   10,
 			disabled: cfg.ReconcilerIntegrationDisabled,
-			step:     upgrade_kyma.NewApplyClusterConfigurationStep(db.Operations(), db.RuntimeStates(), reconcilerClient),
+			step:     upgrade_kyma.NewApplyClusterConfigurationStep(db.Operations(), db.RuntimeStates(), reconcilerClient, k8sClientProvider),
 			cnd:      upgrade_kyma.SkipForPreviewPlan,
 		},
 	}
