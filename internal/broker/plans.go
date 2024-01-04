@@ -113,6 +113,54 @@ func SapConvergedCloudRegions() []string {
 	return []string{"eu-de-1"}
 }
 
+func AzureMachinesTypes() []string {
+	return []string{
+		"Standard_D4s_v5",
+		"Standard_D8s_v5",
+		"Standard_D16s_v5",
+		"Standard_D32s_v5",
+		"Standard_D48s_v5",
+		"Standard_D64s_v5",
+		"Standard_D4_v3",
+		"Standard_D8_v3",
+		"Standard_D16_v3",
+		"Standard_D32_v3",
+		"Standard_D48_v3",
+		"Standard_D64_v3",
+	}
+}
+
+func AzureMachinesDisplayNames() map[string]string {
+	return map[string]string{
+		"Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
+		"Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
+		"Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)",
+		"Standard_D32s_v5": "Standard_D32s_v5 (32vCPU, 128GB RAM)",
+		"Standard_D48s_v5": "Standard_D48s_v5 (48vCPU, 192GB RAM)",
+		"Standard_D64s_v5": "Standard_D64s_v5 (64vCPU, 256GB RAM)",
+		"Standard_D4_v3":   "Standard_D4_v3 (4vCPU, 16GB RAM)",
+		"Standard_D8_v3":   "Standard_D8_v3 (8vCPU, 32GB RAM)",
+		"Standard_D16_v3":  "Standard_D16_v3 (16vCPU, 64GB RAM)",
+		"Standard_D32_v3":  "Standard_D32_v3 (32vCPU, 128GB RAM)",
+		"Standard_D48_v3":  "Standard_D48_v3 (48vCPU, 192GB RAM)",
+		"Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)",
+	}
+}
+
+func AzureLiteMachinesTypes() []string {
+	return []string{
+		"Standard_D4s_v5",
+		"Standard_D4_v3",
+	}
+}
+
+func AzureLiteMachinesDisplayNames() map[string]string {
+	return map[string]string{
+		"Standard_D4s_v5": "Standard_D4s_v5 (4vCPU, 16GB RAM)",
+		"Standard_D4_v3":  "Standard_D4_v3 (4vCPU, 16GB RAM)",
+	}
+}
+
 func requiredSchemaProperties(regionParameterIsRequired bool) []string {
 	if regionParameterIsRequired {
 		return []string{"name", "region"}
@@ -325,44 +373,13 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	sapConvergedCloudSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired)
 
 	// source: https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-sizes-specs#dv3-series
-	azureMachines := []string{
-		"Standard_D4s_v5",
-		"Standard_D8s_v5",
-		"Standard_D16s_v5",
-		"Standard_D32s_v5",
-		"Standard_D48s_v5",
-		"Standard_D64s_v5",
-		"Standard_D4_v3",
-		"Standard_D8_v3",
-		"Standard_D16_v3",
-		"Standard_D32_v3",
-		"Standard_D48_v3",
-		"Standard_D64_v3",
-	}
-	azureMachinesDisplay := map[string]string{
-		"Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
-		"Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
-		"Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)",
-		"Standard_D32s_v5": "Standard_D32s_v5 (32vCPU, 128GB RAM)",
-		"Standard_D48s_v5": "Standard_D48s_v5 (48vCPU, 192GB RAM)",
-		"Standard_D64s_v5": "Standard_D64s_v5 (64vCPU, 256GB RAM)",
-		"Standard_D4_v3":   "Standard_D4_v3 (4vCPU, 16GB RAM)",
-		"Standard_D8_v3":   "Standard_D8_v3 (8vCPU, 32GB RAM)",
-		"Standard_D16_v3":  "Standard_D16_v3 (16vCPU, 64GB RAM)",
-		"Standard_D32_v3":  "Standard_D32_v3 (32vCPU, 128GB RAM)",
-		"Standard_D48_v3":  "Standard_D48_v3 (48vCPU, 192GB RAM)",
-		"Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)",
-	}
+	azureMachines := AzureMachinesTypes()
+	azureMachinesDisplay := AzureMachinesDisplayNames()
 	azureSchema := AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
 
-	azureLiteMachines := []string{
-		"Standard_D4s_v5",
-		"Standard_D4_v3",
-	}
-	azureLiteMachinesDisplay := map[string]string{
-		"Standard_D4s_v5": azureMachinesDisplay["Standard_D4s_v5"],
-		"Standard_D4_v3":  azureMachinesDisplay["Standard_D4_v3"],
-	}
+	azureLiteMachines := AzureLiteMachinesTypes()
+	azureLiteMachinesDisplay := AzureLiteMachinesDisplayNames()
+
 	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
 	freemiumSchema := FreemiumSchema(provider, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired)
 	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false)
