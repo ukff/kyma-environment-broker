@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"path"
 	"testing"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/stretchr/testify/assert"
-	
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -346,13 +346,13 @@ func TestSchemaGenerator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.generator(tt.machineTypesDisplay, tt.machineTypes, false, false)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.file)
-			
+
 			got = tt.generator(tt.machineTypesDisplay, tt.machineTypes, false, true)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.updateFile)
-			
+
 			got = tt.generator(tt.machineTypesDisplay, tt.machineTypes, true, false)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.fileOIDC)
-			
+
 			got = tt.generator(tt.machineTypesDisplay, tt.machineTypes, true, true)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.updateFileOIDC)
 		})
@@ -369,7 +369,7 @@ func validateSchema(t *testing.T, got []byte, file string) {
 			t.Fail()
 		}
 	}
-	
+
 	var prettyGot bytes.Buffer
 	if len(got) > 0 {
 		err := json.Indent(&prettyGot, got, "", "  ")
@@ -385,10 +385,10 @@ func validateSchema(t *testing.T, got []byte, file string) {
 
 func readJsonFile(t *testing.T, file string) string {
 	t.Helper()
-	
+
 	filename := path.Join("testdata", file)
 	yamlFile, err := ioutil.ReadFile(filename)
 	require.NoError(t, err)
-	
+
 	return string(yamlFile)
 }
