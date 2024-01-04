@@ -1037,7 +1037,6 @@ func fixConfig() *Config {
 			AllowNetworkingParameters:      true,
 			RegionParameterIsRequired:      true,
 			ExposeSchemaWithRegionRequired: true,
-			AllowModulesParameters:         true,
 		},
 		Avs: avs.Config{},
 		IAS: ias.Config{
