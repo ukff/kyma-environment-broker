@@ -9,16 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up go environment
-      uses: actions/setup-go@v4
-      with:
-        go-version-file: 'go.mod'
-
-    - name: Run make go-mod-check
-      run: make go-mod-check
-
-    - name: Run make test
-      run: make test
+    # implementation at 'source/generic_make_go.mk'
+    - name: Run tests
+      run: make release

@@ -21,7 +21,6 @@ import (
 func TestRuntimeState(t *testing.T) {
 
 	ctx := context.Background()
-
 	t.Run("should insert and fetch RuntimeState", func(t *testing.T) {
 		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
 		require.NoError(t, err)
@@ -199,7 +198,7 @@ func TestRuntimeState(t *testing.T) {
 			RuntimeID: fixRuntimeID,
 		}
 
-		//runtimeStateWithoutVersion := fixture.FixRuntimeState("fixRuntimeStateID3", fixRuntimeID, fixOperationID2)
+		// runtimeStateWithoutVersion := fixture.FixRuntimeState("fixRuntimeStateID3", fixRuntimeID, fixOperationID2)
 		runtimeStateWithoutVersion := internal.NewRuntimeState(fixRuntimeID, fixOperationID2, nil, &gqlschema.GardenerConfigInput{})
 		runtimeStateWithoutVersion.ID = "fixRuntimeStateID3"
 		runtimeStateWithoutVersion.CreatedAt = runtimeStateWithReconcilerInput.CreatedAt.Add(time.Hour * 3)
