@@ -386,7 +386,7 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 
 	// create SKR kubeconfig endpoint
-	kcBuilder := kubeconfig.NewBuilder(provisionerClient)
+	kcBuilder := kubeconfig.NewBuilder(provisionerClient, skrK8sClientProvider)
 	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, logs.WithField("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
