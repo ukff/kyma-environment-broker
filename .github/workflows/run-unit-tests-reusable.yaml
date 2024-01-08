@@ -5,6 +5,8 @@ name: Run unit tests (reusable)
 on:
   workflow_call:
 
+permissions: write-all
+
 jobs:
   build:
     runs-on: ubuntu-latest
