@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     # implementation at 'source/generic_make_go.mk'
     - name: Run tests
       run: make release
