@@ -5,8 +5,6 @@ name: Run unit tests (reusable)
 on:
   workflow_call:
 
-permissions: write-all
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,4 +14,4 @@ jobs:
 
     # implementation at 'source/generic_make_go.mk'
     - name: Run tests
-      run: make release
+      run: make new-tests

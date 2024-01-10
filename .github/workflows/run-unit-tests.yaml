@@ -7,8 +7,6 @@ on:
     # Trigger for Pull Request
     branches: [ "main" ]
 
-permissions: write-all
-
 jobs:
   run-unit-tests:
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
