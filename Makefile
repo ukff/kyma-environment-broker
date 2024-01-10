@@ -24,10 +24,8 @@ testing-with-database-network:
 	@docker network inspect $(TESTING_DB_NETWORK) >/dev/null 2>&1 || \
 	docker network create --driver bridge $(TESTING_DB_NETWORK)
 	docker build -t keb -f Dockerfile.keb .
-	@docker run -d keb:latest  \
-		-v $(DOCKER_SOCKET):$(DOCKER_SOCKET) \
-		--network=$(TESTING_DB_NETWORK) \
-		$(DOCKER_CREATE_OPTS) go test -tags=database_integration ./...
+	@docker run -d keb:latest --network=$(TESTING_DB_NETWORK) \
+		go test -tags=database_integration ./...
 	@docker network rm $(TESTING_DB_NETWORK) || true
 
 errcheck:
