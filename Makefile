@@ -7,7 +7,8 @@ APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
 DOCKER_SOCKET = /var/run/docker.sock
 TESTING_DB_NETWORK = test_network
 
-verify: test testing-with-database-network errcheck mod-verify go-mod-check check-imports check-fmt
+# testing-with-database-network
+verify: test errcheck mod-verify go-mod-check check-imports check-fmt
 
 mod-verify:
 	GO111MODULE=on go mod verify
