@@ -11,7 +11,7 @@ FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 # testing-with-database-network
 # checks
 
-verify: test
+verify: testing-with-database-network
 checks: errcheck mod-verify go-mod-check check-imports check-fmt
 
 .PHONY: test
@@ -24,8 +24,7 @@ testing-with-database-network:
 	@docker network inspect $(TESTING_DB_NETWORK) >/dev/null 2>&1 || \
 	docker network create --driver bridge $(TESTING_DB_NETWORK)
 	docker build -t keb -f Dockerfile.keb .
-	@docker run $(DOCKER_INTERACTIVE) \
-		-d keb:latest \
+	@docker run -d keb:latest  \
 		-v $(DOCKER_SOCKET):$(DOCKER_SOCKET) \
 		--network=$(TESTING_DB_NETWORK) \
 		$(DOCKER_CREATE_OPTS) go test -tags=database_integration ./...
