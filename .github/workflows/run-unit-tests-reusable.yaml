@@ -12,6 +12,5 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # implementation at 'source/generic_make_go.mk'
     - name: Run tests
       run: make new-tests
