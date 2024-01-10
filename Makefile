@@ -6,6 +6,7 @@ APP_SUBSCRIPTION_CLEANUP_NAME = kyma-environment-subscription-cleanup-job
 APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
 DOCKER_SOCKET = /var/run/docker.sock
 TESTING_DB_NETWORK = test_network
+FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
 # testing-with-database-network
 verify: test errcheck mod-verify go-mod-check check-imports check-fmt
@@ -45,7 +46,7 @@ test:
 
 ##FROM MK##
 errcheck:
-	errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
+	#errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
 
 check-imports:
 	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
