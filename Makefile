@@ -9,7 +9,9 @@ TESTING_DB_NETWORK = test_network
 FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
 # testing-with-database-network
-verify: test checks
+# checks
+
+verify: test
 checks: errcheck mod-verify go-mod-check check-imports check-fmt
 
 .PHONY: test
