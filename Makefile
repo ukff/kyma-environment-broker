@@ -14,7 +14,7 @@ checks: errcheck mod-verify go-mod-check check-imports check-fmt
 
 .PHONY: test
 test:
-	go test ./...
+	go test -tags=database_integration ./...
 
 testing-with-database-network:
 	@docker version
