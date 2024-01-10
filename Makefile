@@ -42,38 +42,6 @@ go-mod-check-local:
 		exit 1; \
 	fi;
 
-##FROM MK##
-errcheck:
-	errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
-
-check-imports:
-	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
-		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
-		goimports -l $$($(FILES_TO_CHECK)); \
-		exit 1; \
-	fi;
-
-check-fmt:
-	@if [ -n "$$(gofmt -l $$($(FILES_TO_CHECK)))" ]; then \
-		gofmt -l $$($(FILES_TO_CHECK)); \
-		echo "✗ some files are not properly formatted. To repair run make fmt"; \
-		exit 1; \
-	fi;
-
-#########
-
-# We have to override test-local and errcheck, because we need to run provisioner with database
-#as docker container connected with custom network and the buildpack container itsefl has to be connected to the network
-
-test-local: ;
-errcheck-local: ;
-
-# TODO: there is no errcheck in go1.13 buildpack, consider creating buildpack-toolbox with go1.13 version
-# errcheck-local:
-# 	@docker run $(DOCKER_INTERACTIVE) \
-# 		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-# 		$(DOCKER_CREATE_OPTS) errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
-
 testing-with-database-network:
 	@docker version
 	@echo testing-with-database-network
@@ -94,3 +62,24 @@ clean-up:
 .PHONY: test
 test:
 	go test ./...
+
+
+##FROM MK##
+errcheck:
+	errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
+
+check-imports:
+	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
+		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
+		goimports -l $$($(FILES_TO_CHECK)); \
+		exit 1; \
+	fi;
+
+check-fmt:
+	@if [ -n "$$(gofmt -l $$($(FILES_TO_CHECK)))" ]; then \
+		gofmt -l $$($(FILES_TO_CHECK)); \
+		echo "✗ some files are not properly formatted. To repair run make fmt"; \
+		exit 1; \
+	fi;
+
+#########
