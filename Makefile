@@ -10,11 +10,7 @@ BUILDPACK = eu.gcr.io/kyma-project/test-infra/buildpack-golang:v20221215-c20ffd6
 DOCKER_SOCKET = /var/run/docker.sock
 TESTING_DB_NETWORK = test_network
 
-.DEFAULT_GOAL := verify
-
 verify: test check-imports check-fmt errcheck testing-with-database-network mod-verify go-mod-check check-fmt
-
-new-tests: verify
 
 resolve-local:
 	GO111MODULE=on go mod vendor -v
@@ -62,7 +58,6 @@ clean-up:
 .PHONY: test
 test:
 	go test ./...
-
 
 ##FROM MK##
 errcheck:

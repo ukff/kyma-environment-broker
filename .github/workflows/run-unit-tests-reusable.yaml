@@ -12,5 +12,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Set up go environment
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+
     - name: Run tests
-      run: make new-tests
+      run: make verify
