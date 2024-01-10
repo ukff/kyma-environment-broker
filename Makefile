@@ -4,32 +4,15 @@ APP_CLEANUP_NAME = kyma-environments-cleanup-job
 APP_SUBACCOUNT_CLEANUP_NAME = kyma-environment-subaccount-cleanup-job
 APP_SUBSCRIPTION_CLEANUP_NAME = kyma-environment-subscription-cleanup-job
 APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
-
-ENTRYPOINT = cmd/broker/
-BUILDPACK = eu.gcr.io/kyma-project/test-infra/buildpack-golang:v20221215-c20ffd65
 DOCKER_SOCKET = /var/run/docker.sock
 TESTING_DB_NETWORK = test_network
 
-verify: test check-imports check-fmt errcheck testing-with-database-network mod-verify go-mod-check check-fmt
+verify: test testing-with-database-network errcheck mod-verify go-mod-check check-imports check-fmt
 
-resolve-local:
-	GO111MODULE=on go mod vendor -v
-
-ensure-local:
-	@echo "Go modules present in component - omitting."
-
-dep-status:
-	@echo "Go modules present in component - omitting."
-
-dep-status-local:
-	@echo "Go modules present in component - omitting."
-
-mod-verify: mod-verify-local
-mod-verify-local:
+mod-verify:
 	GO111MODULE=on go mod verify
 
-go-mod-check: go-mod-check-local
-go-mod-check-local:
+go-mod-check:
 	@echo make go-mod-check
 	go mod tidy
 	@if [ -n "$$(git status -s go.*)" ]; then \
