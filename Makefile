@@ -23,12 +23,11 @@ testing-with-database-network:
 	@echo testing-with-database-network
 	@docker network inspect $(TESTING_DB_NETWORK) >/dev/null 2>&1 || \
 	docker network create --driver bridge $(TESTING_DB_NETWORK)
+	docker build -t keb -f Dockerfile.keb .
 	@docker run $(DOCKER_INTERACTIVE) \
+		-d keb:latest \
 		-v $(DOCKER_SOCKET):$(DOCKER_SOCKET) \
-		-v $(COMPONENT_DIR)/../../:$(WORKSPACE_COMPONENT_DIR)/../../ \
 		--network=$(TESTING_DB_NETWORK) \
-		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-		--env PIPELINE_BUILD=1 --env GO111MODULE=on \
 		$(DOCKER_CREATE_OPTS) go test -tags=database_integration ./...
 	@docker network rm $(TESTING_DB_NETWORK) || true
 
