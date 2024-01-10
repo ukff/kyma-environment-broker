@@ -6,8 +6,17 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: "admin",
+          POSTGRES_PASSWORD: "nimda",
+          POSTGRES_DB: "broker",
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -19,3 +28,9 @@ jobs:
 
     - name: Run tests
       run: make verify
+      env:
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        POSTGRES_USER: "admin",
+        POSTGRES_PASSWORD: "nimda",
+        POSTGRES_DB: "broker",

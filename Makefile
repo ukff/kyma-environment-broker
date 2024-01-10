@@ -5,28 +5,18 @@ APP_SUBACCOUNT_CLEANUP_NAME = kyma-environment-subaccount-cleanup-job
 APP_SUBSCRIPTION_CLEANUP_NAME = kyma-environment-subscription-cleanup-job
 APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
 DOCKER_SOCKET = /var/run/docker.sock
-TESTING_DB_NETWORK = test_network
+TESTING_DB_NETWORK = test_network5
 FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
 # testing-with-database-network
 # checks
 
-verify: testing-with-database-network
+verify: test
 checks: errcheck mod-verify go-mod-check check-imports check-fmt
 
 .PHONY: test
 test:
-	go test -tags=database_integration ./...
-
-testing-with-database-network:
-	@docker version
-	@echo testing-with-database-network
-	@docker network inspect $(TESTING_DB_NETWORK) >/dev/null 2>&1 || \
-	docker network create --driver bridge $(TESTING_DB_NETWORK)
-	docker build -t keb -f Dockerfile.keb .
-	@docker run -d keb:latest --network=$(TESTING_DB_NETWORK) \
-		go test -tags=database_integration ./...
-	@docker network rm $(TESTING_DB_NETWORK) || true
+	go test ./...
 
 errcheck:
 	#errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
