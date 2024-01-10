@@ -9,19 +9,12 @@ TESTING_DB_NETWORK = test_network
 FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
 # testing-with-database-network
-verify: test errcheck mod-verify go-mod-check check-imports check-fmt
+verify: test checks
+checks: errcheck mod-verify go-mod-check check-imports check-fmt
 
-mod-verify:
-	GO111MODULE=on go mod verify
-
-go-mod-check:
-	@echo make go-mod-check
-	go mod tidy
-	@if [ -n "$$(git status -s go.*)" ]; then \
-		echo -e "${RED}✗ go mod tidy modified go.mod or go.sum files${NC}"; \
-		git status -s go.*; \
-		exit 1; \
-	fi;
+.PHONY: test
+test:
+	go test ./...
 
 testing-with-database-network:
 	@docker version
@@ -37,14 +30,6 @@ testing-with-database-network:
 		$(DOCKER_CREATE_OPTS) go test -tags=database_integration ./...
 	@docker network rm $(TESTING_DB_NETWORK) || true
 
-clean-up:
-	@docker network rm $(TESTING_DB_NETWORK) || true
-
-.PHONY: test
-test:
-	go test ./...
-
-##FROM MK##
 errcheck:
 	#errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
 
@@ -62,4 +47,14 @@ check-fmt:
 		exit 1; \
 	fi;
 
-#########
+mod-verify:
+	GO111MODULE=on go mod verify
+
+go-mod-check:
+	@echo make go-mod-check
+	go mod tidy
+	@if [ -n "$$(git status -s go.*)" ]; then \
+		echo -e "${RED}✗ go mod tidy modified go.mod or go.sum files${NC}"; \
+		git status -s go.*; \
+		exit 1; \
+	fi;
