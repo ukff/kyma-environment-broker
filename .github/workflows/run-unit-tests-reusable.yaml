@@ -1,7 +1,12 @@
 # Call this workflow from other jobs to execute unit tests in the current context
 
 name: Run unit tests (reusable)
-
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: "admin"
+  POSTGRES_PASSWORD: "nimda"
+  POSTGRES_DB: "broker"
 on:
   workflow_call:
 
@@ -12,11 +17,11 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "nimda"
-          POSTGRES_DB: "broker"
+          POSTGRES_HOST: env.POSTGRES_HOST
+          POSTGRES_PORT: env.POSTGRES_PORT
+          POSTGRES_USER: env.POSTGRES_USER
+          POSTGRES_PASSWORD: env.POSTGRES_PASSWORD
+          POSTGRES_DB: env.POSTGRES_DB
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -29,11 +34,11 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
 
-    - name: Run tests
+    - name: Verify KEB
       run: make verify
       env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_USER: "admin"
-        POSTGRES_PASSWORD: "nimda"
-        POSTGRES_DB: "broker"
+        POSTGRES_HOST: env.POSTGRES_HOST
+        POSTGRES_PORT: env.POSTGRES_PORT
+        POSTGRES_USER: env.POSTGRES_USER
+        POSTGRES_PASSWORD: env.POSTGRES_PASSWORD
+        POSTGRES_DB: env.POSTGRES_DB
