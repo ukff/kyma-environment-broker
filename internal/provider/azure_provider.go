@@ -57,7 +57,7 @@ func (p *AzureInput) Defaults() *gqlschema.ClusterConfigInput {
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "Standard_D4_v3",
+			MachineType:    "Standard_D4s_v5",
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,
@@ -122,7 +122,7 @@ func (p *AzureLiteInput) Defaults() *gqlschema.ClusterConfigInput {
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "Standard_D4_v3",
+			MachineType:    "Standard_D4s_v5",
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,
@@ -181,7 +181,7 @@ func azureTrialDefaults() *gqlschema.ClusterConfigInput {
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "Standard_D4_v3",
+			MachineType:    "Standard_D4s_v5",
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,
