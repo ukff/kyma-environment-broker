@@ -2,7 +2,6 @@ APP_NAME = kyma-environment-broker
 APP_PATH = components/kyma-environment-broker
 APP_CLEANUP_NAME = kyma-environments-cleanup-job
 APP_SUBACCOUNT_CLEANUP_NAME = kyma-environment-subaccount-cleanup-job
-APP_SUBSCRIPTION_CLEANUP_NAME = kyma-environment-subscription-cleanup-job
 APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
 
 ENTRYPOINT = cmd/broker/
