@@ -221,7 +221,6 @@ subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
 trialDocsURL: "https://help.sap.com/docs/"
 exposeSchemaWithRegionRequired: "false"
 regionParameterIsRequired: "false"
-allowModulesParameters: "false"
 
 osbUpdateProcessingEnabled: "false"
 
