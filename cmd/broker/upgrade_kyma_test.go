@@ -43,7 +43,7 @@ func TestClusterUpgradeUsesUpdatedAutoscalerParams(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// perform an update with custom autoscaler params
@@ -153,7 +153,7 @@ func TestKymaUpgradeScheduledToFutureMaintenanceWindow(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	nextWeek := time.Now().AddDate(0, 0, 7)

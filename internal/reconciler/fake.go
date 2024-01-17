@@ -25,16 +25,25 @@ type FakeClient struct {
 	mu                sync.Mutex
 	inventoryClusters map[string]*registeredCluster
 	deleted           map[string]struct{}
+
+	expectedStatus *reconcilerApi.Status // expected status
 }
 
 type registeredCluster struct {
 	clusterConfigs map[int64]reconcilerApi.Cluster
 	clusterStates  map[int64]*reconcilerApi.HTTPClusterResponse
 	statusChanges  []*reconcilerApi.StatusChange
+
+	numberOfGetStatusCalls int
 }
 
 func NewFakeClient() *FakeClient {
-	return &FakeClient{inventoryClusters: map[string]*registeredCluster{}, deleted: map[string]struct{}{}}
+	s := reconcilerApi.StatusReady
+	return &FakeClient{inventoryClusters: map[string]*registeredCluster{}, deleted: map[string]struct{}{}, expectedStatus: &s}
+}
+
+func (c *FakeClient) PrepareReconcilerClusterStatus(expectedStatus reconcilerApi.Status) {
+	c.expectedStatus = &expectedStatus
 }
 
 // POST /v1/clusters
@@ -61,13 +70,38 @@ func (c *FakeClient) GetCluster(clusterName string, configVersion int64) (*recon
 
 	existingCluster, exists := c.inventoryClusters[clusterName]
 	if !exists {
-		return &reconcilerApi.HTTPClusterResponse{}, fmt.Errorf("not found")
+		msg := stringKeys(c.inventoryClusters)
+		return &reconcilerApi.HTTPClusterResponse{}, fmt.Errorf("cluster not found, name=%s (%s)", clusterName, msg)
+	}
+	existingCluster.numberOfGetStatusCalls = existingCluster.numberOfGetStatusCalls - 1
+	if existingCluster.numberOfGetStatusCalls <= 0 {
+		existingCluster.numberOfGetStatusCalls = 0
 	}
 	state, exists := existingCluster.clusterStates[configVersion]
 	if !exists {
-		return &reconcilerApi.HTTPClusterResponse{}, fmt.Errorf("not found")
+		msg := intKeys(existingCluster.clusterStates)
+		return &reconcilerApi.HTTPClusterResponse{}, fmt.Errorf("cluster state not found, version=%d (%s)", configVersion, msg)
+	}
+	if existingCluster.numberOfGetStatusCalls == 0 && c.expectedStatus != nil {
+		state.Status = *c.expectedStatus
 	}
 	return state, nil
+}
+
+func intKeys(states map[int64]*reconcilerApi.HTTPClusterResponse) string {
+	result := ""
+	for k, state := range states {
+		result = result + fmt.Sprintf("[%d:%s] ", k, state.Status)
+	}
+	return result
+}
+
+func stringKeys(clusters map[string]*registeredCluster) string {
+	result := ""
+	for k, _ := range clusters {
+		result = result + ", " + k
+	}
+	return result
 }
 
 // GET v1/clusters/{clusterName}/status
@@ -121,6 +155,7 @@ func (c *FakeClient) addToInventory(cluster reconcilerApi.Cluster) (*reconcilerA
 				Status:   reconcilerApi.StatusReconcilePending,
 				Duration: int64(10 * time.Second),
 			}},
+			numberOfGetStatusCalls: 4,
 		}
 
 		return c.inventoryClusters[cluster.RuntimeID].clusterStates[1], nil

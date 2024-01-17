@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
+
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -85,6 +87,8 @@ func TestExpiration(t *testing.T) {
 	defer suite.TearDown()
 
 	t.Run("should expire a trial instance", func(t *testing.T) {
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
 		// given
 		instanceID := uuid.NewString()
 		resp := suite.CallAPI(http.MethodPut,
@@ -93,10 +97,11 @@ func TestExpiration(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 		provisioningOpID := suite.DecodeOperationID(resp)
-		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.processProvisioningByOperationID(provisioningOpID)
 		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
+		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		resp = suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(expirationRequestPathFormat, instanceID),
 			"")
@@ -108,7 +113,6 @@ func TestExpiration(t *testing.T) {
 		assert.NotEmpty(t, suspensionOpID)
 
 		suite.WaitForOperationState(suspensionOpID, domain.InProgress)
-		suite.MarkClusterConfigurationDeleted(instanceID)
 		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
@@ -117,6 +121,8 @@ func TestExpiration(t *testing.T) {
 	})
 
 	t.Run("should retrigger expiration (suspension) on already expired instance", func(t *testing.T) {
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
 		// given
 		instanceID := uuid.NewString()
 		resp := suite.CallAPI(http.MethodPut,
@@ -125,10 +131,11 @@ func TestExpiration(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 		provisioningOpID := suite.DecodeOperationID(resp)
-		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.processProvisioningByOperationID(provisioningOpID)
 		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
+		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		resp = suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(expirationRequestPathFormat, instanceID),
 			"")
@@ -140,7 +147,6 @@ func TestExpiration(t *testing.T) {
 		assert.NotEmpty(t, suspensionOpID)
 
 		suite.WaitForOperationState(suspensionOpID, domain.InProgress)
-		suite.MarkClusterConfigurationDeleted(instanceID)
 		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
@@ -166,6 +172,8 @@ func TestExpiration(t *testing.T) {
 	})
 
 	t.Run("should expire a trial instance after failed provisioning", func(t *testing.T) {
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
 		// given
 		instanceID := uuid.NewString()
 		resp := suite.CallAPI(http.MethodPut,
@@ -178,6 +186,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(provisioningOpID, domain.Failed)
 
 		// when
+		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		resp = suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(expirationRequestPathFormat, instanceID),
 			"")
@@ -197,6 +206,8 @@ func TestExpiration(t *testing.T) {
 	})
 
 	t.Run("should expire a trial instance after failed deprovisioning", func(t *testing.T) {
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
 		// given
 		instanceID := uuid.NewString()
 		resp := suite.CallAPI(http.MethodPut,
@@ -205,9 +216,10 @@ func TestExpiration(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 		provisioningOpID := suite.DecodeOperationID(resp)
-		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.processProvisioningByOperationID(provisioningOpID)
 		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
+		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleteError)
 		resp = suite.CallAPI(http.MethodDelete,
 			fmt.Sprintf(deprovisioningRequestPathFormat, instanceID, broker.TrialPlanID),
 			trialDeprovisioningRequestBody)
@@ -220,6 +232,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(deprovisioningOpID, domain.Failed)
 
 		// when
+		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		resp = suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(expirationRequestPathFormat, instanceID),
 			"")
@@ -239,6 +252,8 @@ func TestExpiration(t *testing.T) {
 	})
 
 	t.Run("should reject an expiration request of non-trial instance", func(t *testing.T) {
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
 		// given
 		instanceID := uuid.NewString()
 		resp := suite.CallAPI(http.MethodPut,
@@ -247,7 +262,7 @@ func TestExpiration(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 		provisioningOpID := suite.DecodeOperationID(resp)
-		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.processProvisioningByOperationID(provisioningOpID)
 		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
@@ -264,6 +279,8 @@ func TestExpiration(t *testing.T) {
 	})
 
 	t.Run("should reject unsuspension request of an expired instance", func(t *testing.T) {
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
 		// given
 		instanceID := uuid.NewString()
 		resp := suite.CallAPI(http.MethodPut,
@@ -272,10 +289,11 @@ func TestExpiration(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 		provisioningOpID := suite.DecodeOperationID(resp)
-		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.processProvisioningByOperationID(provisioningOpID)
 		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
+		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		resp = suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(expirationRequestPathFormat, instanceID),
 			"")
@@ -287,7 +305,6 @@ func TestExpiration(t *testing.T) {
 		assert.NotEmpty(t, suspensionOpID)
 
 		suite.WaitForOperationState(suspensionOpID, domain.InProgress)
-		suite.MarkClusterConfigurationDeleted(instanceID)
 		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
