@@ -103,12 +103,13 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	defer func() {
 		fmt.Printf("InitTestDBTables took -> %s\n", time.Since(start))
 	}()
+	fmt.Printf("InitTestDBTables took before WaitForDatabaseAccess -> %s\n", time.Since(start))
 	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 10, 1000*time.Millisecond, logrus.New())
 	if err != nil {
 		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
 		return nil, fmt.Errorf("while waiting for database access: %w", err)
 	}
-	fmt.Printf("InitTestDBTables took after wait -> %s\n", time.Since(start))
+	fmt.Printf("InitTestDBTables took after WaitForDatabaseAccess -> %s\n", time.Since(start))
 
 	cleanupFunc := func() {
 		_, err = connection.Exec(clearDBQuery())
@@ -147,7 +148,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		}
 	}
 	log.Printf("Files applied to database")
-	fmt.Printf("InitTestDBTables took after migration -> %s\n", time.Since(start))
+	fmt.Printf("InitTestDBTables took after migration and at the end -> %s\n", time.Since(start))
 
 	return cleanupFunc, nil
 }
