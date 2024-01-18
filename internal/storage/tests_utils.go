@@ -104,7 +104,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		fmt.Printf("InitTestDBTables took -> %s\n", time.Since(start))
 	}()
 	fmt.Printf("InitTestDBTables took before WaitForDatabaseAccess -> %s\n", time.Since(start))
-	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 3, 100*time.Millisecond, logrus.New())
+	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 1000, 10*time.Millisecond, logrus.New())
 	if err != nil {
 		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
 		return nil, fmt.Errorf("while waiting for database access: %w", err)
