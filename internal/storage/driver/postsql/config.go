@@ -3,6 +3,6 @@ package postsql
 import "time"
 
 const (
-	defaultRetryTimeout  = time.Second * 5
-	defaultRetryInterval = time.Millisecond * 500
+	defaultRetryTimeout  = time.Second * 1
+	defaultRetryInterval = time.Millisecond * 100
 )

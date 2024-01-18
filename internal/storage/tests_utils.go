@@ -108,6 +108,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
 		return nil, fmt.Errorf("while waiting for database access: %w", err)
 	}
+	fmt.Printf("InitTestDBTables took after wait -> %s\n", time.Since(start))
 
 	cleanupFunc := func() {
 		_, err = connection.Exec(clearDBQuery())
@@ -117,6 +118,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	}
 
 	initialized, err := postsql.CheckIfDatabaseInitialized(connection)
+	fmt.Printf("InitTestDBTables took after check if initialized -> %s\n", time.Since(start))
 	if err != nil {
 		CloseDatabase(t, connection)
 		return nil, fmt.Errorf("while checking DB initialization: %w", err)
@@ -130,6 +132,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		log.Printf("Cannot read files from directory %s", dirPath)
 		return nil, fmt.Errorf("while reading migration data: %w", err)
 	}
+	fmt.Printf("InitTestDBTables took before migration -> %s\n", time.Since(start))
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
@@ -144,6 +147,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		}
 	}
 	log.Printf("Files applied to database")
+	fmt.Printf("InitTestDBTables took after migration -> %s\n", time.Since(start))
 
 	return cleanupFunc, nil
 }
