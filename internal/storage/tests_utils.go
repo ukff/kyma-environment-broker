@@ -148,6 +148,62 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	return cleanupFunc, nil
 }
 
+func SetupTestDBTables(connectionURL string) (cleanupFunc func(), err error) {
+	connection, _ := postsql.WaitForDatabaseAccess(connectionURL, 10, 100*time.Millisecond, logrus.New())
+	// if err != nil {
+	//	log.Printf("Cannot connect to database with URL - reload test 3 - %s", connectionURL)
+	//	return nil, fmt.Errorf("while waiting for database access: %w", err)
+	// }
+	return nil, nil
+
+	cleanupFunc = func() {
+		_, err = connection.Exec(clearDBQuery())
+		if err != nil {
+			err = fmt.Errorf("failed to clear DB tables: %w", err)
+		}
+	}
+
+	initialized, err := postsql.CheckIfDatabaseInitialized(connection)
+	if err != nil {
+		closeDBConnection(connection)
+		return nil, fmt.Errorf("while checking DB initialization: %w", err)
+	} else if initialized {
+		return cleanupFunc, nil
+	}
+
+	dirPath := "./../../../../resources/keb/migrations/"
+	files, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		log.Printf("Cannot read files from directory %s", dirPath)
+		return nil, fmt.Errorf("while reading files from directory: %w", err)
+	}
+
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), "up.sql") {
+			v, err := ioutil.ReadFile(dirPath + file.Name())
+			if err != nil {
+				log.Printf("Cannot read file %s", file.Name())
+			}
+			if _, err = connection.Exec(string(v)); err != nil {
+				log.Printf("Cannot apply file %s", file.Name())
+				return nil, fmt.Errorf("while executing migration: %w", err)
+			}
+		}
+	}
+	log.Printf("Files applied to database")
+
+	return cleanupFunc, nil
+}
+
+func closeDBConnection(connection *dbr.Connection) {
+	if connection != nil {
+		err := connection.Close()
+		if err != nil {
+			log.Printf("failed to close db connection: %v", err)
+		}
+	}
+}
+
 func dockerClient() (*client.Client, error) {
 	start := time.Now()
 	defer func() {

@@ -5,11 +5,8 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 	
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/sirupsen/logrus"
 )
 
 func TestMain(m *testing.M) {
@@ -30,7 +27,7 @@ func TestMain(m *testing.M) {
 	}
 	defer containerCleanupFunc()
 	
-	_, err = postsql.WaitForDatabaseAccess(cfg.ConnectionURL(), 10, 100*time.Millisecond, logrus.New())
+	_, err = storage.SetupTestDBTables(cfg.ConnectionURL())
 	if err != nil {
 		log.Fatal(err)
 	}
