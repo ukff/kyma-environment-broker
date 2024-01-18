@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	}
 	defer containerCleanupFunc()
 	
-	_, err = postsql.WaitForDatabaseAccess(cfg.ConnectionURL(), 10, 100*time.Millisecond, logrus.New())
+	_, err = postsql.WaitForDatabaseAccess(cfg.ConnectionURL(), 10, 1*time.Second, logrus.New())
 	if err != nil {
 		log.Fatal(err)
 	}
