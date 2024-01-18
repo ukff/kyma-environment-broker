@@ -314,6 +314,45 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 	})
 }
 
+func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
+	// given
+	ms := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests()
+	// k8s client to an "empty" K8s
+	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
+	step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewK8sClientFromSecretProvider(k8sCli))
+	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+	op.State = "in progress"
+
+	// when
+	log := logrus.New()
+	_, backoff, err := step.Run(op.Operation, log)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+}
+
+func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
+	// given
+	ms := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests()
+	// k8s client to an "empty" K8s
+	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
+	step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+	op.State = "in progress"
+	op.RuntimeID = ""
+
+	// when
+	log := logrus.New()
+	_, backoff, err := step.Run(op.Operation, log)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+}
+
 type fakeK8sClientWrapper struct {
 	fake             client.Client
 	cleanupInstances bool
