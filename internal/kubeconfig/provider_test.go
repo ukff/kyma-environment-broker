@@ -62,6 +62,8 @@ func TestSecretProvider_NoSecret(t *testing.T) {
 	// then
 	assert.Error(t, errKubeconfig)
 	assert.Error(t, errClient)
+	assert.True(t, IsNotFound(errKubeconfig))
+	assert.True(t, IsNotFound(errClient))
 }
 
 func TestSecretProvider_BadKubeconfig(t *testing.T) {

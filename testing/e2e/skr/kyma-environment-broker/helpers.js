@@ -32,13 +32,39 @@ async function provisionSKR(
   const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
   const objRuntimeStatus = JSON.parse(runtimeStatus);
   expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
-  debug('Fetching shoot info from gardener...');
-  const shoot = await gardener.getShoot(objRuntimeStatus.data[0].shootName);
-  debug(`Compass ID ${shoot.compassID}`);
+  let shoot;
+  if (process.env['GARDENER_KUBECONFIG']) {
+    debug('Fetching shoot info from gardener...');
+    shoot = await gardener.getShoot(objRuntimeStatus.data[0].shootName);
+    debug(`Compass ID ${shoot.compassID}`);
+  } else {
+    debug('Fetching shoot info using kcp cli...');
+    shoot = await getShoot(kcp, objRuntimeStatus.data[0].shootName);
+  }
 
   return {
     operationID,
     shoot,
+  };
+}
+
+async function getShoot(kcp, shootName) {
+  debug(`Fetching shoot: ${shootName}`);
+
+  const kubeconfigPath = await kcp.getKubeconfig(shootName);
+
+  const runtimeClusterConfig = await kcp.getRuntimeClusterConfig(shootName);
+  const objRuntimeClusterConfig = JSON.parse(runtimeClusterConfig);
+  expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.oidcConfig').not.empty;
+  expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.dnsConfig.domain').not.empty;
+  expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.machineType').not.empty;
+
+  return {
+    name: shootName,
+    kubeconfig: kubeconfigPath,
+    oidcConfig: objRuntimeClusterConfig.data[0].clusterConfig.oidcConfig,
+    shootDomain: objRuntimeClusterConfig.data[0].clusterConfig.dnsConfig.domain,
+    spec: objRuntimeClusterConfig.data[0].clusterConfig.machineType,
   };
 }
 
@@ -85,7 +111,13 @@ async function updateSKR(keb,
 
   await ensureOperationSucceeded(keb, kcp, instanceID, operationID, timeout);
 
-  const shoot = await gardener.getShoot(shootName);
+  let shoot;
+
+  if (process.env['GARDENER_KUBECONFIG']) {
+    shoot = await gardener.getShoot(shootName);
+  } else {
+    shoot = await getShoot(kcp, shootName);
+  }
 
   return {
     operationID,
@@ -161,4 +193,5 @@ module.exports = {
   ensureValidShootOIDCConfig,
   ensureValidOIDCConfigInCustomerFacingKubeconfig,
   getCatalog,
+  getShoot,
 };

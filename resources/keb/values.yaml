@@ -11,19 +11,19 @@ global:
       version: "v20231219-d6bc8703" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.0.3"
+      version: "1.1.1"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.0.3"
+      version: "1.1.1"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.0.3"
+      version: "1.1.1"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.0.3"
+      version: "1.1.1"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.0.3"
+      version: "1.1.1"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -114,6 +114,9 @@ broker:
     memory: false
   events:
     enabled: false
+
+binding:
+  enabled: false
 
 service:
   type: ClusterIP
@@ -219,10 +222,8 @@ includeAdditionalParamsInSchema: "false"
 showTrialExpirationInfo: "false"
 subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
 trialDocsURL: "https://help.sap.com/docs/"
-allowNetworkingParameters: "false"
 exposeSchemaWithRegionRequired: "false"
 regionParameterIsRequired: "false"
-allowModulesParameters: "false"
 
 osbUpdateProcessingEnabled: "false"
 

@@ -16,12 +16,18 @@ type Config struct {
 }
 
 type Builder struct {
-	provisionerClient provisioner.Client
+	provisionerClient  provisioner.Client
+	kubeconfigProvider kubeconfigProvider
 }
 
-func NewBuilder(provisionerClient provisioner.Client) *Builder {
+type kubeconfigProvider interface {
+	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
+}
+
+func NewBuilder(provisionerClient provisioner.Client, provider kubeconfigProvider) *Builder {
 	return &Builder{
-		provisionerClient: provisionerClient,
+		provisionerClient:  provisionerClient,
+		kubeconfigProvider: provider,
 	}
 }
 
@@ -34,23 +40,28 @@ type kubeconfigData struct {
 }
 
 func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKubeconfig string) (string, error) {
+	if instance.RuntimeID == "" {
+		return "", fmt.Errorf("RuntimeID must not be empty")
+	}
 	status, err := b.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
 	if err != nil {
 		return "", fmt.Errorf("while fetching runtime status from provisioner: %w", err)
 	}
 
 	var kubeCfg kubeconfig
+	var kubeconfigContent []byte
 	if adminKubeconfig == "" {
-		if status.RuntimeConfiguration.Kubeconfig == nil {
-			return "", fmt.Errorf("kubeconfig is nil (nil response from Provisioner)")
+		kubeconfigContent, err = b.kubeconfigProvider.KubeconfigForRuntimeID(instance.RuntimeID)
+		if err != nil {
+			return "", err
 		}
-		adminKubeconfig = *status.RuntimeConfiguration.Kubeconfig
+	} else {
+		kubeconfigContent = []byte(adminKubeconfig)
 	}
-	err = yaml.Unmarshal([]byte(adminKubeconfig), &kubeCfg)
+	err = yaml.Unmarshal(kubeconfigContent, &kubeCfg)
 	if err != nil {
 		return "", fmt.Errorf("while unmarshaling kubeconfig: %w", err)
 	}
-
 	if err := b.validKubeconfig(kubeCfg); err != nil {
 		return "", fmt.Errorf("while validation kubeconfig fetched by provisioner: %w", err)
 	}

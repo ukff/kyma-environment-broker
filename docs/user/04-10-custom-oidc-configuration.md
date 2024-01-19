@@ -42,6 +42,7 @@ See the following JSON example without the `oidc` object:
     "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
   },
   "parameters" : {
+    "region": {REGION},
     "name" : {CLUSTER_NAME}
   }
 }
@@ -55,6 +56,7 @@ See the following JSON example with the `oidc` object whose properties are empty
     "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
   },
   "parameters" : {
+    "region": {REGION},
     "name" : {CLUSTER_NAME},
     "oidc" : {
       "clientID" : "",

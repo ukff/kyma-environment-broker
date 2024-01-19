@@ -386,7 +386,7 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 
 	// create SKR kubeconfig endpoint
-	kcBuilder := kubeconfig.NewBuilder(provisionerClient)
+	kcBuilder := kubeconfig.NewBuilder(provisionerClient, skrK8sClientProvider)
 	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, logs.WithField("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
@@ -488,7 +488,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), logs),
-		BindEndpoint:                 broker.NewBind(logs),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs),
 		UnbindEndpoint:               broker.NewUnbind(logs),
 		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),

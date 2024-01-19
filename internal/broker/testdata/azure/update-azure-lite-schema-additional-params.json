@@ -28,14 +28,16 @@
       "minimum": 2,
       "type": "integer"
     },
-    "machineType": {
-      "_enumDisplayName": {
-        "Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"
+    "machineType":{
+      "_enumDisplayName":{
+        "Standard_D4s_v5":"Standard_D4s_v5 (4vCPU, 16GB RAM)",
+        "Standard_D4_v3":"Standard_D4_v3 (4vCPU, 16GB RAM)"
       },
-      "enum": [
+      "enum":[
+        "Standard_D4s_v5",
         "Standard_D4_v3"
       ],
-      "type": "string"
+      "type":"string"
     },
     "oidc": {
       "description": "OIDC configuration",
