@@ -4,6 +4,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+
 GOLINT_VER = "v1.55.2"
 FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 VERIFY_IGNORE := /vendor\|/automock
