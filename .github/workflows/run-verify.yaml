@@ -29,6 +29,7 @@ jobs:
         version: v1.55.2
         only-new-issues: true
         install-mode: "goinstall"
+        skip-cache: true
 
   run-go-checks:
     runs-on: ubuntu-latest
@@ -40,7 +41,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-          skip-cache: true
 
       - name: Run go checks
         run: make checks
