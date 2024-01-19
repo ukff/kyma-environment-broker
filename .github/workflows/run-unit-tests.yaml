@@ -1,11 +1,7 @@
 name: Run unit tests
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    # Trigger for Pull Request
-    branches: [ "main" ]
+  workflow_call:
 
 jobs:
   run-unit-tests:
