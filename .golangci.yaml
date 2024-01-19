@@ -1,3 +1,9 @@
+output:
+  format: "colored-tab:stdout,github-actions:stdout"
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+
 linters:
   disable-all: true
   enable:
