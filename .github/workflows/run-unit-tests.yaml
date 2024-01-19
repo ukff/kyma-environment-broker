@@ -1,0 +1,16 @@
+name: Run unit tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    # Trigger for Pull Request
+    branches: [ "main" ]
+
+jobs:
+  run-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        shell: bash
+        run: echo "Skipping"
