@@ -129,7 +129,6 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
-	cfg.Broker.RegionParameterIsRequired = false
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
@@ -625,6 +624,10 @@ func (s *BrokerSuiteTest) FinishProvisioningOperationByReconciler(operationID st
 		return false, nil
 	})
 	assert.NoError(s.t, err)
+}
+
+func (c *BrokerSuiteTest) SetReconcilerResponseStatus(s reconcilerApi.Status) {
+	c.reconcilerClient.PrepareReconcilerClusterStatus(s)
 }
 
 func (s *BrokerSuiteTest) FailProvisioningOperationByReconciler(operationID string) {
@@ -1237,18 +1240,6 @@ func (s *BrokerSuiteTest) fixGardenerShootForOperationID(opID string) *unstructu
 	return &un
 }
 
-func (s *BrokerSuiteTest) processProvisioningAndReconcilingByOperationID(opID string) {
-	// Provisioner part
-	s.WaitForProvisioningState(opID, domain.InProgress)
-	s.AssertProvisionerStartedProvisioning(opID)
-	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateSucceeded)
-	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
-	require.NoError(s.t, err)
-
-	// Reconciler part
-	s.processReconcilingByOperationID(opID)
-}
-
 func (s *BrokerSuiteTest) processReconcilingByOperationID(opID string) {
 	// Reconciler part
 	s.AssertReconcilerStartedReconcilingWhenProvisioning(opID)
@@ -1257,34 +1248,10 @@ func (s *BrokerSuiteTest) processReconcilingByOperationID(opID string) {
 	s.WaitForOperationState(opID, domain.Succeeded)
 }
 
-func (s *BrokerSuiteTest) processProvisioningAndFailReconcilingByOperationID(opID string) {
-	// Provisioner part
-	s.WaitForProvisioningState(opID, domain.InProgress)
-	s.AssertProvisionerStartedProvisioning(opID)
-	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateSucceeded)
-	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
-	require.NoError(s.t, err)
-
-	// Reconciler part
-	s.failReconcilingByOperationID(opID)
-}
-
-func (s *BrokerSuiteTest) failReconcilingByOperationID(opID string) {
-	s.AssertReconcilerStartedReconcilingWhenProvisioning(opID)
-	s.FailProvisioningOperationByReconciler(opID)
-	s.WaitForOperationState(opID, domain.Failed)
-}
-
 func (s *BrokerSuiteTest) processProvisioningByInstanceID(iid string) {
 	opID := s.WaitForLastOperation(iid, domain.InProgress)
 
 	s.processProvisioningByOperationID(opID)
-}
-
-func (s *BrokerSuiteTest) processProvisioningAndReconciliationByInstanceID(iid string) {
-	opID := s.WaitForLastOperation(iid, domain.InProgress)
-
-	s.processProvisioningAndReconcilingByOperationID(opID)
 }
 
 func (s *BrokerSuiteTest) ShootName(id string) string {

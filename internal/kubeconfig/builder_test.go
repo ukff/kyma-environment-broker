@@ -40,7 +40,7 @@ func TestBuilder_Build(t *testing.T) {
 		}, nil)
 		defer provisionerClient.AssertExpectations(t)
 
-		builder := NewBuilder(provisionerClient)
+		builder := NewBuilder(provisionerClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -61,7 +61,7 @@ func TestBuilder_Build(t *testing.T) {
 		provisionerClient.On("RuntimeStatus", globalAccountID, runtimeID).Return(schema.RuntimeStatus{}, fmt.Errorf("cannot return kubeconfig"))
 		defer provisionerClient.AssertExpectations(t)
 
-		builder := NewBuilder(provisionerClient)
+		builder := NewBuilder(provisionerClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
@@ -73,30 +73,6 @@ func TestBuilder_Build(t *testing.T) {
 		//then
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "while fetching runtime status from provisioner: cannot return kubeconfig")
-	})
-
-	t.Run("provisioner client returned wrong kubeconfig", func(t *testing.T) {
-		// given
-		provisionerClient := &automock.Client{}
-		provisionerClient.On("RuntimeStatus", globalAccountID, runtimeID).Return(schema.RuntimeStatus{
-			RuntimeConfiguration: &schema.RuntimeConfig{
-				Kubeconfig: skrWrongKubeconfig(),
-			},
-		}, nil)
-		defer provisionerClient.AssertExpectations(t)
-
-		builder := NewBuilder(provisionerClient)
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		_, err := builder.Build(instance)
-
-		//then
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "while validation kubeconfig fetched by provisioner")
 	})
 }
 
@@ -121,7 +97,7 @@ func TestBuilder_BuildFromAdminKubeconfig(t *testing.T) {
 		}, nil)
 		defer provisionerClient.AssertExpectations(t)
 
-		builder := NewBuilder(provisionerClient)
+		builder := NewBuilder(provisionerClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -245,27 +221,6 @@ users:
 	)
 }
 
-func skrWrongKubeconfig() *string {
-	kc := `
----
-apiVersion: v1
-kind: Config
-current-context: shoot--kyma-dev--ac0d8d9
-clusters:
-- name: shoot--kyma-dev--ac0d8d9
-contexts:
-- name: shoot--kyma-dev--ac0d8d9
-  context:
-    cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9-token
-users:
-- name: shoot--kyma-dev--ac0d8d9-token
-  user:
-    token: DKPAe2Lt06a8dlUlE81kaWdSSDVSSf38x5PIj6cwQkqHMrw4UldsUr1guD6Thayw
-`
-	return &kc
-}
-
 func adminKubeconfig() string {
 	return `
 ---
@@ -288,4 +243,18 @@ users:
     token: DKPAe2Lt06a8dlUlE81kaWdSSDVSSf38x5PIj6cwQkqHMrw4UldsUr1guD6Thayw
 
 `
+}
+
+func NewFakeKubeconfigProvider(content *string) *fakeKubeconfigProvider {
+	return &fakeKubeconfigProvider{
+		content: *content,
+	}
+}
+
+type fakeKubeconfigProvider struct {
+	content string
+}
+
+func (p *fakeKubeconfigProvider) KubeconfigForRuntimeID(_ string) ([]byte, error) {
+	return []byte(p.content), nil
 }

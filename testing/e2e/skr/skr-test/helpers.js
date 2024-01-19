@@ -185,4 +185,5 @@ module.exports = {
   saveKubeconfig,
   log,
   initK8sConfig,
+  initializeK8sClient,
 };

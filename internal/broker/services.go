@@ -45,6 +45,7 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log logrus.FieldLogg
 //	GET /v2/catalog
 func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, error) {
 	var availableServicePlans []domain.ServicePlan
+	bindable := true
 	// we scope to the kymaruntime service only
 	class, ok := b.servicesConfig[KymaServiceName]
 	if !ok {
@@ -53,13 +54,14 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
-	regionRequired := b.cfg.ExposeSchemaWithRegionRequired || b.cfg.RegionParameterIsRequired
-	for _, plan := range Plans(class.Plans, provider, b.cfg.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), regionRequired) {
+	for _, plan := range Plans(class.Plans, provider, b.cfg.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion)) {
 		// filter out not enabled plans
 		if _, exists := b.enabledPlanIDs[plan.ID]; !exists {
 			continue
 		}
-		// p := plan.PlanDefinition
+		if b.cfg.Binding.Enabled && b.cfg.Binding.BindablePlans.Contains(plan.Name) {
+			plan.Bindable = &bindable
+		}
 
 		availableServicePlans = append(availableServicePlans, plan)
 	}

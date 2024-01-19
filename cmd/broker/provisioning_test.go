@@ -115,7 +115,7 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(resp)
 
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -150,41 +150,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(resp)
 
-	suite.processProvisioningAndReconcilingByOperationID(opID)
-
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
-	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
-	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-	suite.AssertSecretWithKubeconfigExists(opID)
-}
-
-func TestProvisioning_HappyPathSapConvergedCloudWithDefaultRegion(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTestWithOptionalRegion(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
-					"context": {
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -260,7 +226,7 @@ func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(resp)
 
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 
 	suite.WaitForOperationState(opID, domain.Succeeded)
 }
@@ -349,7 +315,8 @@ func TestProvisioning_AzureWithEURestrictedAccessHappyFlow(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertAzureRegion("switzerlandnorth")
@@ -384,7 +351,8 @@ func TestProvisioning_AzureWithEURestrictedAccessDefaultRegion(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertAzureRegion("switzerlandnorth")
@@ -419,7 +387,8 @@ func TestProvisioning_AWSWithEURestrictedAccessHappyFlow(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
@@ -455,7 +424,8 @@ func TestProvisioning_AWSWithEURestrictedAccessDefaultRegion(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
@@ -491,7 +461,8 @@ func TestProvisioning_TrialWithEmptyRegion(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-west-1")
@@ -527,7 +498,8 @@ func TestProvisioning_Conflict(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -645,7 +617,8 @@ func TestProvisioning_TrialAtEU(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
@@ -736,7 +709,8 @@ func TestProvisioningWithReconciler_HappyPath(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 	provisioningOp, _ := suite.db.Operations().GetProvisioningOperationByID(opID)
 	clusterID := provisioningOp.InstanceDetails.ServiceManagerClusterID
 
@@ -798,7 +772,8 @@ func TestProvisioningWithReconcilerWithBTPOperator_HappyPath(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
 	suite.AssertProvider("aws")
@@ -854,7 +829,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
-			expectedMachineType:                 "Standard_D4_v3",
+			expectedMachineType:                 "Standard_D4s_v5",
 			expectedProfile:                     gqlschema.KymaProfileEvaluation,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          true,
@@ -881,7 +856,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileEvaluation,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
-			expectedMachineType:                 "Standard_D4_v3",
+			expectedMachineType:                 "Standard_D4s_v5",
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production Azure": {
@@ -892,7 +867,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "Standard_D4_v3",
+			expectedMachineType:                 "Standard_D4s_v5",
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
@@ -907,7 +882,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(3),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "Standard_D4_v3",
+			expectedMachineType:                 "Standard_D4s_v5",
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
@@ -1251,7 +1226,7 @@ func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 	instance := suite.GetInstance(iid)
 
 	// then
@@ -1286,7 +1261,7 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 	instance := suite.GetInstance(iid)
 
 	// then
@@ -1369,7 +1344,7 @@ func TestProvisioning_Modules(t *testing.T) {
 				}`)
 		opID := suite.DecodeOperationID(resp)
 
-		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.processProvisioningByOperationID(opID)
 
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)
@@ -1410,7 +1385,7 @@ func TestProvisioning_Modules(t *testing.T) {
 				}`)
 		opID := suite.DecodeOperationID(resp)
 
-		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.processProvisioningByOperationID(opID)
 
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)
@@ -1455,7 +1430,7 @@ func TestProvisioning_Modules(t *testing.T) {
 				}`)
 		opID := suite.DecodeOperationID(resp)
 
-		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.processProvisioningByOperationID(opID)
 
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)
@@ -1489,7 +1464,7 @@ func TestProvisioning_Modules(t *testing.T) {
 				}`)
 		opID := suite.DecodeOperationID(resp)
 
-		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.processProvisioningByOperationID(opID)
 
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)
@@ -1524,7 +1499,7 @@ func TestProvisioning_Modules(t *testing.T) {
 
 		opID := suite.DecodeOperationID(resp)
 
-		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.processProvisioningByOperationID(opID)
 
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)
@@ -1558,7 +1533,7 @@ func TestProvisioning_Modules(t *testing.T) {
 
 		opID := suite.DecodeOperationID(resp)
 
-		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.processProvisioningByOperationID(opID)
 
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op, err := suite.db.Operations().GetOperationByID(opID)

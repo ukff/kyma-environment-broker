@@ -3,5 +3,3 @@
 
 # Owners of all .md files in the repository
 *.md @kyma-project/technical-writers
-
-/cmd/subscriptioncleanup @kyma-project/Framefrog

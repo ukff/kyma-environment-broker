@@ -1,43 +1,42 @@
-APP_NAME = kyma-environment-broker
-APP_PATH = components/kyma-environment-broker
-APP_CLEANUP_NAME = kyma-environments-cleanup-job
-APP_SUBACCOUNT_CLEANUP_NAME = kyma-environment-subaccount-cleanup-job
-APP_SUBSCRIPTION_CLEANUP_NAME = kyma-environment-subscription-cleanup-job
-APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
 
-ENTRYPOINT = cmd/broker/
-BUILDPACK = eu.gcr.io/kyma-project/test-infra/buildpack-golang:v20221215-c20ffd65
-SCRIPTS_DIR = $(realpath $(shell pwd))/scripts
-DOCKER_SOCKET = /var/run/docker.sock
-TESTING_DB_NETWORK = test_network
+GOLINT_VER = "v1.55.2"
+FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
+VERIFY_IGNORE := /vendor\|/automock
 
-include $(SCRIPTS_DIR)/generic_make_go.mk
+ ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
+.PHONY: help
+help: 
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-.DEFAULT_GOAL := custom-verify
+##@ General
 
-custom-verify: testing-with-database-network mod-verify go-mod-check check-fmt
+.PHONY: verify
+verify: test checks go-lint ## verify simulates same behaviour as 'verify' GitHub Action which run on PR
 
-verify:: custom-verify
+.PHONY: checks
+checks: check-go-mod-tidy check-go-fmt check-gqlgen check-go-imports ## run different go checks
 
-resolve-local:
-	GO111MODULE=on go mod vendor -v
+.PHONY: test 
+test: ## run Go tests
+	go test ./...
 
-ensure-local:
-	@echo "Go modules present in component - omitting."
+.PHONY: go-lint
+go-lint: ## linter config in file at root of project -> '.golangci.yaml'
+	@if ! [ "$(command -v golangci-lint version --format short)" == $GOLINT_VER ]; then \
+  		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
+		GOBIN= go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
+		echo golangci installed in $(GOBIN) with version: $(shell golangci-lint version --format short); \
+	fi;
+	golangci-lint run ./...
 
-dep-status:
-	@echo "Go modules present in component - omitting."
-
-dep-status-local:
-	@echo "Go modules present in component - omitting."
-
-mod-verify: mod-verify-local
-mod-verify-local:
-	GO111MODULE=on go mod verify
-
-go-mod-check: go-mod-check-local
-go-mod-check-local:
-	@echo make go-mod-check
+.PHONY: check-go-mod-tidy
+check-go-mod-tidy: ## check if go mod tidy needed
+	@echo check-go-mod-tidy
 	go mod tidy
 	@if [ -n "$$(git status -s go.*)" ]; then \
 		echo -e "${RED}✗ go mod tidy modified go.mod or go.sum files${NC}"; \
@@ -45,44 +44,30 @@ go-mod-check-local:
 		exit 1; \
 	fi;
 
-# We have to override test-local and errcheck, because we need to run provisioner with database
-#as docker container connected with custom network and the buildpack container itsefl has to be connected to the network
+## TODO: Replace by using golangci-lint configuration
+.PHONY: check-go-fmt ## run Go fmt against changes
+check-go-fmt:
+	@echo check-go-fmt
+	@if [ -n "$$(gofmt -l $$($(FILES_TO_CHECK)))" ]; then \
+		gofmt -l $$($(FILES_TO_CHECK)); \
+		echo "✗ some files are not properly formatted. To repair run make fmt"; \
+		exit 1; \
+	fi;
 
-test-local: ;
-errcheck-local: ;
+.PHONY: check-go-imports ## run Go imports against changes
+check-go-imports:
+	@echo check-go-imports
+	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
+		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
+		goimports -l $$($(FILES_TO_CHECK)); \
+		exit 1; \
+	fi;
 
-# TODO: there is no errcheck in go1.13 buildpack, consider creating buildpack-toolbox with go1.13 version
-# errcheck-local:
-# 	@docker run $(DOCKER_INTERACTIVE) \
-# 		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-# 		$(DOCKER_CREATE_OPTS) errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
-
-test-integration-local:
-	go test ./... -tags=integration
-
-test-integration:
-	@echo make test-integration-local
-	@docker run $(DOCKER_INTERACTIVE) \
-		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-		$(DOCKER_CREATE_OPTS) make test-integration-local
-
-testing-with-database-network:
-	@docker version
-	@echo testing-with-database-network
-	@docker network inspect $(TESTING_DB_NETWORK) >/dev/null 2>&1 || \
-	docker network create --driver bridge $(TESTING_DB_NETWORK)
-	@docker run $(DOCKER_INTERACTIVE) \
-		-v $(DOCKER_SOCKET):$(DOCKER_SOCKET) \
-		-v $(COMPONENT_DIR)/../../:$(WORKSPACE_COMPONENT_DIR)/../../ \
-		--network=$(TESTING_DB_NETWORK) \
-		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-		--env PIPELINE_BUILD=1 --env GO111MODULE=on \
-		$(DOCKER_CREATE_OPTS) go test -tags=database_integration ./...
-	@docker network rm $(TESTING_DB_NETWORK) || true
-
-clean-up:
-	@docker network rm $(TESTING_DB_NETWORK) || true
-
-.PHONY: test
-test:
-	go test ./...
+.PHONY: check-gqlgen
+check-gqlgen: ## run GraphQL changes
+	@echo check-gqlgen
+	@if [ -n "$$(git status -s pkg/graphql)" ]; then \
+		echo -e "${RED}✗ gqlgen.sh modified some files, schema and code are out-of-sync${NC}"; \
+		git status -s pkg/graphql; \
+		exit 1; \
+	fi;
