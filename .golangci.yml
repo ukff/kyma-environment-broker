@@ -3,7 +3,6 @@ output:
   print-issued-lines: true
   print-linter-name: true
   uniq-by-line: true
-
 linters:
   disable-all: true
   enable:
