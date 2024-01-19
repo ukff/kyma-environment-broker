@@ -17,23 +17,29 @@ help:
 ##@ General
 
 .PHONY: verify
-verify: test checks go-lint ## verify simulates same behaviour as 'verify' GitHub Action which run on PR
+verify: test checks go-lint ## verify simulates same behaviour as 'verify' GitHub Action which run on every PR
 
 .PHONY: checks
-checks: check-go-mod-tidy check-go-fmt check-gqlgen check-go-imports ## run different go checks
-
-.PHONY: test 
-test: ## run Go tests
-	go test ./...
+checks: check-go-mod-tidy check-go-fmt check-gqlgen check-go-imports ## run different Go related checks
 
 .PHONY: go-lint
-go-lint: ## linter config in file at root of project -> '.golangci.yaml'
+go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
+	golangci-lint run ./...
+
+go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 	@if ! [ "$(command -v golangci-lint version --format short)" == $GOLINT_VER ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
 		GOBIN= go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
 		echo golangci installed in $(GOBIN) with version: $(shell golangci-lint version --format short); \
 	fi;
-	golangci-lint run ./...
+##@ Tests
+
+.PHONY: test 
+test: ## run Go tests
+	go test ./...
+
+
+##@ Go checks 
 
 .PHONY: check-go-mod-tidy
 check-go-mod-tidy: ## check if go mod tidy needed
@@ -45,25 +51,6 @@ check-go-mod-tidy: ## check if go mod tidy needed
 		exit 1; \
 	fi;
 
-## TODO: Replace by using golangci-lint configuration
-.PHONY: check-go-fmt ## run Go fmt against changes
-check-go-fmt:
-	@echo check-go-fmt
-	@if [ -n "$$(gofmt -l $$($(FILES_TO_CHECK)))" ]; then \
-		gofmt -l $$($(FILES_TO_CHECK)); \
-		echo "✗ some files are not properly formatted. To repair run make fmt"; \
-		exit 1; \
-	fi;
-
-.PHONY: check-go-imports ## run Go imports against changes
-check-go-imports:
-	@echo check-go-imports
-	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
-		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
-		goimports -l $$($(FILES_TO_CHECK)); \
-		exit 1; \
-	fi;
-
 .PHONY: check-gqlgen
 check-gqlgen: ## run GraphQL changes
 	@echo check-gqlgen
@@ -72,3 +59,11 @@ check-gqlgen: ## run GraphQL changes
 		git status -s pkg/graphql; \
 		exit 1; \
 	fi;
+
+
+##@ Development support commands
+
+.PHONY: fix
+fix: go-lint-install ## try to fix automatically issues
+	go mod tidy -e -v -x 
+	golangci-lint run --fix
