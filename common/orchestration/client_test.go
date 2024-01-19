@@ -492,7 +492,7 @@ func respondOperationListWithFailed(w http.ResponseWriter, operations []Operatio
 			}
 		}
 	}
-	for i := range operations {
+	for i, _ := range operations {
 		if operations[i].State != "failed" {
 			operationR = append(operationR, operations[i])
 		}
