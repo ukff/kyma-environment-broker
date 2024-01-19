@@ -1,9 +1,0 @@
-name: Run unit tests
-
-on:
-  workflow_call:
-
-jobs:
-  run-unit-tests:
-    if: false 
-    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
