@@ -9,4 +9,8 @@ on:
 
 jobs:
   run-unit-tests:
-    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depracated
+        shell: bash
+        run: echo "This action is depracated, due to use Verify KEB / run-go-tests / build action instead."
