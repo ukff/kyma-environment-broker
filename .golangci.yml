@@ -1,3 +1,5 @@
+run:
+  allow-parallel-runners: true
 output:
   format: "colored-tab:stdout,github-actions:stdout"
   print-issued-lines: true
