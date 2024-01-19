@@ -151,6 +151,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processProvisioningByOperationID(opID)
+<<<<<<< HEAD
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -185,6 +186,8 @@ func TestProvisioning_HappyPathSapConvergedCloudWithDefaultRegion(t *testing.T) 
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processProvisioningByOperationID(opID)
+=======
+>>>>>>> main
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)

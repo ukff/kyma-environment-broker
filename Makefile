@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+=======
+APP_NAME = kyma-environment-broker
+APP_PATH = components/kyma-environment-broker
+APP_CLEANUP_NAME = kyma-environments-cleanup-job
+APP_SUBACCOUNT_CLEANUP_NAME = kyma-environment-subaccount-cleanup-job
+APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
+>>>>>>> main
 
 GOLINT_VER = "v1.55.2"
 FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
