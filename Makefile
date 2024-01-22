@@ -55,4 +55,4 @@ check-go-mod-tidy: ## check if go mod tidy needed
 .PHONY: fix
 fix: go-lint-install ## try to fix automatically issues
 	go mod tidy
-	golangci-lint run --fix
+	golangci-lint run ./... --fix --new
