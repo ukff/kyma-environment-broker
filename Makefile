@@ -32,6 +32,7 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 		GOBIN= go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
 		echo golangci installed in $(GOBIN) with version: $(shell golangci-lint version --format short); \
 	fi;
+	
 ##@ Tests
 
 .PHONY: test 
@@ -62,6 +63,6 @@ check-gqlgen: ## run GraphQL changes
 ##@ Development support commands
 
 .PHONY: fix
-fix: go-lint-install ## try to fix automatically issues
+fix: go-lint-install checks ## try to fix automatically issues
 	go mod tidy -e -v -x 
 	golangci-lint run --fix
