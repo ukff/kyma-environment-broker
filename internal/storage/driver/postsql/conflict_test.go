@@ -2,7 +2,6 @@ package postsql_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -24,23 +23,18 @@ func TestConflict(t *testing.T) {
 	t.Run("Conflict Operations", func(t *testing.T) {
 
 		t.Run("Plain operations - provisioning", func(t *testing.T) {
-			start := time.Now()
-
 			containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
 			require.NoError(t, err)
-			fmt.Println(fmt.Sprintf("after InitTestDBContainer -> %s", time.Since(start)))
 
 			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 			defer tablesCleanupFunc()
 			defer containerCleanupFunc()
 			require.NoError(t, err)
-			fmt.Println(fmt.Sprintf("after InitTestDBTables -> %s", time.Since(start)))
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
 			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
-			fmt.Println(fmt.Sprintf("after NewFromConfig -> %s", time.Since(start)))
 
 			givenOperation := fixture.FixOperation("operation-001", "inst-id", internal.OperationTypeProvision)
 			givenOperation.State = domain.InProgress
@@ -50,37 +44,29 @@ func TestConflict(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
-			fmt.Println(fmt.Sprintf("after Operation Fix -> %s", time.Since(start)))
-
 			err = svc.InsertOperation(givenOperation)
 			require.NoError(t, err)
-			fmt.Println(fmt.Sprintf("after InsertOperation -> %s", time.Since(start)))
 
 			// when
 			gotOperation1, err := svc.GetOperationByID("operation-001")
 			require.NoError(t, err)
-			fmt.Println(fmt.Sprintf("after GetOp1 -> %s", time.Since(start)))
 
 			gotOperation2, err := svc.GetOperationByID("operation-001")
 			require.NoError(t, err)
-			fmt.Println(fmt.Sprintf("after GetOp2 -> %s", time.Since(start)))
 
 			// when
 			gotOperation1.Description = "new modified description 1"
 			gotOperation2.Description = "new modified description 2"
 			_, err = svc.UpdateOperation(*gotOperation1)
 			require.NoError(t, err)
-			fmt.Println(fmt.Sprintf("after UpdateOp1 -> %s", time.Since(start)))
 
 			_, err = svc.UpdateOperation(*gotOperation2)
-			fmt.Println(fmt.Sprintf("after UpdateOp2 -> %s", time.Since(start)))
 
 			// then
 			assertError(t, dberr.CodeConflict, err)
 
 			// when
 			err = svc.InsertOperation(*gotOperation1)
-			fmt.Println(fmt.Sprintf("after InsertOp1 -> %s", time.Since(start)))
 
 			// then
 			assertError(t, dberr.CodeAlreadyExists, err)
