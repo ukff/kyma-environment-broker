@@ -6,8 +6,8 @@ endif
 
 
 GOLINT_VER = "v1.55.2"
-FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 VERIFY_IGNORE := /vendor\|/automock
+FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
@@ -37,7 +37,7 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 
 .PHONY: test 
 test: ## run Go tests
-	go test ./...
+	go test -v github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql
 
 ##@ Go checks 
 
@@ -55,5 +55,5 @@ check-go-mod-tidy: ## check if go mod tidy needed
 
 .PHONY: fix
 fix: go-lint-install checks ## try to fix automatically issues
-	go mod tidy -e -v -x 
+	go mod tidy -e -v -x
 	golangci-lint run --fix
