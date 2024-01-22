@@ -1709,6 +1709,6 @@ func TestProvisioning_Modules(t *testing.T) {
 					}
 				}`)
 
-		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	})
 }
