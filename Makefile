@@ -53,6 +53,6 @@ check-go-mod-tidy: ## check if go mod tidy needed
 ##@ Development support commands
 
 .PHONY: fix
-fix: go-lint-install checks ## try to fix automatically issues
-	go mod tidy -e -v -x
+fix: go-lint-install ## try to fix automatically issues
+	go mod tidy
 	golangci-lint run --fix
