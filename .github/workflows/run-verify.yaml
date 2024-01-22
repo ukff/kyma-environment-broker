@@ -1,29 +1,35 @@
 name: Verify KEB
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-jobs:
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
 
+jobs:
   run-go-tests:
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
 
-#  run-go-linter:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up go environment
-#        uses: actions/setup-go@v4
-#        with:
-#          go-version-file: 'go.mod'
-
-#      - name: golangci-lint
-#        uses: golangci/golangci-lint-action@v3
+  run-go-linter:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up go environment
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+    - name: Go linter
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.55.2
+        only-new-issues: true
+        install-mode: "goinstall"
+        skip-cache: true
 
   run-go-checks:
     runs-on: ubuntu-latest
@@ -35,12 +41,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
-
-      - name: Install go import
-        shell: bash
-        run: |
-          GOBIN=$(go env GOPATH)/bin
-          GOBIN= go install golang.org/x/tools/cmd/goimports
 
       - name: Run go checks
         run: make checks
