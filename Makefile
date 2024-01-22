@@ -4,10 +4,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-
 GOLINT_VER = v1.55.2
-VERIFY_IGNORE := /vendor\|/automock
-FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
@@ -55,4 +52,4 @@ check-go-mod-tidy: ## check if go mod tidy needed
 .PHONY: fix
 fix: go-lint-install ## try to fix automatically issues
 	go mod tidy
-	golangci-lint run ./... --fix --new
+	golangci-lint run --fix --new
