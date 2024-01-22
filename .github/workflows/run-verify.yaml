@@ -19,17 +19,17 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
     - name: Set up go environment
       uses: actions/setup-go@v4
       with:
         go-version-file: 'go.mod'
+        
     - name: Go linter
       uses: golangci/golangci-lint-action@v3
       with:
         version: v1.55.2
         only-new-issues: true
-        install-mode: "goinstall"
-        skip-cache: true
 
   run-go-checks:
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 
-GOLINT_VER = "v1.55.2"
+GOLINT_VER = v1.55.2
 VERIFY_IGNORE := /vendor\|/automock
 FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 
@@ -27,7 +27,7 @@ go-lint: go-lint-install ## linter config in file at root of project -> '.golang
 	golangci-lint run ./...
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
-	@if ! [ "$(command -v golangci-lint version --format short)" == $GOLINT_VER ]; then \
+	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
 		GOBIN= go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
 		echo golangci installed in $(GOBIN) with version: $(shell golangci-lint version --format short); \
@@ -43,7 +43,6 @@ test: ## run Go tests
 
 .PHONY: check-go-mod-tidy
 check-go-mod-tidy: ## check if go mod tidy needed
-	@echo check-go-mod-tidy
 	go mod tidy
 	@if [ -n "$$(git status -s go.*)" ]; then \
 		echo -e "${RED}✗ go mod tidy modified go.mod or go.sum files${NC}"; \
