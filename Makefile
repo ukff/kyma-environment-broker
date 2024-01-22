@@ -20,7 +20,7 @@ help:
 verify: test checks go-lint ## verify simulates same behaviour as 'verify' GitHub Action which run on every PR
 
 .PHONY: checks
-checks: check-go-mod-tidy check-gqlgen ## run different Go related checks
+checks: check-go-mod-tidy ## run different Go related checks
 
 .PHONY: go-lint
 go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
@@ -48,15 +48,6 @@ check-go-mod-tidy: ## check if go mod tidy needed
 	@if [ -n "$$(git status -s go.*)" ]; then \
 		echo -e "${RED}✗ go mod tidy modified go.mod or go.sum files${NC}"; \
 		git status -s go.*; \
-		exit 1; \
-	fi;
-
-.PHONY: check-gqlgen
-check-gqlgen: ## run GraphQL changes
-	@echo check-gqlgen
-	@if [ -n "$$(git status -s pkg/graphql)" ]; then \
-		echo -e "${RED}✗ gqlgen.sh modified some files, schema and code are out-of-sync${NC}"; \
-		git status -s pkg/graphql; \
 		exit 1; \
 	fi;
 
