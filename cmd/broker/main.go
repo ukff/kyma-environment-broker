@@ -72,11 +72,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-	func init() {
-		rand.Seed(time.Now().UTC().UnixNano())
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-// Config holds configuration for the whole application
+// Config holds configuration for the whole application - test
 type Config struct {
 	// DbInMemory allows to use memory storage instead of the postgres one.
 	// Suitable for development purposes.
