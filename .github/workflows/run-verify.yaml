@@ -30,6 +30,7 @@ jobs:
       with:
         version: v1.55.2
         skip-cache: true
+        only-new-issues: true
 
   run-go-checks:
     runs-on: ubuntu-latest

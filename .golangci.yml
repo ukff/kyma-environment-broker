@@ -1,7 +1,5 @@
 run:
   allow-parallel-runners: true
-issues:
-  new: true
 output:
   format: "colored-tab:stderr,github-actions:stdout"
   print-issued-lines: true
