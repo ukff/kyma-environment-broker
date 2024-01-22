@@ -133,7 +133,7 @@ func fixGithubServer(t *testing.T) *httptest.Server {
 			10542: true,
 		},
 		branchCommit: map[string]map[string]bool{
-			"main": {
+			"main": map[string]bool{
 				"f5e6d75": true,
 			},
 		},

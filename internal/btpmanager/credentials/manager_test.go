@@ -525,7 +525,7 @@ func (e *Environment) getSkrsForSimulateChange(skrIndexes []int) []*envtest.Envi
 			}
 		}
 
-		for index := range indexSet {
+		for index, _ := range indexSet {
 			testEnv := e.skrs[index]
 			result = append(result, testEnv)
 		}
