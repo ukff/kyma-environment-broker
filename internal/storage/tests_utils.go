@@ -86,6 +86,7 @@ func InitTestDBContainer(log func(format string, args ...interface{}), ctx conte
 		return nil, Config{}, fmt.Errorf("while testing docker network: %w", err)
 	}
 
+	fmt.Println(fmt.Sprintf("InitTestDBContainer params -> %s, %s", hostname, mappedPort))
 	isAvailable, dbCfg, err := isDBContainerAvailable(hostname, mappedPort)
 	if err != nil {
 		return nil, Config{}, fmt.Errorf("while checking db container: %w", err)
@@ -96,6 +97,7 @@ func InitTestDBContainer(log func(format string, args ...interface{}), ctx conte
 		return func() {}, dbCfg, nil
 	}
 
+	//in each test we create new container, which cause long time in postsql WaitForDatabaseAccess
 	return createDbContainer(log, hostname)
 }
 
@@ -386,10 +388,7 @@ func createDbContainer(log func(format string, args ...interface{}), hostname st
 	}
 
 	cleanupFunc := func() {
-		err := cli.ContainerRemove(context.Background(), body.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
-		if err != nil {
-			panic(fmt.Errorf("during container removal: %w", err))
-		}
+
 	}
 
 	if err := cli.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
