@@ -92,6 +92,7 @@ func InitTestDBContainer(log func(format string, args ...interface{}), ctx conte
 	} else if !isAvailable {
 		log("cannot connect to DB container. Creating new Postgres container...")
 	} else if isAvailable {
+		fmt.Println("InitTestDBContainer isAvailable => true")
 		return func() {}, dbCfg, nil
 	}
 
