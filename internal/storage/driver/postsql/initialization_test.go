@@ -35,8 +35,8 @@ func TestInitialization(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Should return error when failed to connect to the database", func(t *testing.T) {
-		containerCleanupFunc, _, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_3")
+	t.Run("Should return error when failed to connect to the database with bad connection string", func(t *testing.T) {
+		containerCleanupFunc, _, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
 		require.NoError(t, err)
 		defer containerCleanupFunc()
 

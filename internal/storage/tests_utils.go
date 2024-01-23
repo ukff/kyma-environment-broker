@@ -28,41 +28,35 @@ import (
 )
 
 const (
-	DbUser            = "admin"
+	DbHostname        = "localhost"
+	DbUser            = "test_user"
 	DbPass            = "nimda"
 	DbName            = "broker"
-	DbPort            = "5432"
+	DbPort            = "1111"
 	DockerUserNetwork = "test_network"
-	EnvPipelineBuild  = "PIPELINE_BUILD"
 )
 
-var mappedPort string
+var (
+	testDbConfig Config
+)
 
-func MakeConnectionString(hostname string, port string) Config {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("makeConnectionString took -> %s\n", time.Since(start))
-	}()
-	host := "localhost"
-	if os.Getenv(EnvPipelineBuild) != "" {
-		host = hostname
-		port = DbPort
-	}
+func SetTestDbConfig(value Config) {
+	testDbConfig = value
+}
 
-	cfg := Config{
-		Host:      host,
-		User:      DbUser,
-		Password:  DbPass,
-		Port:      port,
-		Name:      DbName,
-		SSLMode:   "disable",
-		SecretKey: "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
-
+func MakeTestDbConfig(hostname string, port string) *Config {
+	return &Config{
+		Host:            hostname,
+		User:            DbUser,
+		Password:        DbPass,
+		Port:            port,
+		Name:            DbName,
+		SSLMode:         "disable",
+		SecretKey:       "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
 		MaxOpenConns:    2,
 		MaxIdleConns:    1,
 		ConnMaxLifetime: time.Minute,
 	}
-	return cfg
 }
 
 func CloseDatabase(t *testing.T, connection *dbr.Connection) {
@@ -76,13 +70,109 @@ func CloseDatabase(t *testing.T, connection *dbr.Connection) {
 	}
 }
 
-func InitTestDBContainer(log func(format string, args ...interface{}), ctx context.Context, hostname string) (func(), Config, error) {
+func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context, hostname string) (func(), Config, error) {
+
 	start := time.Now()
 	defer func() {
 		fmt.Printf("InitTestDBContainer took -> %s\n", time.Since(start))
 	}()
-	//in each test we create new container, which cause long time in postsql WaitForDatabaseAccess
-	return CreateDbContainer(log, hostname)
+
+	cli, err := dockerClient()
+	if err != nil {
+		return nil, Config{}, fmt.Errorf("while creating docker client: %w", err)
+	}
+
+	dbImage := "postgres:11"
+
+	filterBy := filters.NewArgs()
+	filterBy.Add("name", dbImage)
+	image, err := cli.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
+
+	if image == nil || err != nil {
+		log("Image not found... pulling...")
+		reader, err := cli.ImagePull(context.Background(), dbImage, types.ImagePullOptions{})
+		io.Copy(os.Stdout, reader)
+		defer reader.Close()
+
+		if err != nil {
+			return nil, Config{}, fmt.Errorf("while pulling dbImage: %w", err)
+		}
+	}
+
+	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{DbPort})
+	if err != nil {
+		return nil, Config{}, fmt.Errorf("while parsing ports specs: %w", err)
+	}
+
+	body, err := cli.ContainerCreate(context.Background(),
+		&container.Config{
+			Image: dbImage,
+			Env: []string{
+				fmt.Sprintf("POSTGRES_USER=%s", DbUser),
+				fmt.Sprintf("POSTGRES_PASSWORD=%s", DbPass),
+				fmt.Sprintf("POSTGRES_DB=%s", DbName),
+			},
+		},
+		&container.HostConfig{
+			NetworkMode:     "default",
+			PublishAllPorts: false,
+			PortBindings:    parsedPortSpecs,
+		},
+		&network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				DockerUserNetwork: {
+					Aliases: []string{
+						hostname,
+					},
+				},
+			},
+		},
+		&v1.Platform{},
+		"")
+
+	if err != nil {
+		return nil, Config{}, fmt.Errorf("during container creation: %w", err)
+	}
+
+	cleanupFunc := func() {
+
+	}
+
+	if err := cli.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
+		return cleanupFunc, Config{}, fmt.Errorf("during container startup: %w", err)
+	}
+
+	err = waitFor(cli, body.ID, "database system is ready to accept connections")
+	if err != nil {
+		log("Failed to query container's logs: %s", err)
+		return cleanupFunc, Config{}, fmt.Errorf("while waiting for DB readiness: %w", err)
+	}
+
+	filterBy = filters.NewArgs()
+	filterBy.Add("id", body.ID)
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{Filters: filterBy})
+
+	if err != nil || len(containers) == 0 {
+		log("no containers found: %s", err)
+		return cleanupFunc, Config{}, fmt.Errorf("while loading containers: %w", err)
+	}
+
+	var container = &containers[0]
+
+	if container == nil {
+		log("no container found: %s", err)
+		return cleanupFunc, Config{}, fmt.Errorf("while searching for a container: %w", err)
+	}
+
+	ports := container.Ports
+
+	dbCfg := MakeTestDbConfig(hostname, fmt.Sprint(ports[0].PublicPort))
+	SetTestDbConfig(*dbCfg)
+	return cleanupFunc, *dbCfg, nil
+}
+
+func InitTestDBContainer(log func(format string, args ...interface{}), ctx context.Context, hostname string) (func(), Config, error) {
+	return func() {}, testDbConfig, nil
 }
 
 func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
@@ -280,105 +370,6 @@ func clearDBQuery() string {
 		postsql.OrchestrationTableName,
 		postsql.RuntimeStateTableName,
 	)
-}
-
-func CreateDbContainer(log func(format string, args ...interface{}), hostname string) (func(), Config, error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("createDbContainer took -> %s\n", time.Since(start))
-	}()
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, Config{}, fmt.Errorf("while creating docker client: %w", err)
-	}
-
-	dbImage := "postgres:11"
-
-	filterBy := filters.NewArgs()
-	filterBy.Add("name", dbImage)
-	image, err := cli.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
-
-	if image == nil || err != nil {
-		log("Image not found... pulling...")
-		reader, err := cli.ImagePull(context.Background(), dbImage, types.ImagePullOptions{})
-		io.Copy(os.Stdout, reader)
-		defer reader.Close()
-
-		if err != nil {
-			return nil, Config{}, fmt.Errorf("while pulling dbImage: %w", err)
-		}
-	}
-
-	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{DbPort})
-	if err != nil {
-		return nil, Config{}, fmt.Errorf("while parsing ports specs: %w", err)
-	}
-
-	body, err := cli.ContainerCreate(context.Background(),
-		&container.Config{
-			Image: dbImage,
-			Env: []string{
-				fmt.Sprintf("POSTGRES_USER=%s", DbUser),
-				fmt.Sprintf("POSTGRES_PASSWORD=%s", DbPass),
-				fmt.Sprintf("POSTGRES_DB=%s", DbName),
-			},
-		},
-		&container.HostConfig{
-			NetworkMode:     "default",
-			PublishAllPorts: false,
-			PortBindings:    parsedPortSpecs,
-		},
-		&network.NetworkingConfig{
-			EndpointsConfig: map[string]*network.EndpointSettings{
-				DockerUserNetwork: {
-					Aliases: []string{
-						hostname,
-					},
-				},
-			},
-		},
-		&v1.Platform{},
-		"")
-
-	if err != nil {
-		return nil, Config{}, fmt.Errorf("during container creation: %w", err)
-	}
-
-	cleanupFunc := func() {
-
-	}
-
-	if err := cli.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
-		return cleanupFunc, Config{}, fmt.Errorf("during container startup: %w", err)
-	}
-
-	err = waitFor(cli, body.ID, "database system is ready to accept connections")
-	if err != nil {
-		log("Failed to query container's logs: %s", err)
-		return cleanupFunc, Config{}, fmt.Errorf("while waiting for DB readiness: %w", err)
-	}
-
-	filterBy = filters.NewArgs()
-	filterBy.Add("id", body.ID)
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{Filters: filterBy})
-
-	if err != nil || len(containers) == 0 {
-		log("no containers found: %s", err)
-		return cleanupFunc, Config{}, fmt.Errorf("while loading containers: %w", err)
-	}
-
-	var container = &containers[0]
-
-	if container == nil {
-		log("no container found: %s", err)
-		return cleanupFunc, Config{}, fmt.Errorf("while searching for a container: %w", err)
-	}
-
-	ports := container.Ports
-
-	dbCfg := MakeConnectionString(hostname, fmt.Sprint(ports[0].PublicPort))
-
-	return cleanupFunc, dbCfg, nil
 }
 
 func waitFor(cli *client.Client, containerId string, text string) error {
