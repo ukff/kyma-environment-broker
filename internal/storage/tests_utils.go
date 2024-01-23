@@ -167,7 +167,7 @@ func CreateDBContainer(log func(format string, args ...interface{})) (func(), er
 		ConnMaxLifetime: 3 * time.Minute,
 	}
 
-	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 100, 10*time.Millisecond, logrus.New())
+	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
 	if err != nil {
 		return cleanupFunc, fmt.Errorf("while waiting for DB readiness:  %w", err)
 	}
