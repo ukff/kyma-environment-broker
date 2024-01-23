@@ -164,7 +164,7 @@ func CreateDBContainer(log func(format string, args ...interface{})) (func(), er
 		SecretKey:       testSecretKey,
 		MaxOpenConns:    1,
 		MaxIdleConns:    1,
-		ConnMaxLifetime: 3 * time.Minute,
+		ConnMaxLifetime: time.Minute,
 	}
 
 	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
