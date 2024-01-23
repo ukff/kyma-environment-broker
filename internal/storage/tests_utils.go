@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	TestDbHostname        = "localhost"
+	TestDbHostname        = "test_DB_1"
 	TestDbUser            = "test_user"
 	TestDbPass            = "nimda"
 	TestDbName            = "broker"
@@ -70,8 +70,7 @@ func CloseDatabase(t *testing.T, connection *dbr.Connection) {
 	}
 }
 
-func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context, hostname string) (func(), Config, error) {
-
+func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), Config, error) {
 	start := time.Now()
 	defer func() {
 		fmt.Printf("InitTestDBContainer took -> %s\n", time.Since(start))
@@ -122,7 +121,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				TestDockerUserNetwork: {
 					Aliases: []string{
-						hostname,
+						TestDbHostname,
 					},
 				},
 			},
@@ -169,7 +168,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 
 	ports := container.Ports
 
-	dbCfg := MakeTestDbConfig(hostname, fmt.Sprint(ports[0].PublicPort))
+	dbCfg := MakeTestDbConfig(TestDbHostname, fmt.Sprint(ports[0].PublicPort))
 	SetTestDbConfig(*dbCfg)
 	return cleanupFunc, *dbCfg, nil
 }
