@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
@@ -36,20 +37,17 @@ const (
 )
 
 var (
-	testDbConfig Config
+	testDbConfig     Config
+	testDbConnection *dbr.Connection
 )
-
-func SetTestDbConfig(value Config) {
-	testDbConfig = value
-}
 
 func GetTestDBContainer() (Config, error) {
 	return testDbConfig, nil
 }
 
-func MakeTestDbConfig(hostname string, port string) *Config {
+func MakeTestDbConfig(port string) *Config {
 	return &Config{
-		Host:            hostname,
+		Host:            TestDbHostname,
 		User:            TestDbUser,
 		Password:        TestDbPass,
 		Port:            port,
@@ -62,10 +60,10 @@ func MakeTestDbConfig(hostname string, port string) *Config {
 	}
 }
 
-func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), Config, error) {
+func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), error) {
 	cli, err := dockerClient()
 	if err != nil {
-		return nil, Config{}, fmt.Errorf("while creating docker client: %w", err)
+		return nil, fmt.Errorf("while creating docker client: %w", err)
 	}
 
 	dbImage := "postgres:11"
@@ -81,13 +79,13 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		defer reader.Close()
 
 		if err != nil {
-			return nil, Config{}, fmt.Errorf("while pulling dbImage: %w", err)
+			return nil, fmt.Errorf("while pulling dbImage: %w", err)
 		}
 	}
 
 	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{TestDbPort})
 	if err != nil {
-		return nil, Config{}, fmt.Errorf("while parsing ports specs: %w", err)
+		return nil, fmt.Errorf("while parsing ports specs: %w", err)
 	}
 
 	body, err := cli.ContainerCreate(context.Background(),
@@ -117,10 +115,13 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		"")
 
 	if err != nil {
-		return nil, Config{}, fmt.Errorf("during container creation: %w", err)
+		return nil, fmt.Errorf("during container creation: %w", err)
 	}
 
 	cleanupFunc := func() {
+		if testDbConnection != nil {
+			testDbConnection.Close()
+		}
 		err := cli.ContainerRemove(context.Background(), body.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
 			panic(fmt.Errorf("during container removal: %w", err))
@@ -128,13 +129,13 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 	}
 
 	if err := cli.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
-		return cleanupFunc, Config{}, fmt.Errorf("during container startup: %w", err)
+		return cleanupFunc, fmt.Errorf("during container startup: %w", err)
 	}
 
 	err = waitFor(cli, body.ID, "database system is ready to accept connections")
 	if err != nil {
 		log("Failed to query container's logs: %s", err)
-		return cleanupFunc, Config{}, fmt.Errorf("while waiting for DB readiness: %w", err)
+		return cleanupFunc, fmt.Errorf("while waiting for DB readiness: %w", err)
 	}
 
 	filterBy = filters.NewArgs()
@@ -143,41 +144,39 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 
 	if err != nil || len(containers) == 0 {
 		log("no containers found: %s", err)
-		return cleanupFunc, Config{}, fmt.Errorf("while loading containers: %w", err)
+		return cleanupFunc, fmt.Errorf("while loading containers: %w", err)
 	}
 
 	var container = &containers[0]
 
 	if container == nil {
 		log("no container found: %s", err)
-		return cleanupFunc, Config{}, fmt.Errorf("while searching for a container: %w", err)
+		return cleanupFunc, fmt.Errorf("while searching for a container: %w", err)
 	}
 
-	ports := container.Ports
+	port := fmt.Sprint(container.Ports[0].PublicPort)
 
-	dbCfg := MakeTestDbConfig(TestDbHostname, fmt.Sprint(ports[0].PublicPort))
-	SetTestDbConfig(*dbCfg)
-	return cleanupFunc, *dbCfg, nil
+	testDbConfig = *MakeTestDbConfig(port)
+	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
+	if err != nil {
+		return cleanupFunc, fmt.Errorf("while waiting for DB readiness: %w", err)
+	}
+
+	return cleanupFunc, nil
 }
 
 func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
-	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 1000, 10*time.Millisecond, logrus.New())
-	if err != nil {
-		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
-		return nil, fmt.Errorf("while waiting for database access: %w", err)
-	}
-
 	cleanupFunc := func() {
-		_, err = connection.Exec(clearDBQuery())
+		_, err := testDbConnection.Exec(clearDBQuery())
 		if err != nil {
 			err = fmt.Errorf("failed to clear DB tables: %w", err)
 		}
 	}
 
-	initialized, err := postsql.CheckIfDatabaseInitialized(connection)
+	initialized, err := postsql.CheckIfDatabaseInitialized(testDbConnection)
 	if err != nil {
-		if connection != nil {
-			err := connection.Close()
+		if testDbConnection != nil {
+			err := testDbConnection.Close()
 			assert.Nil(t, err, "Failed to close db connection")
 		}
 		return nil, fmt.Errorf("while checking DB initialization: %w", err)
@@ -198,7 +197,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 			if err != nil {
 				log.Printf("Cannot read file %s", file.Name())
 			}
-			if _, err = connection.Exec(string(v)); err != nil {
+			if _, err = testDbConnection.Exec(string(v)); err != nil {
 				log.Printf("Cannot apply file %s", file.Name())
 				return nil, fmt.Errorf("while applying migration files: %w", err)
 			}
