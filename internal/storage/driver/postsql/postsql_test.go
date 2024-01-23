@@ -2,6 +2,7 @@ package postsql_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -13,8 +14,12 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	fmt.Println("===============================TestMain START===============================")
 	exitVal := 0
-	defer func() { os.Exit(exitVal) }()
+	defer func() {
+		fmt.Println("===============================TestMain END===============================")
+		os.Exit(exitVal)
+	}()
 
 	ctx := context.Background()
 
