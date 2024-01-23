@@ -38,7 +38,7 @@ const (
 
 var mappedPort string
 
-func makeConnectionString(hostname string, port string) Config {
+func MakeConnectionString(hostname string, port string) Config {
 	start := time.Now()
 	defer func() {
 		fmt.Printf("makeConnectionString took -> %s\n", time.Since(start))
@@ -81,24 +81,8 @@ func InitTestDBContainer(log func(format string, args ...interface{}), ctx conte
 	defer func() {
 		fmt.Printf("InitTestDBContainer took -> %s\n", time.Since(start))
 	}()
-	_, err := isDockerTestNetworkPresent(ctx)
-	if err != nil {
-		return nil, Config{}, fmt.Errorf("while testing docker network: %w", err)
-	}
-
-	fmt.Println(fmt.Sprintf("InitTestDBContainer params -> %s, %s", hostname, mappedPort))
-	isAvailable, dbCfg, err := isDBContainerAvailable(hostname, mappedPort)
-	if err != nil {
-		return nil, Config{}, fmt.Errorf("while checking db container: %w", err)
-	} else if !isAvailable {
-		log("cannot connect to DB container. Creating new Postgres container...")
-	} else if isAvailable {
-		fmt.Println("InitTestDBContainer isAvailable => true")
-		return func() {}, dbCfg, nil
-	}
-
 	//in each test we create new container, which cause long time in postsql WaitForDatabaseAccess
-	return createDbContainer(log, hostname)
+	return CreateDbContainer(log, hostname)
 }
 
 func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
@@ -285,35 +269,6 @@ func SetupTestNetworkForDB(ctx context.Context) (cleanupFunc func(), err error) 
 	}
 }
 
-func isDBContainerAvailable(hostname, port string) (isAvailable bool, dbCfg Config, err error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("isDBContainerAvailable took -> %s\n", time.Since(start))
-	}()
-	dbCfg = makeConnectionString(hostname, port)
-
-	connection, err := dbr.Open("postgres", dbCfg.ConnectionURL(), nil)
-	if err != nil {
-		return false, Config{}, fmt.Errorf("invalid connection string: %w", err)
-	}
-
-	defer func(c *dbr.Connection) {
-		fmt.Println("closing connection")
-		err = c.Close()
-		if err != nil {
-			err = fmt.Errorf("failed to close database connection: %w", err)
-		}
-	}(connection)
-
-	err = connection.Ping()
-	if err == nil {
-		fmt.Println("container is available")
-		return true, dbCfg, nil
-	}
-
-	return false, Config{}, fmt.Errorf("while checking container availbility: %w", err)
-}
-
 func clearDBQuery() string {
 	start := time.Now()
 	defer func() {
@@ -327,7 +282,7 @@ func clearDBQuery() string {
 	)
 }
 
-func createDbContainer(log func(format string, args ...interface{}), hostname string) (func(), Config, error) {
+func CreateDbContainer(log func(format string, args ...interface{}), hostname string) (func(), Config, error) {
 	start := time.Now()
 	defer func() {
 		fmt.Printf("createDbContainer took -> %s\n", time.Since(start))
@@ -421,7 +376,7 @@ func createDbContainer(log func(format string, args ...interface{}), hostname st
 
 	ports := container.Ports
 
-	dbCfg := makeConnectionString(hostname, fmt.Sprint(ports[0].PublicPort))
+	dbCfg := MakeConnectionString(hostname, fmt.Sprint(ports[0].PublicPort))
 
 	return cleanupFunc, dbCfg, nil
 }

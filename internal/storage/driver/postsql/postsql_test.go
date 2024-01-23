@@ -6,11 +6,9 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/sirupsen/logrus"
 )
 
 func TestMain(m *testing.M) {
@@ -29,16 +27,24 @@ func TestMain(m *testing.M) {
 	}
 	defer cleanupNetwork()
 
-	containerCleanupFunc, cfg, err := storage.InitTestDBContainer(log.Printf, ctx, "test_DB_1")
+	containerCleanupFunc, dbCfg, err := storage.InitTestDBContainer(log.Printf, ctx, "test_DB_1")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer containerCleanupFunc()
 
-	_, err = postsql.WaitForDatabaseAccess(cfg.ConnectionURL(), 10, 1*time.Second, logrus.New())
+	connection, err := dbr.Open("postgres", dbCfg.ConnectionURL(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer func(c *dbr.Connection) {
+		fmt.Println("closing connection")
+		err = c.Close()
+		if err != nil {
+			err = fmt.Errorf("failed to close database connection: %w", err)
+		}
+	}(connection)
 
 	exitVal = m.Run()
 }
