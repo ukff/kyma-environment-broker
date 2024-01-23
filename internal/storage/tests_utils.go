@@ -19,7 +19,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
@@ -63,16 +62,7 @@ func MakeTestDbConfig(hostname string, port string) *Config {
 	}
 }
 
-func CloseDatabase(t *testing.T, connection *dbr.Connection) {
-
-}
-
 func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), Config, error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("InitTestDBContainer took -> %s\n", time.Since(start))
-	}()
-
 	cli, err := dockerClient()
 	if err != nil {
 		return nil, Config{}, fmt.Errorf("while creating docker client: %w", err)
@@ -118,7 +108,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				TestDockerUserNetwork: {
 					Aliases: []string{
-						TestDockerUserNetwork,
+						TestDbHostname,
 					},
 				},
 			},
@@ -171,17 +161,11 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 }
 
 func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("InitTestDBTables (total) -> %s\n", time.Since(start))
-	}()
-	fmt.Printf("InitTestDBTables start (wait for db access) to -> %s : %s \n", connectionURL, time.Since(start))
 	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 1000, 10*time.Millisecond, logrus.New())
 	if err != nil {
 		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
 		return nil, fmt.Errorf("while waiting for database access: %w", err)
 	}
-	fmt.Printf("InitTestDBTables (connected after) -> %s\n", time.Since(start))
 
 	cleanupFunc := func() {
 		_, err = connection.Exec(clearDBQuery())
@@ -191,7 +175,6 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	}
 
 	initialized, err := postsql.CheckIfDatabaseInitialized(connection)
-	fmt.Printf("InitTestDBTables took after check if initialized -> %s\n", time.Since(start))
 	if err != nil {
 		if connection != nil {
 			err := connection.Close()
@@ -223,24 +206,15 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		}
 	}
 	log.Printf("Files applied to database")
-	fmt.Printf("InitTestDBTables took after migration and at the end -> %s\n", time.Since(start))
 
 	return cleanupFunc, nil
 }
 
 func dockerClient() (*client.Client, error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("dockerClient took -> %s\n", time.Since(start))
-	}()
 	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 }
 
 func isDockerTestNetworkPresent(ctx context.Context) (bool, error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("isDockerTestNetworkPresent took -> %s\n", time.Since(start))
-	}()
 	cli, err := dockerClient()
 	if err != nil {
 		return false, fmt.Errorf("while creating docker client: %w", err)
@@ -259,10 +233,6 @@ func isDockerTestNetworkPresent(ctx context.Context) (bool, error) {
 }
 
 func createTestNetworkForDB(ctx context.Context) (*types.NetworkResource, error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("createTestNetworkForDB took -> %s\n", time.Since(start))
-	}()
 	cli, err := dockerClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a Docker client: %w", err)
@@ -285,10 +255,6 @@ func createTestNetworkForDB(ctx context.Context) (*types.NetworkResource, error)
 }
 
 func EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("EnsureTestNetworkForDB took -> %s\n", time.Since(start))
-	}()
 	exec.Command("systemctl start docker.service")
 
 	networkPresent, err := isDockerTestNetworkPresent(ctx)
@@ -317,10 +283,6 @@ func EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
 }
 
 func SetupTestNetworkForDB(ctx context.Context) (cleanupFunc func(), err error) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("SetupTestNetworkForDB took -> %s\n", time.Since(start))
-	}()
 	exec.Command("systemctl start docker.service")
 
 	networkPresent, err := isDockerTestNetworkPresent(ctx)
@@ -354,10 +316,6 @@ func SetupTestNetworkForDB(ctx context.Context) (cleanupFunc func(), err error) 
 }
 
 func clearDBQuery() string {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("clearDBQuery took -> %s\n", time.Since(start))
-	}()
 	return fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 		postsql.InstancesTableName,
 		postsql.OperationTableName,
