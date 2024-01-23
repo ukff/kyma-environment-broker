@@ -212,7 +212,6 @@ func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
 	}
 }
 
-// test
 func main() {
 	apiextensionsv1.AddToScheme(scheme.Scheme)
 	ctx, cancel := context.WithCancel(context.Background())

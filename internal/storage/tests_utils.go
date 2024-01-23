@@ -191,7 +191,6 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		log.Printf("Cannot read files from directory %s", dirPath)
 		return nil, fmt.Errorf("while reading migration data: %w", err)
 	}
-	fmt.Printf("InitTestDBTables took before migration -> %s\n", time.Since(start))
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
