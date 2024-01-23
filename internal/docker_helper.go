@@ -31,7 +31,7 @@ type DockerHelper struct {
 	client *client.Client
 }
 
-func NewDockerClient() (*DockerHelper, error) {
+func NewDockerHandler() (*DockerHelper, error) {
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("while creating docker client: %w", err)

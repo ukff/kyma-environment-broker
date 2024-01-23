@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 		os.Exit(exitVal)
 	}()
 
-	dockerHandler, err := internal.NewDockerClient()
+	dockerHandler, err := internal.NewDockerHandler()
 	if err != nil {
 		log.Fatal(err)
 	}
