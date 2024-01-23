@@ -125,7 +125,7 @@ func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, 
 
 	err = waitForContainer(cli, body.ID, "database system is ready to accept connections")
 	if err != nil {
-		log.Print("Failed to query container's logs: %s", err)
+		log.Printf("Failed to query container's logs: %s", err)
 		return cleanupFunc, &types.Container{}, fmt.Errorf("while waiting for DB readiness: %w", err)
 	}
 
@@ -134,13 +134,13 @@ func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, 
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{Filters: filterBy})
 
 	if err != nil || len(containers) == 0 {
-		log.Print("no containers found: %s", err)
+		log.Printf("no containers found: %s", err)
 		return cleanupFunc, &types.Container{}, fmt.Errorf("while loading containers: %w", err)
 	}
 
 	var created = &containers[0]
 	if created == nil {
-		log.Print("no container found: %s", err)
+		log.Printf("no container found: %s", err)
 		return cleanupFunc, &types.Container{}, fmt.Errorf("while searching for a container: %w", err)
 	}
 
