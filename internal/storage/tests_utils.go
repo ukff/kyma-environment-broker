@@ -31,7 +31,7 @@ const (
 	testDbHostname        = "localhost"
 	testDbUser            = "testuser"
 	testDbPass            = "testpass"
-	testDbName            = "broker"
+	testDbName            = "testbroker"
 	testDbPort            = "5432"
 	testDockerUserNetwork = "testnetwork"
 	testSecretKey         = "################################"
@@ -164,10 +164,10 @@ func CreateDBContainer(log func(format string, args ...interface{})) (func(), er
 		SecretKey:       testSecretKey,
 		MaxOpenConns:    1,
 		MaxIdleConns:    1,
-		ConnMaxLifetime: time.Minute,
+		ConnMaxLifetime: 3 * time.Minute,
 	}
 
-	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
+	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 10, 1*time.Second, logrus.New())
 	if err != nil {
 		return cleanupFunc, fmt.Errorf("while waiting for DB readiness:  %w", err)
 	}
