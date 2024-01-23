@@ -30,9 +30,9 @@ import (
 const (
 	TestDbHostname        = "test_DB_1"
 	TestDbUser            = "test_user"
-	TestDbPass            = "nimda"
+	TestDbPass            = "testpass"
 	TestDbName            = "broker"
-	TestDbPort            = "1111"
+	TestDbPort            = "5432"
 	TestDockerUserNetwork = "test_network"
 )
 
