@@ -28,12 +28,9 @@ import (
 func TestInstance(t *testing.T) {
 
 	t.Run("Should create and update instance", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{Enabled: true}, cipher, logrus.StandardLogger())
@@ -120,12 +117,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should fetch instance statistics", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -169,12 +163,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should fetch instances along with their operations", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -244,12 +235,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should fetch instances based on subaccount list", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -283,12 +271,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on page and page size", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -340,12 +325,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on filters", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -462,12 +444,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on filters", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -584,12 +563,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list trial instances", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -671,12 +647,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list regular instances and not completely deprovisioned instances", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -752,12 +725,9 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list not completely deprovisioned instances", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())

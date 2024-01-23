@@ -20,11 +20,8 @@ func TestConflict(t *testing.T) {
 	t.Run("Conflict Operations", func(t *testing.T) {
 
 		t.Run("Plain operations - provisioning", func(t *testing.T) {
-			cfg, err := storage.GetTestDBConfig()
-			require.NoError(t, err)
-
-			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-			defer tablesCleanupFunc()
+			cleanup, cfg, err := storage.InitTestDB(t)
+			defer cleanup()
 			require.NoError(t, err)
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
@@ -70,11 +67,8 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Plain operations - deprovisioning", func(t *testing.T) {
-			cfg, err := storage.GetTestDBConfig()
-			require.NoError(t, err)
-
-			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-			defer tablesCleanupFunc()
+			cleanup, cfg, err := storage.InitTestDB(t)
+			defer cleanup()
 			require.NoError(t, err)
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
@@ -119,11 +113,8 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Provisioning", func(t *testing.T) {
-			cfg, err := storage.GetTestDBConfig()
-			require.NoError(t, err)
-
-			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-			defer tablesCleanupFunc()
+			cleanup, cfg, err := storage.InitTestDB(t)
+			defer cleanup()
 			require.NoError(t, err)
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
@@ -168,12 +159,9 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Deprovisioning", func(t *testing.T) {
-			cfg, err := storage.GetTestDBConfig()
+			cleanup, cfg, err := storage.InitTestDB(t)
+			defer cleanup()
 			require.NoError(t, err)
-
-			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-			require.NoError(t, err)
-			defer tablesCleanupFunc()
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
 			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -216,12 +204,9 @@ func TestConflict(t *testing.T) {
 	})
 
 	t.Run("Conflict Instances", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())

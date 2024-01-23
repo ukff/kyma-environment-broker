@@ -17,12 +17,9 @@ import (
 func TestOrchestration(t *testing.T) {
 
 	t.Run("Orchestrations", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())

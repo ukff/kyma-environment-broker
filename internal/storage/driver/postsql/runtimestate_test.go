@@ -20,12 +20,9 @@ import (
 func TestRuntimeState(t *testing.T) {
 
 	t.Run("should insert and fetch RuntimeState", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -55,12 +52,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should insert and fetch RuntimeState with Reconciler input", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -95,12 +89,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should distinguish between latest RuntimeStates with and without Reconciler input", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -161,12 +152,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -192,7 +180,7 @@ func TestRuntimeState(t *testing.T) {
 			RuntimeID: fixRuntimeID,
 		}
 
-		//runtimeStateWithoutVersion := fixture.FixRuntimeState("fixRuntimeStateID3", fixRuntimeID, fixOperationID2)
+		// runtimeStateWithoutVersion := fixture.FixRuntimeState("fixRuntimeStateID3", fixRuntimeID, fixOperationID2)
 		runtimeStateWithoutVersion := internal.NewRuntimeState(fixRuntimeID, fixOperationID2, nil, &gqlschema.GardenerConfigInput{})
 		runtimeStateWithoutVersion.ID = "fixRuntimeStateID3"
 		runtimeStateWithoutVersion.CreatedAt = runtimeStateWithReconcilerInput.CreatedAt.Add(time.Hour * 3)
@@ -223,12 +211,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version stored only in the kyma_version field", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -279,12 +264,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with OIDC config", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		defer cleanup()
 		require.NoError(t, err)
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())

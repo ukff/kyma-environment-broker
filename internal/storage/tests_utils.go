@@ -43,18 +43,11 @@ var (
 	testDbConnection *dbr.Connection
 )
 
-func GetTestDBConfig() (Config, error) {
-	if testDbConfig == (Config{}) {
-		return Config{}, fmt.Errorf("test DB config is not initialized")
-	}
-	return testDbConfig, nil
-}
-
 func dockerClient() (*client.Client, error) {
 	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 }
 
-func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), error) {
+func CreateDBContainer(log func(format string, args ...interface{})) (func(), error) {
 	cli, err := dockerClient()
 	if err != nil {
 		return nil, fmt.Errorf("while creating docker client: %w", err)
@@ -106,7 +99,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 			},
 		},
 		&v1.Platform{},
-		"")
+		"keb-db-tests")
 
 	if err != nil {
 		return nil, fmt.Errorf("during container creation: %w", err)
@@ -114,7 +107,10 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 
 	cleanupFunc := func() {
 		if testDbConnection != nil {
-			testDbConnection.Close()
+			err := testDbConnection.Close()
+			if err != nil {
+				log("Failed to close db connection: %s", err)
+			}
 		}
 		err := cli.ContainerRemove(context.Background(), body.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
@@ -142,7 +138,6 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 	}
 
 	var container = &containers[0]
-
 	if container == nil {
 		log("no container found: %s", err)
 		return cleanupFunc, fmt.Errorf("while searching for a container: %w", err)
@@ -183,7 +178,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 	return cleanupFunc, nil
 }
 
-func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
+func InitTestDB(t *testing.T) (func(), Config, error) {
 	cleanupFunc := func() {
 		_, err := testDbConnection.Exec(clearDBQuery())
 		if err != nil {
@@ -198,16 +193,16 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 			err := testDbConnection.Close()
 			assert.Nil(t, err, "Failed to close db connection")
 		}
-		return nil, fmt.Errorf("while checking DB initialization: %w", err)
+		return nil, Config{}, fmt.Errorf("while checking DB initialization: %w", err)
 	} else if initialized {
-		return cleanupFunc, nil
+		return cleanupFunc, Config{}, nil
 	}
 
 	dirPath := "./../../../../resources/keb/migrations/"
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		log.Printf("Cannot read files from directory %s", dirPath)
-		return nil, fmt.Errorf("while reading migration data: %w", err)
+		return nil, Config{}, fmt.Errorf("while reading migration data: %w", err)
 	}
 
 	for _, file := range files {
@@ -218,13 +213,13 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 			}
 			if _, err = testDbConnection.Exec(string(v)); err != nil {
 				log.Printf("Cannot apply file %s", file.Name())
-				return nil, fmt.Errorf("while applying migration files: %w", err)
+				return nil, Config{}, fmt.Errorf("while applying migration files: %w", err)
 			}
 		}
 	}
 	log.Printf("Files applied to database")
 
-	return cleanupFunc, nil
+	return cleanupFunc, testDbConfig, nil
 }
 
 func clearDBQuery() string {

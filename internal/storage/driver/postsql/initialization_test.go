@@ -18,7 +18,8 @@ func TestInitialization(t *testing.T) {
 
 	t.Skip()
 	t.Run("Should initialize database when schema not applied", func(t *testing.T) {
-		cfg, err := storage.GetTestDBConfig()
+		cleanup, cfg, err := storage.InitTestDB(t)
+		cleanup()
 		require.NoError(t, err)
 
 		// when
