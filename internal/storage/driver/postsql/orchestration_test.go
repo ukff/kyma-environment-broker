@@ -17,7 +17,7 @@ import (
 func TestOrchestration(t *testing.T) {
 
 	t.Run("Orchestrations", func(t *testing.T) {
-		cfg, err := storage.GetTestDBContainer()
+		cfg, err := storage.GetTestDBConfig()
 		require.NoError(t, err)
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())

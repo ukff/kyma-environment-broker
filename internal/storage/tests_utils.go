@@ -28,12 +28,12 @@ import (
 )
 
 const (
-	TestDbHostname        = "localhost"
-	TestDbUser            = "testuser"
-	TestDbPass            = "testpass"
-	TestDbName            = "broker"
-	TestDbPort            = "5432"
-	TestDockerUserNetwork = "testnetwork"
+	testDbHostname        = "localhost"
+	testDbUser            = "testuser"
+	testDbPass            = "testpass"
+	testDbName            = "broker"
+	testDbPort            = "5432"
+	testDockerUserNetwork = "testnetwork"
 )
 
 var (
@@ -41,23 +41,8 @@ var (
 	testDbConnection *dbr.Connection
 )
 
-func GetTestDBContainer() (Config, error) {
+func GetTestDBConfig() (Config, error) {
 	return testDbConfig, nil
-}
-
-func MakeTestDbConfig(port string) *Config {
-	return &Config{
-		Host:            TestDbHostname,
-		User:            TestDbUser,
-		Password:        TestDbPass,
-		Port:            port,
-		Name:            TestDbName,
-		SSLMode:         "disable",
-		SecretKey:       "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
-		MaxOpenConns:    1,
-		MaxIdleConns:    1,
-		ConnMaxLifetime: time.Minute,
-	}
 }
 
 func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), error) {
@@ -83,7 +68,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		}
 	}
 
-	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{TestDbPort})
+	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{testDbPort})
 	if err != nil {
 		return nil, fmt.Errorf("while parsing ports specs: %w", err)
 	}
@@ -92,9 +77,9 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		&container.Config{
 			Image: dbImage,
 			Env: []string{
-				fmt.Sprintf("POSTGRES_USER=%s", TestDbUser),
-				fmt.Sprintf("POSTGRES_PASSWORD=%s", TestDbPass),
-				fmt.Sprintf("POSTGRES_DB=%s", TestDbName),
+				fmt.Sprintf("POSTGRES_USER=%s", testDbUser),
+				fmt.Sprintf("POSTGRES_PASSWORD=%s", testDbPass),
+				fmt.Sprintf("POSTGRES_DB=%s", testDbName),
 			},
 		},
 		&container.HostConfig{
@@ -104,9 +89,9 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		},
 		&network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
-				TestDockerUserNetwork: {
+				testDockerUserNetwork: {
 					Aliases: []string{
-						TestDbHostname,
+						testDbHostname,
 					},
 				},
 			},
@@ -155,11 +140,25 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 	}
 
 	port := fmt.Sprint(container.Ports[0].PublicPort)
+	testDbConfig = Config{
+		Host:            testDbHostname,
+		User:            testDbUser,
+		Password:        testDbPass,
+		Port:            port,
+		Name:            testDbName,
+		SSLMode:         "disable",
+		SecretKey:       "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
+		MaxOpenConns:    1,
+		MaxIdleConns:    1,
+		ConnMaxLifetime: time.Minute,
+	}
 
-	testDbConfig = *MakeTestDbConfig(port)
 	testDbConnection, err = postsql.WaitForDatabaseAccess(testDbConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
 	if err != nil {
-		return cleanupFunc, fmt.Errorf("while waiting for DB readiness: %w", err)
+		return cleanupFunc, fmt.Errorf("while waiting for DB readiness:  %w", err)
+	}
+	if testDbConnection == nil {
+		return cleanupFunc, fmt.Errorf("while waiting for DB readiness: connection is nil")
 	}
 
 	return cleanupFunc, nil
@@ -219,7 +218,7 @@ func isDockerTestNetworkPresent(ctx context.Context) (bool, error) {
 	}
 
 	filterBy := filters.NewArgs()
-	filterBy.Add("name", TestDockerUserNetwork)
+	filterBy.Add("name", testDockerUserNetwork)
 	filterBy.Add("driver", "bridge")
 	list, err := cli.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
 
@@ -236,7 +235,7 @@ func createTestNetworkForDB(ctx context.Context) (*types.NetworkResource, error)
 		return nil, fmt.Errorf("failed to create a Docker client: %w", err)
 	}
 
-	createdNetworkResponse, err := cli.NetworkCreate(context.Background(), TestDockerUserNetwork, types.NetworkCreate{Driver: "bridge"})
+	createdNetworkResponse, err := cli.NetworkCreate(context.Background(), testDockerUserNetwork, types.NetworkCreate{Driver: "bridge"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create docker user network: %w", err)
 	}
@@ -301,7 +300,7 @@ func SetupTestNetworkForDB(ctx context.Context) (cleanupFunc func(), err error) 
 	cleanupFunc = func() {
 		err = cli.NetworkRemove(ctx, createdNetwork.ID)
 		if err != nil {
-			err = fmt.Errorf("failed to remove docker network: %w + %s", err, TestDockerUserNetwork)
+			err = fmt.Errorf("failed to remove docker network: %w + %s", err, testDockerUserNetwork)
 		}
 		time.Sleep(1 * time.Second)
 	}

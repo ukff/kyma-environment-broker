@@ -21,7 +21,7 @@ import (
 func TestOperation(t *testing.T) {
 
 	t.Run("Operations - provisioning and deprovisioning", func(t *testing.T) {
-		cfg, err := storage.GetTestDBContainer()
+		cfg, err := storage.GetTestDBConfig()
 		require.NoError(t, err)
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
@@ -120,7 +120,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning", func(t *testing.T) {
-		cfg, err := storage.GetTestDBContainer()
+		cfg, err := storage.GetTestDBConfig()
 		require.NoError(t, err)
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
@@ -223,7 +223,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Deprovisioning", func(t *testing.T) {
-		cfg, err := storage.GetTestDBContainer()
+		cfg, err := storage.GetTestDBConfig()
 		require.NoError(t, err)
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
@@ -293,7 +293,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Kyma", func(t *testing.T) {
-		cfg, err := storage.GetTestDBContainer()
+		cfg, err := storage.GetTestDBConfig()
 		require.NoError(t, err)
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
@@ -366,7 +366,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Cluster", func(t *testing.T) {
-		cfg, err := storage.GetTestDBContainer()
+		cfg, err := storage.GetTestDBConfig()
 		require.NoError(t, err)
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
