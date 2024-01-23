@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	defer cleanupNetwork()
 	
 	kebStorageTestConfig = testConfig()
-	
+
 	cleanupContainer, container, err := dockerHandler.CreateDBContainer(storage.ContainerCreateConfig{
 		Port:          kebStorageTestConfig.Port,
 		User:          kebStorageTestConfig.User,
