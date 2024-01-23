@@ -56,6 +56,7 @@ func MakeTestDbConfig(hostname string, port string) *Config {
 		Port:            port,
 		Name:            TestDbName,
 		SSLMode:         "disable",
+		SecretKey:       "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
 		MaxOpenConns:    1,
 		MaxIdleConns:    1,
 		ConnMaxLifetime: time.Minute,
