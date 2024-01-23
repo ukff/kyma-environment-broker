@@ -68,7 +68,7 @@ func makeConnectionString(hostname string, port string) Config {
 func CloseDatabase(t *testing.T, connection *dbr.Connection) {
 	start := time.Now()
 	defer func() {
-		fmt.Printf("createDbContainer took -> %s\n", time.Since(start))
+		fmt.Printf("CloseDatabase took -> %s\n", time.Since(start))
 	}()
 	if connection != nil {
 		err := connection.Close()
@@ -101,15 +101,15 @@ func InitTestDBContainer(log func(format string, args ...interface{}), ctx conte
 func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	start := time.Now()
 	defer func() {
-		fmt.Printf("InitTestDBTables took -> %s\n", time.Since(start))
+		fmt.Printf("InitTestDBTables (total) -> %s\n", time.Since(start))
 	}()
-	fmt.Printf("InitTestDBTables took before WaitForDatabaseAccess -> %s\n", time.Since(start))
+	fmt.Printf("InitTestDBTables start -> %s\n", time.Since(start))
 	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 1000, 10*time.Millisecond, logrus.New())
 	if err != nil {
 		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
 		return nil, fmt.Errorf("while waiting for database access: %w", err)
 	}
-	fmt.Printf("InitTestDBTables took after WaitForDatabaseAccess -> %s\n", time.Since(start))
+	fmt.Printf("InitTestDBTables connected after -> %s\n", time.Since(start))
 
 	cleanupFunc := func() {
 		_, err = connection.Exec(clearDBQuery())
