@@ -60,11 +60,13 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 	if image == nil || err != nil {
 		log("Image not found... pulling...")
 		reader, err := cli.ImagePull(context.Background(), dbImage, types.ImagePullOptions{})
-		io.Copy(os.Stdout, reader)
-		defer reader.Close()
-
 		if err != nil {
 			return nil, fmt.Errorf("while pulling dbImage: %w", err)
+		}
+		defer reader.Close()
+		_, err = io.Copy(os.Stdout, reader)
+		if err != nil {
+			return nil, fmt.Errorf("while handling dbImage: %w", err)
 		}
 	}
 
