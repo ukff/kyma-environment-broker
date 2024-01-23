@@ -34,17 +34,20 @@ func TestMain(m *testing.M) {
 		os.Exit(exitVal)
 	}()
 	
-	kebStorageTestConfig = testConfig()
+	dockerHandler, err := storage.NewDockerClient()
+	if err != nil {
+		log.Fatal(err)
+	}
 	
-	dockerClient := storage.NewDockerClient()
-	
-	cleanupNetwork, err := dockerClient.SetupTestNetworkForDB()
+	cleanupNetwork, err := dockerHandler.SetupTestNetworkForDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer cleanupNetwork()
 	
-	cleanupContainer, container, err := dockerClient.CreateDBContainer(storage.ContainerCreateConfig{
+	kebStorageTestConfig = testConfig()
+	
+	cleanupContainer, container, err := dockerHandler.CreateDBContainer(storage.ContainerCreateConfig{
 		Port:          kebStorageTestConfig.Port,
 		User:          kebStorageTestConfig.User,
 		Password:      kebStorageTestConfig.Password,

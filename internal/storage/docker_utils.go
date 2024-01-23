@@ -27,19 +27,18 @@ const (
 	testDockerUserNetwork = "testnetwork"
 )
 
-type DockerClient struct {
+type DockerHelper struct {
 	client *client.Client
-	config ContainerCreateConfig
 }
 
-func NewDockerClient() *DockerClient {
+func NewDockerClient() (*DockerHelper, error) {
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(fmt.Errorf("while creating docker client: %w", err))
+		return nil, fmt.Errorf("while creating docker client: %w", err)
 	}
-	return &DockerClient{
+	return &DockerHelper{
 		client: dockerClient,
-	}
+	}, nil
 }
 
 type ContainerCreateConfig struct {
@@ -52,7 +51,7 @@ type ContainerCreateConfig struct {
 	Image         string
 }
 
-func (d *DockerClient) CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, error) {
+func (d *DockerHelper) CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, error) {
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", config.Image)
 	image, err := d.client.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
@@ -140,7 +139,7 @@ func (d *DockerClient) CreateDBContainer(config ContainerCreateConfig) (func(), 
 	return cleanupFunc, created, nil
 }
 
-func (d *DockerClient) isDockerTestNetworkPresent() (bool, error) {
+func (d *DockerHelper) isDockerTestNetworkPresent() (bool, error) {
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", testDockerUserNetwork)
 	filterBy.Add("driver", "bridge")
@@ -153,7 +152,7 @@ func (d *DockerClient) isDockerTestNetworkPresent() (bool, error) {
 	return false, fmt.Errorf("while testing network availbility: %w", err)
 }
 
-func (d *DockerClient) createTestNetworkForDB() (*types.NetworkResource, error) {
+func (d *DockerHelper) createTestNetworkForDB() (*types.NetworkResource, error) {
 	createdNetworkResponse, err := d.client.NetworkCreate(context.Background(), testDockerUserNetwork, types.NetworkCreate{Driver: "bridge"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create docker user network: %w", err)
@@ -170,7 +169,7 @@ func (d *DockerClient) createTestNetworkForDB() (*types.NetworkResource, error) 
 	return &list[0], nil
 }
 
-func (d *DockerClient) EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
+func (d *DockerHelper) EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
 	exec.Command("systemctl start docker.service")
 
 	networkPresent, err := d.isDockerTestNetworkPresent()
@@ -192,7 +191,7 @@ func (d *DockerClient) EnsureTestNetworkForDB(t *testing.T, ctx context.Context)
 	return cleanupFunc, nil
 }
 
-func (d *DockerClient) SetupTestNetworkForDB() (cleanupFunc func(), err error) {
+func (d *DockerHelper) SetupTestNetworkForDB() (cleanupFunc func(), err error) {
 	exec.Command("systemctl start docker.service")
 
 	networkPresent, err := d.isDockerTestNetworkPresent()
