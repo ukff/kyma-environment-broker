@@ -35,6 +35,7 @@ const (
 	testDbPort            = "5432"
 	testDockerUserNetwork = "testnetwork"
 	testSecretKey         = "################################"
+	dbImage               = "postgres:11"
 )
 
 var (
@@ -49,13 +50,15 @@ func GetTestDBConfig() (Config, error) {
 	return testDbConfig, nil
 }
 
+func dockerClient() (*client.Client, error) {
+	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+}
+
 func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), error) {
 	cli, err := dockerClient()
 	if err != nil {
 		return nil, fmt.Errorf("while creating docker client: %w", err)
 	}
-
-	dbImage := "postgres:11"
 
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", dbImage)
@@ -185,6 +188,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		_, err := testDbConnection.Exec(clearDBQuery())
 		if err != nil {
 			err = fmt.Errorf("failed to clear DB tables: %w", err)
+			assert.NoError(t, err)
 		}
 	}
 
@@ -223,8 +227,13 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	return cleanupFunc, nil
 }
 
-func dockerClient() (*client.Client, error) {
-	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+func clearDBQuery() string {
+	return fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
+		postsql.InstancesTableName,
+		postsql.OperationTableName,
+		postsql.OrchestrationTableName,
+		postsql.RuntimeStateTableName,
+	)
 }
 
 func isDockerTestNetworkPresent(ctx context.Context) (bool, error) {
@@ -326,15 +335,6 @@ func SetupTestNetworkForDB(ctx context.Context) (cleanupFunc func(), err error) 
 	} else {
 		return cleanupFunc, nil
 	}
-}
-
-func clearDBQuery() string {
-	return fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
-		postsql.InstancesTableName,
-		postsql.OperationTableName,
-		postsql.OrchestrationTableName,
-		postsql.RuntimeStateTableName,
-	)
 }
 
 func waitFor(cli *client.Client, containerId string, text string) error {
