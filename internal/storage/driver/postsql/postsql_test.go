@@ -25,7 +25,7 @@ const (
 	kebStorageTestDbUser    = "testuser"
 	kebStorageTestDbPass    = "testpass"
 	kebStorageTestDbName    = "testbroker"
-	kebStorageTestDbPort    = "5432"
+	kebStorageTestDbPort    = "1024"
 	kebStorageTestSecretKey = "################################"
 )
 
