@@ -20,9 +20,9 @@ import (
 func TestRuntimeState(t *testing.T) {
 
 	t.Run("should insert and fetch RuntimeState", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -52,9 +52,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should insert and fetch RuntimeState with Reconciler input", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -89,9 +89,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should distinguish between latest RuntimeStates with and without Reconciler input", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -152,9 +152,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -211,9 +211,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version stored only in the kyma_version field", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -264,9 +264,9 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with OIDC config", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())

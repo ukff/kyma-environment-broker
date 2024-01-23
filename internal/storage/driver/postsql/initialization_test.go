@@ -3,7 +3,6 @@ package postsql_test
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -16,11 +15,10 @@ const (
 
 func TestInitialization(t *testing.T) {
 
-	t.Skip()
 	t.Run("Should initialize database when schema not applied", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		// when
 		connection, err := postsql.InitializeDatabase(cfg.ConnectionURL(), maxTestDbAccessRetries, logrus.New())

@@ -21,9 +21,9 @@ import (
 func TestOperation(t *testing.T) {
 
 	t.Run("Operations - provisioning and deprovisioning", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -117,9 +117,9 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -217,9 +217,9 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Deprovisioning", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -284,9 +284,9 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Kyma", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -354,9 +354,9 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Cluster", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())

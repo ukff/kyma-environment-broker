@@ -20,9 +20,9 @@ func TestConflict(t *testing.T) {
 	t.Run("Conflict Operations", func(t *testing.T) {
 
 		t.Run("Plain operations - provisioning", func(t *testing.T) {
-			cleanup, cfg, err := storage.InitTestDB(t)
-			defer cleanup()
+			cleanup, cfg, err := prepareStorageTestEnvironment(t)
 			require.NoError(t, err)
+			defer cleanup()
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
 			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -67,9 +67,9 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Plain operations - deprovisioning", func(t *testing.T) {
-			cleanup, cfg, err := storage.InitTestDB(t)
-			defer cleanup()
+			cleanup, cfg, err := prepareStorageTestEnvironment(t)
 			require.NoError(t, err)
+			defer cleanup()
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
 			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -113,9 +113,9 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Provisioning", func(t *testing.T) {
-			cleanup, cfg, err := storage.InitTestDB(t)
-			defer cleanup()
+			cleanup, cfg, err := prepareStorageTestEnvironment(t)
 			require.NoError(t, err)
+			defer cleanup()
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
 			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -159,9 +159,9 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Deprovisioning", func(t *testing.T) {
-			cleanup, cfg, err := storage.InitTestDB(t)
-			defer cleanup()
+			cleanup, cfg, err := prepareStorageTestEnvironment(t)
 			require.NoError(t, err)
+			defer cleanup()
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
 			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
@@ -204,9 +204,9 @@ func TestConflict(t *testing.T) {
 	})
 
 	t.Run("Conflict Instances", func(t *testing.T) {
-		cleanup, cfg, err := storage.InitTestDB(t)
-		defer cleanup()
+		cleanup, cfg, err := prepareStorageTestEnvironment(t)
 		require.NoError(t, err)
+		defer cleanup()
 
 		cipher := storage.NewEncrypter(cfg.SecretKey)
 		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
