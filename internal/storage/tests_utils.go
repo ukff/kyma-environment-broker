@@ -121,7 +121,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				TestDockerUserNetwork: {
 					Aliases: []string{
-						TestDbHostname,
+						TestDockerUserNetwork,
 					},
 				},
 			},

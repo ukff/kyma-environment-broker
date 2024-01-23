@@ -46,5 +46,6 @@ func TestMain(m *testing.M) {
 		}
 	}(connection)
 
+	fmt.Println(fmt.Sprintf("connection created to -> : %v", dbCfg.ConnectionURL()))
 	exitVal = m.Run()
 }
