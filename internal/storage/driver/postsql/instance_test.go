@@ -207,7 +207,7 @@ func TestInstance(t *testing.T) {
 		fixDeprovisionOps := []internal.DeprovisioningOperation{
 			fixDeprovisionOperation("A1"),
 			fixDeprovisionOperation("B1"),
-			fixDeprovisionOperation("C2"),
+			fixDeprovisionOperation("C1"),
 		}
 
 		for _, op := range fixDeprovisionOps {
