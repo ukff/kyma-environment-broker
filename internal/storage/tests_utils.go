@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	TestDbHostname        = "test_DB_1"
+	TestDbHostname        = "localhost"
 	TestDbUser            = "test_user"
 	TestDbPass            = "testpass"
 	TestDbName            = "broker"
