@@ -298,10 +298,6 @@ func EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
 		return func() {}, nil
 	}
 
-	if os.Getenv(EnvPipelineBuild) != "" {
-		return func() {}, fmt.Errorf("Docker network %s does not exist", DockerUserNetwork)
-	}
-
 	createdNetwork, err := createTestNetworkForDB(ctx)
 
 	if err != nil {
