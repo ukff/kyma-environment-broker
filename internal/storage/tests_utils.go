@@ -34,6 +34,7 @@ const (
 	testDbName            = "broker"
 	testDbPort            = "5432"
 	testDockerUserNetwork = "testnetwork"
+	testSecretKey         = "################################"
 )
 
 var (
@@ -141,15 +142,25 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		return cleanupFunc, fmt.Errorf("while searching for a container: %w", err)
 	}
 
-	port := fmt.Sprint(container.Ports[0].PublicPort)
+	if container.Ports == nil || len(container.Ports) == 0 {
+		log("no ports found: %s", err)
+		return cleanupFunc, fmt.Errorf("while searching for a container: %w", err)
+	}
+
+	port := container.Ports[0].PublicPort
+	if port == 0 {
+		log("no ports set: %s", err)
+		return cleanupFunc, fmt.Errorf("while searching for a container: %w", err)
+	}
+
 	testDbConfig = Config{
 		Host:            testDbHostname,
 		User:            testDbUser,
 		Password:        testDbPass,
-		Port:            port,
+		Port:            fmt.Sprint(port),
 		Name:            testDbName,
 		SSLMode:         "disable",
-		SecretKey:       "################################",
+		SecretKey:       testSecretKey,
 		MaxOpenConns:    1,
 		MaxIdleConns:    1,
 		ConnMaxLifetime: time.Minute,
