@@ -43,6 +43,9 @@ var (
 )
 
 func GetTestDBConfig() (Config, error) {
+	if testDbConfig == (Config{}) {
+		return Config{}, fmt.Errorf("test DB config is not initialized")
+	}
 	return testDbConfig, nil
 }
 
