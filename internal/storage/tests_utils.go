@@ -32,7 +32,7 @@ const (
 	testDbUser            = "testuser"
 	testDbPass            = "testpass"
 	testDbName            = "broker"
-	testDbPort            = "5432"
+	testDbPort            = "1234"
 	testDockerUserNetwork = "testnetwork"
 )
 
