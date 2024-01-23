@@ -106,7 +106,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	defer func() {
 		fmt.Printf("InitTestDBTables (total) -> %s\n", time.Since(start))
 	}()
-	fmt.Printf("InitTestDBTables start (wait for db access) -> %s\n", time.Since(start))
+	fmt.Printf("InitTestDBTables start (wait for db access) to -> %s : %s \n", connectionURL, time.Since(start))
 	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 1000, 10*time.Millisecond, logrus.New())
 	if err != nil {
 		t.Logf("Cannot connect to database with URL - reload test 2 - %s", connectionURL)
@@ -306,6 +306,7 @@ func isDBContainerAvailable(hostname, port string) (isAvailable bool, dbCfg Conf
 
 	err = connection.Ping()
 	if err == nil {
+		fmt.Println("container is available")
 		return true, dbCfg, nil
 	}
 
