@@ -31,7 +31,7 @@ const (
 	testDbHostname        = "localhost"
 	testDbUser            = "testuser"
 	testDbPass            = "testpass"
-	testDbName            = "broker"
+	testDbName            = "testbroker"
 	testDbPort            = "5432"
 	testDockerUserNetwork = "testnetwork"
 	testSecretKey         = "################################"
