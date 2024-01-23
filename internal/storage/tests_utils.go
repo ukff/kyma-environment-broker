@@ -195,7 +195,7 @@ func InitTestDB(t *testing.T) (func(), Config, error) {
 		}
 		return nil, Config{}, fmt.Errorf("while checking DB initialization: %w", err)
 	} else if initialized {
-		return cleanupFunc, Config{}, fmt.Errorf("DB already initialized, but should be empty")
+		return cleanupFunc, testDbConfig, nil
 	}
 
 	dirPath := "./../../../../resources/keb/migrations/"
