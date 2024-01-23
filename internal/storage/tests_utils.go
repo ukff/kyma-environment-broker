@@ -28,12 +28,12 @@ import (
 )
 
 const (
-	TestDbHostname        = "localhost"
-	TestDbUser            = "test_user"
+	TestDbHostname        = "testhost"
+	TestDbUser            = "testuser"
 	TestDbPass            = "testpass"
 	TestDbName            = "broker"
 	TestDbPort            = "5432"
-	TestDockerUserNetwork = "test_network"
+	TestDockerUserNetwork = "testnetwork"
 )
 
 var (
