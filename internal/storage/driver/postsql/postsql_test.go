@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
@@ -25,7 +25,7 @@ const (
 	kebStorageTestDbUser    = "testuser"
 	kebStorageTestDbPass    = "testpass"
 	kebStorageTestDbName    = "testbroker"
-	kebStorageTestDbPort    = "1024"
+	kebStorageTestDbPort    = "5432"
 	kebStorageTestSecretKey = "################################"
 )
 
@@ -34,20 +34,20 @@ func TestMain(m *testing.M) {
 	defer func() {
 		os.Exit(exitVal)
 	}()
-
+	
 	dockerHandler, err := internal.NewDockerHandler()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	
 	cleanupNetwork, err := dockerHandler.SetupTestNetworkForDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer cleanupNetwork()
-
+	
 	kebStorageTestConfig = testConfig()
-
+	
 	cleanupContainer, container, err := dockerHandler.CreateDBContainer(internal.ContainerCreateConfig{
 		Port:          kebStorageTestConfig.Port,
 		User:          kebStorageTestConfig.User,
@@ -57,18 +57,18 @@ func TestMain(m *testing.M) {
 		ContainerName: "keb-storage-tests",
 		Image:         "postgres:11",
 	})
-
+	
 	if err != nil || container == nil {
 		log.Fatal(err)
 	}
 	defer cleanupContainer()
-
+	
 	port, err := internal.ExtractPortFromContainer(*container)
 	if err != nil {
 		log.Fatal(err)
 	}
 	kebStorageTestConfig.Port = port
-
+	
 	exitVal = m.Run()
 }
 
@@ -106,7 +106,7 @@ func testConfig() storage.Config {
 
 func prepareStorageTestEnvironment(t *testing.T) (func(), storage.Config, error) {
 	testDbConnection, err := postsql.WaitForDatabaseAccess(kebStorageTestConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
-
+	
 	cleanupFunc := func() {
 		_, err := testDbConnection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 			postsql.InstancesTableName,
@@ -119,7 +119,7 @@ func prepareStorageTestEnvironment(t *testing.T) (func(), storage.Config, error)
 			assert.NoError(t, err)
 		}
 	}
-
+	
 	initialized, err := postsql.CheckIfDatabaseInitialized(testDbConnection)
 	if err != nil {
 		if testDbConnection != nil {
@@ -130,14 +130,14 @@ func prepareStorageTestEnvironment(t *testing.T) (func(), storage.Config, error)
 	} else if initialized {
 		return cleanupFunc, kebStorageTestConfig, nil
 	}
-
+	
 	dirPath := "./../../../../resources/keb/migrations/"
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		log.Printf("cannot read files from keb migrations directory %s", dirPath)
 		return nil, emptyConfig(), fmt.Errorf("while reading migration data: %w", err)
 	}
-
+	
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
 			v, err := ioutil.ReadFile(dirPath + file.Name())
@@ -151,6 +151,6 @@ func prepareStorageTestEnvironment(t *testing.T) (func(), storage.Config, error)
 		}
 	}
 	log.Printf("migration applied to database")
-
+	
 	return cleanupFunc, kebStorageTestConfig, nil
 }
