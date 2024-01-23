@@ -1,7 +1,6 @@
 package postsql_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -17,12 +16,9 @@ import (
 
 func TestOrchestration(t *testing.T) {
 
-	ctx := context.Background()
-
 	t.Run("Orchestrations", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)

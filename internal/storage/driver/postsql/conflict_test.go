@@ -1,7 +1,6 @@
 package postsql_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -19,20 +18,17 @@ import (
 
 func TestConflict(t *testing.T) {
 
-	ctx := context.Background()
-
 	t.Run("Conflict Operations", func(t *testing.T) {
 
 		t.Run("Plain operations - provisioning", func(t *testing.T) {
 			start := time.Now()
 
-			containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+			cfg, err := storage.GetTestDBContainer()
 			require.NoError(t, err)
 			fmt.Println(fmt.Sprintf("after InitTestDBContainer -> %s", time.Since(start)))
 
 			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 			defer tablesCleanupFunc()
-			defer containerCleanupFunc()
 			require.NoError(t, err)
 			fmt.Println(fmt.Sprintf("after InitTestDBTables -> %s", time.Since(start)))
 
@@ -87,12 +83,11 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Plain operations - deprovisioning", func(t *testing.T) {
-			containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+			cfg, err := storage.GetTestDBContainer()
 			require.NoError(t, err)
 
 			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 			defer tablesCleanupFunc()
-			defer containerCleanupFunc()
 			require.NoError(t, err)
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
@@ -137,12 +132,11 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Provisioning", func(t *testing.T) {
-			containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+			cfg, err := storage.GetTestDBContainer()
 			require.NoError(t, err)
 
 			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 			defer tablesCleanupFunc()
-			defer containerCleanupFunc()
 			require.NoError(t, err)
 
 			cipher := storage.NewEncrypter(cfg.SecretKey)
@@ -187,9 +181,8 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Deprovisioning", func(t *testing.T) {
-			containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+			cfg, err := storage.GetTestDBContainer()
 			require.NoError(t, err)
-			defer containerCleanupFunc()
 
 			tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 			require.NoError(t, err)
@@ -236,9 +229,8 @@ func TestConflict(t *testing.T) {
 	})
 
 	t.Run("Conflict Instances", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)

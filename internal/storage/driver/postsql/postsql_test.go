@@ -12,10 +12,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	fmt.Println("===============================TestMain START===============================")
 	exitVal := 0
 	defer func() {
-		fmt.Println("===============================TestMain END===============================")
 		os.Exit(exitVal)
 	}()
 
@@ -46,6 +44,6 @@ func TestMain(m *testing.M) {
 		}
 	}(connection)
 
-	fmt.Println(fmt.Sprintf("connection created to -> : %v", dbCfg.ConnectionURL()))
+	log.Default().Printf((fmt.Sprintf("connection created to -> : %v", dbCfg.ConnectionURL())))
 	exitVal = m.Run()
 }

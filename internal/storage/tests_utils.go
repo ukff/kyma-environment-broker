@@ -44,6 +44,10 @@ func SetTestDbConfig(value Config) {
 	testDbConfig = value
 }
 
+func GetTestDBContainer() (Config, error) {
+	return testDbConfig, nil
+}
+
 func MakeTestDbConfig(hostname string, port string) *Config {
 	return &Config{
 		Host:            hostname,
@@ -52,22 +56,14 @@ func MakeTestDbConfig(hostname string, port string) *Config {
 		Port:            port,
 		Name:            TestDbName,
 		SSLMode:         "disable",
-		SecretKey:       "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
-		MaxOpenConns:    2,
+		MaxOpenConns:    1,
 		MaxIdleConns:    1,
 		ConnMaxLifetime: time.Minute,
 	}
 }
 
 func CloseDatabase(t *testing.T, connection *dbr.Connection) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("CloseDatabase took -> %s\n", time.Since(start))
-	}()
-	if connection != nil {
-		err := connection.Close()
-		assert.Nil(t, err, "Failed to close db connection")
-	}
+
 }
 
 func CreateDBContainer(log func(format string, args ...interface{}), ctx context.Context) (func(), Config, error) {
@@ -173,10 +169,6 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 	return cleanupFunc, *dbCfg, nil
 }
 
-func InitTestDBContainer(log func(format string, args ...interface{}), ctx context.Context, hostname string) (func(), Config, error) {
-	return func() {}, testDbConfig, nil
-}
-
 func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	start := time.Now()
 	defer func() {
@@ -200,7 +192,10 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 	initialized, err := postsql.CheckIfDatabaseInitialized(connection)
 	fmt.Printf("InitTestDBTables took after check if initialized -> %s\n", time.Since(start))
 	if err != nil {
-		CloseDatabase(t, connection)
+		if connection != nil {
+			err := connection.Close()
+			assert.Nil(t, err, "Failed to close db connection")
+		}
 		return nil, fmt.Errorf("while checking DB initialization: %w", err)
 	} else if initialized {
 		return cleanupFunc, nil

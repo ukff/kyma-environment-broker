@@ -1,7 +1,6 @@
 package postsql_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -20,12 +19,9 @@ import (
 
 func TestRuntimeState(t *testing.T) {
 
-	ctx := context.Background()
-
 	t.Run("should insert and fetch RuntimeState", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -59,9 +55,8 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should insert and fetch RuntimeState with Reconciler input", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -100,9 +95,8 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should distinguish between latest RuntimeStates with and without Reconciler input", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -167,9 +161,8 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -230,9 +223,8 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version stored only in the kyma_version field", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_2")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -287,9 +279,8 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with OIDC config", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)

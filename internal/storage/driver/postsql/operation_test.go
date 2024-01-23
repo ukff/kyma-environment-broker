@@ -1,7 +1,6 @@
 package postsql_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -21,12 +20,9 @@ import (
 
 func TestOperation(t *testing.T) {
 
-	ctx := context.Background()
-
 	t.Run("Operations - provisioning and deprovisioning", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -124,9 +120,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -228,9 +223,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Deprovisioning", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -299,9 +293,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Kyma", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
@@ -373,9 +366,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Cluster", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		cfg, err := storage.GetTestDBContainer()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
 
 		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
 		require.NoError(t, err)
