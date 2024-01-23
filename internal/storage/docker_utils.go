@@ -27,6 +27,21 @@ const (
 	testDockerUserNetwork = "testnetwork"
 )
 
+type DockerClient struct {
+	client *client.Client
+	config ContainerCreateConfig
+}
+
+func NewDockerClient() *DockerClient {
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		panic(fmt.Errorf("while creating docker client: %w", err))
+	}
+	return &DockerClient{
+		client: dockerClient,
+	}
+}
+
 type ContainerCreateConfig struct {
 	Port          string
 	User          string
@@ -37,36 +52,14 @@ type ContainerCreateConfig struct {
 	Image         string
 }
 
-func dockerClient() (*client.Client, error) {
-	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-}
-
-func ExtractPortFromContainer(container types.Container) (string, error) {
-	if container.Ports == nil || len(container.Ports) == 0 {
-		return "", fmt.Errorf("no ports: %w", nil)
-	}
-
-	port := container.Ports[0].PublicPort
-	if port == 0 {
-		return "", fmt.Errorf("port is 0 %w", nil)
-	}
-
-	return fmt.Sprint(container.Ports[0].PublicPort), nil
-}
-
-func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, &types.Container{}, fmt.Errorf("while creating docker client: %w", err)
-	}
-
+func (d *DockerClient) CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, error) {
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", config.Image)
-	image, err := cli.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
+	image, err := d.client.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
 
 	if image == nil || err != nil {
 		log.Print("Image not found... pulling...")
-		reader, err := cli.ImagePull(context.Background(), config.Image, types.ImagePullOptions{})
+		reader, err := d.client.ImagePull(context.Background(), config.Image, types.ImagePullOptions{})
 		if err != nil {
 			return nil, &types.Container{}, fmt.Errorf("while pulling dbImage: %w", err)
 		}
@@ -82,7 +75,7 @@ func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, 
 		return nil, &types.Container{}, fmt.Errorf("while parsing ports specs: %w", err)
 	}
 
-	body, err := cli.ContainerCreate(context.Background(),
+	body, err := d.client.ContainerCreate(context.Background(),
 		&container.Config{
 			Image: config.Image,
 			Env: []string{
@@ -113,17 +106,17 @@ func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, 
 	}
 
 	cleanupFunc := func() {
-		err := cli.ContainerRemove(context.Background(), body.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
+		err := d.client.ContainerRemove(context.Background(), body.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
 			panic(fmt.Errorf("during container removal: %w", err))
 		}
 	}
 
-	if err := cli.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
+	if err := d.client.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
 		return cleanupFunc, &types.Container{}, fmt.Errorf("during container startup: %w", err)
 	}
 
-	err = waitForContainer(cli, body.ID, "database system is ready to accept connections")
+	err = waitForContainer(d.client, body.ID, "database system is ready to accept connections")
 	if err != nil {
 		log.Printf("Failed to query container's logs: %s", err)
 		return cleanupFunc, &types.Container{}, fmt.Errorf("while waiting for DB readiness: %w", err)
@@ -131,7 +124,7 @@ func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, 
 
 	filterBy = filters.NewArgs()
 	filterBy.Add("id", body.ID)
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{Filters: filterBy})
+	containers, err := d.client.ContainerList(context.Background(), types.ContainerListOptions{Filters: filterBy})
 
 	if err != nil || len(containers) == 0 {
 		log.Printf("no containers found: %s", err)
@@ -147,16 +140,11 @@ func CreateDBContainer(config ContainerCreateConfig) (func(), *types.Container, 
 	return cleanupFunc, created, nil
 }
 
-func isDockerTestNetworkPresent() (bool, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return false, fmt.Errorf("while creating docker client: %w", err)
-	}
-
+func (d *DockerClient) isDockerTestNetworkPresent() (bool, error) {
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", testDockerUserNetwork)
 	filterBy.Add("driver", "bridge")
-	list, err := cli.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
+	list, err := d.client.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
 
 	if err == nil {
 		return len(list) == 1, nil
@@ -165,20 +153,15 @@ func isDockerTestNetworkPresent() (bool, error) {
 	return false, fmt.Errorf("while testing network availbility: %w", err)
 }
 
-func createTestNetworkForDB() (*types.NetworkResource, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a Docker client: %w", err)
-	}
-
-	createdNetworkResponse, err := cli.NetworkCreate(context.Background(), testDockerUserNetwork, types.NetworkCreate{Driver: "bridge"})
+func (d *DockerClient) createTestNetworkForDB() (*types.NetworkResource, error) {
+	createdNetworkResponse, err := d.client.NetworkCreate(context.Background(), testDockerUserNetwork, types.NetworkCreate{Driver: "bridge"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create docker user network: %w", err)
 	}
 
 	filterBy := filters.NewArgs()
 	filterBy.Add("id", createdNetworkResponse.ID)
-	list, err := cli.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
+	list, err := d.client.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
 
 	if err != nil || len(list) != 1 {
 		return nil, fmt.Errorf("network not found or not created: %w", err)
@@ -187,27 +170,21 @@ func createTestNetworkForDB() (*types.NetworkResource, error) {
 	return &list[0], nil
 }
 
-func EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
+func (d *DockerClient) EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
 	exec.Command("systemctl start docker.service")
 
-	networkPresent, err := isDockerTestNetworkPresent()
+	networkPresent, err := d.isDockerTestNetworkPresent()
 	if networkPresent && err == nil {
 		return func() {}, nil
 	}
 
-	createdNetwork, err := createTestNetworkForDB()
+	createdNetwork, err := d.createTestNetworkForDB()
 
 	if err != nil {
 		return func() {}, fmt.Errorf("while creating test network: %w", err)
 	}
-
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a Docker client: %w", err)
-	}
-
 	cleanupFunc := func() {
-		err = cli.NetworkRemove(ctx, createdNetwork.ID)
+		err = d.client.NetworkRemove(ctx, createdNetwork.ID)
 		assert.NoError(t, err)
 		time.Sleep(1 * time.Second)
 	}
@@ -215,26 +192,22 @@ func EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
 	return cleanupFunc, nil
 }
 
-func SetupTestNetworkForDB() (cleanupFunc func(), err error) {
+func (d *DockerClient) SetupTestNetworkForDB() (cleanupFunc func(), err error) {
 	exec.Command("systemctl start docker.service")
 
-	networkPresent, err := isDockerTestNetworkPresent()
+	networkPresent, err := d.isDockerTestNetworkPresent()
 	if networkPresent && err == nil {
 		return func() {}, nil
 	}
 
-	createdNetwork, err := createTestNetworkForDB()
+	createdNetwork, err := d.createTestNetworkForDB()
 
 	if err != nil {
 		return func() {}, fmt.Errorf("while creating test network: %w", err)
 	}
 
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a Docker client: %w", err)
-	}
 	cleanupFunc = func() {
-		err = cli.NetworkRemove(context.Background(), createdNetwork.ID)
+		err = d.client.NetworkRemove(context.Background(), createdNetwork.ID)
 		if err != nil {
 			err = fmt.Errorf("failed to remove docker network: %w + %s", err, testDockerUserNetwork)
 		}
@@ -270,4 +243,17 @@ func waitForContainer(cli *client.Client, containerId string, text string) error
 
 		return true, nil
 	})
+}
+
+func ExtractPortFromContainer(container types.Container) (string, error) {
+	if container.Ports == nil || len(container.Ports) == 0 {
+		return "", fmt.Errorf("no ports: %w", nil)
+	}
+
+	port := container.Ports[0].PublicPort
+	if port == 0 {
+		return "", fmt.Errorf("port is 0 %w", nil)
+	}
+
+	return fmt.Sprint(port), nil
 }
