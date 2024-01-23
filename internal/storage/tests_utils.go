@@ -149,7 +149,7 @@ func CreateDBContainer(log func(format string, args ...interface{}), ctx context
 		Port:            port,
 		Name:            testDbName,
 		SSLMode:         "disable",
-		SecretKey:       "$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNd",
+		SecretKey:       "################################",
 		MaxOpenConns:    1,
 		MaxIdleConns:    1,
 		ConnMaxLifetime: time.Minute,
