@@ -79,7 +79,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			},
 		},
 		&container.HostConfig{
-			NetworkMode:     "default",
+			NetworkMode:     "host",
 			PublishAllPorts: false,
 			PortBindings: nat.PortMap{
 				nat.Port(config.Port): []nat.PortBinding{{
@@ -111,10 +111,10 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 	}
 	log.Println("container started...")
 	
-	/*_, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
+	_, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
 	if err := <-errCh; err != nil {
 		return cleanupFunc, nil
-	}*/
+	}
 	
 	log.Println("container created OK..")
 	
