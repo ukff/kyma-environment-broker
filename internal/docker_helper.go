@@ -69,14 +69,14 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 	containerPortBinding := nat.PortMap{
 		nat.Port("5432" + "/tcp"): []nat.PortBinding{{
 			HostIP:   "0.0.0.0",
-			HostPort: "5432",
+			HostPort: config.Host,
 		}},
 	}
 
 	response, err := d.client.ContainerCreate(context.Background(),
 		&container.Config{
 			ExposedPorts: map[nat.Port]struct{}{
-				nat.Port("5432" + "/tcp"): {},
+				"5432" + "/tcp": {},
 			},
 			Image: config.Image,
 			Env: []string{
