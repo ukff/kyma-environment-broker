@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -84,6 +85,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 	}
 	
 	cleanupFunc := func() error {
+		log.Println("starting cleanUp function...")
 		err := d.client.ContainerRemove(context.Background(), response.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
 			return fmt.Errorf("during container removal: %w", err)
@@ -103,6 +105,8 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		return cleanupFunc, fmt.Errorf("during container inspect: %w", err)
 	}
 	log.Printf("container inspect: %v", j)
+	res2B, _ := json.Marshal(j)
+	fmt.Println(string(res2B))
 	statusCh, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
