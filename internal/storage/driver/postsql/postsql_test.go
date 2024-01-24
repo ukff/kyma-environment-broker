@@ -134,7 +134,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	cleanup := func() error {
 		failOnIncorrectDB(connection, config)
 		
-		_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
+		_, err = connection.Exec(fmt.Sprintf("DROP TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 			postsql.InstancesTableName,
 			postsql.OperationTableName,
 			postsql.OrchestrationTableName,
