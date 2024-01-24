@@ -12,7 +12,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 )
 
 type DockerHelper struct {
@@ -65,10 +64,6 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		}
 	}
 	
-	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{config.Port})
-	if err != nil {
-		return nil, fmt.Errorf("while parsing ports specs: %w", err)
-	}
 	log.Println("creating container...")
 	body, err := d.client.ContainerCreate(context.Background(),
 		&container.Config{
@@ -79,7 +74,6 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			NetworkMode:     "default",
 			PublishAllPorts: false,
 			AutoRemove:      true,
-			PortBindings:    parsedPortSpecs,
 		},
 		nil,
 		nil,
