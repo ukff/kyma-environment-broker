@@ -7,12 +7,11 @@ import (
 	"log"
 	"os"
 	"strings"
-
+	
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 )
 
 type DockerHelper struct {
@@ -25,7 +24,7 @@ func NewDockerHandler() (*DockerHelper, error) {
 		return nil, err
 	}
 	fmt.Println(fmt.Sprintf("host is -> %s", dockerClient.DaemonHost()))
-
+	
 	return &DockerHelper{
 		client: dockerClient,
 	}, nil
@@ -47,11 +46,11 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 	if err != nil {
 		return nil, fmt.Errorf("ping docker failed with: %w", err)
 	}
-
+	
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", config.Image)
 	image, err := d.client.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
-
+	
 	if image == nil || err != nil {
 		log.Print(fmt.Sprintf("Image %s not found... pulling...", config.Image))
 		reader, err := d.client.ImagePull(context.Background(), config.Image, types.ImagePullOptions{})
@@ -64,13 +63,13 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			return nil, fmt.Errorf("while handling dbImage: %w of %s", err, config.Name)
 		}
 	}
-
-	portMapping := make(map[nat.Port][]nat.PortBinding, 1)
+	
+	/*portMapping := make(map[nat.Port][]nat.PortBinding, 1)
 	portMapping["5432"] = []nat.PortBinding{{
 		HostIP:   config.Host,
 		HostPort: config.Port,
-	}}
-
+	}}*/
+	
 	body, err := d.client.ContainerCreate(context.Background(),
 		&container.Config{
 			Image: config.Image,
@@ -80,16 +79,15 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			NetworkMode:     "default",
 			PublishAllPorts: false,
 			AutoRemove:      true,
-			PortBindings:    portMapping,
 		},
 		nil,
 		nil,
 		config.ContainerName)
-
+	
 	if err != nil {
 		return nil, fmt.Errorf("during container creation: %w", err)
 	}
-
+	
 	cleanupFunc := func() error {
 		err := d.client.ContainerRemove(context.Background(), body.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
@@ -97,11 +95,11 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		}
 		return nil
 	}
-
+	
 	if err := d.client.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{}); err != nil {
 		return cleanupFunc, fmt.Errorf("during container startup: %w", err)
 	}
-
+	
 	statusCh, errCh := d.client.ContainerWait(context.Background(), body.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
@@ -110,7 +108,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		}
 	case <-statusCh:
 	}
-
+	
 	return cleanupFunc, nil
 }
 
@@ -118,7 +116,7 @@ func (d *DockerHelper) CloseDockerClient() error {
 	if d.client == nil {
 		return fmt.Errorf("docker client is nil")
 	}
-
+	
 	err := d.client.Close()
 	if err != nil {
 		return fmt.Errorf("while closing docker client: %s", err.Error())
