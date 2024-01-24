@@ -175,19 +175,30 @@ func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
 }
 
 func failOnNotEmptyDb(db *dbr.Connection) {
-	tableExists := func(table string) bool {
+	tableExists := func(table string) (bool, error) {
 		var rowResult string
 		result := db.QueryRow(fmt.Sprintf("SELECT to_regclass('%s.%s')", "public", table))
-		result.Scan(rowResult)
+		err := result.Scan(rowResult)
+		if err != nil {
+			return false, err
+		}
 		fmt.Println(fmt.Sprintf("table lookup result: %s", rowResult))
-		return rowResult != ""
+		return rowResult != "", nil
 	}
 	
-	if tableExists(postsql.InstancesTableName) {
-		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
+	exists, err := tableExists(postsql.OperationTableName)
+	if err != nil {
+		panic(fmt.Sprintf("cannot verify if table %s exists", postsql.OperationTableName))
 	}
-	
-	if tableExists(postsql.OperationTableName) {
+	if exists {
 		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
+	}
+	
+	exists, err = tableExists(postsql.InstancesTableName)
+	if err != nil {
+		panic(fmt.Sprintf("cannot verify if table %s exists", postsql.InstancesTableName))
+	}
+	if exists {
+		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
 	}
 }
