@@ -22,11 +22,10 @@ const (
 
 // InitializeDatabase opens database connection and initializes schema if it does not exist
 func InitializeDatabase(connectionURL string, retries int, log logrus.FieldLogger) (*dbr.Connection, error) {
-	connection, err := WaitForDatabaseAccess(connectionURL, retries, 1*time.Second, log)
+	connection, err := WaitForDatabaseAccess(connectionURL, retries, 300*time.Millisecond, log)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("CONNECTED")
 
 	initialized, err := CheckIfDatabaseInitialized(connection)
 	if err != nil {
@@ -77,7 +76,7 @@ func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Dur
 
 	re := regexp.MustCompile(`password=.*?\s`)
 	log.Info(re.ReplaceAllString(connString, ""))
-	log.Info(fmt.Sprintf("cs -> %s", connString))
+
 	for ; retryCount > 0; retryCount-- {
 		connection, err = dbr.Open("postgres", connString, nil)
 		if err != nil {
