@@ -31,8 +31,6 @@ spec:
               image: europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.1.3
               imagePullPolicy: IfNotPresent
               env:
-                - name: DATABASE_EMBEDDED
-                  value: "false"
                 - name: APP_MAX_AGE_HOURS
                   value: 24h
                 - name: APP_GARDENER_PROJECT
