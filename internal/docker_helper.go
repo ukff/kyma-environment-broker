@@ -10,7 +10,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 )
@@ -84,15 +83,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			PublishAllPorts: false,
 			PortBindings:    parsedPortSpecs,
 		},
-		&network.NetworkingConfig{
-			EndpointsConfig: map[string]*network.EndpointSettings{
-				"localhost": {
-					Aliases: []string{
-						config.Host,
-					},
-				},
-			},
-		},
+		nil,
 		nil,
 		config.ContainerName)
 	log.Printf("container started with ID: %s", response.ID)
