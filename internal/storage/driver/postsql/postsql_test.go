@@ -169,7 +169,7 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 
 func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
 	if db == nil {
-		return
+		panic("db is nil")
 	}
 	row := db.QueryRow("SELECT CURRENT_DATABASE();")
 	var result string
