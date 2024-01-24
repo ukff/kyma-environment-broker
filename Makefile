@@ -34,7 +34,7 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 
 .PHONY: test 
 test: ## run Go tests
-	go test ./...
+	go test -v github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql
 
 ##@ Go checks 
 

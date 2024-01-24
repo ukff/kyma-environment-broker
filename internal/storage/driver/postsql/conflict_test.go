@@ -5,12 +5,9 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,14 +17,13 @@ func TestConflict(t *testing.T) {
 	t.Run("Conflict Operations", func(t *testing.T) {
 
 		t.Run("Plain operations - provisioning", func(t *testing.T) {
-			cleanup, cfg, err := prepareStorageTestEnvironment(t)
-			require.NoError(t, err)
-			defer cleanup()
-
-			cipher := storage.NewEncrypter(cfg.SecretKey)
-			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+			storageCleanup, brokerStorage, err := GetStorageForTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
+			defer func() {
+				err := storageCleanup()
+				assert.NoError(t, err)
+			}()
 
 			givenOperation := fixture.FixOperation("operation-001", "inst-id", internal.OperationTypeProvision)
 			givenOperation.State = domain.InProgress
@@ -67,14 +63,13 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Plain operations - deprovisioning", func(t *testing.T) {
-			cleanup, cfg, err := prepareStorageTestEnvironment(t)
-			require.NoError(t, err)
-			defer cleanup()
-
-			cipher := storage.NewEncrypter(cfg.SecretKey)
-			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+			storageCleanup, brokerStorage, err := GetStorageForTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
+			defer func() {
+				err := storageCleanup()
+				assert.NoError(t, err)
+			}()
 
 			givenOperation := fixture.FixOperation("operation-001", "inst-id", internal.OperationTypeDeprovision)
 			givenOperation.State = domain.InProgress
@@ -113,14 +108,13 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Provisioning", func(t *testing.T) {
-			cleanup, cfg, err := prepareStorageTestEnvironment(t)
-			require.NoError(t, err)
-			defer cleanup()
-
-			cipher := storage.NewEncrypter(cfg.SecretKey)
-			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+			storageCleanup, brokerStorage, err := GetStorageForTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
+			defer func() {
+				err := storageCleanup()
+				assert.NoError(t, err)
+			}()
 
 			givenOperation := fixture.FixProvisioningOperation("operation-001", "inst-id")
 			givenOperation.State = domain.InProgress
@@ -159,14 +153,13 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Deprovisioning", func(t *testing.T) {
-			cleanup, cfg, err := prepareStorageTestEnvironment(t)
-			require.NoError(t, err)
-			defer cleanup()
-
-			cipher := storage.NewEncrypter(cfg.SecretKey)
-			brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+			storageCleanup, brokerStorage, err := GetStorageForTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
+			defer func() {
+				err := storageCleanup()
+				assert.NoError(t, err)
+			}()
 
 			givenOperation := fixture.FixDeprovisioningOperation("operation-001", "inst-id")
 			givenOperation.State = domain.InProgress
@@ -204,14 +197,13 @@ func TestConflict(t *testing.T) {
 	})
 
 	t.Run("Conflict Instances", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		svc := brokerStorage.Instances()
 

@@ -1,95 +1,33 @@
 package postsql_test
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 )
 
-var (
-	kebStorageTestConfig storage.Config
-)
+func brokerStorageTestConfig() storage.Config {
+	const (
+		kebStorageTestHostname  = "testnetwork"
+		kebStorageTestDbUser    = "test"
+		kebStorageTestDbPass    = "test"
+		kebStorageTestDbName    = "testbroker"
+		kebStorageTestDbPort    = "5432"
+		kebStorageTestSecretKey = "################################"
+	)
 
-const (
-	kebStorageTestHostname  = "testnetwork"
-	kebStorageTestDbUser    = "testuser"
-	kebStorageTestDbPass    = "testpass"
-	kebStorageTestDbName    = "testbroker"
-	kebStorageTestDbPort    = "5432"
-	kebStorageTestSecretKey = "################################"
-)
-
-func TestMain(m *testing.M) {
-	exitVal := 0
-	defer func() {
-		os.Exit(exitVal)
-	}()
-
-	dockerHandler, err := internal.NewDockerHandler()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cleanupNetwork, err := dockerHandler.SetupTestNetworkForDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cleanupNetwork()
-
-	kebStorageTestConfig = testConfig()
-
-	cleanupContainer, container, err := dockerHandler.CreateDBContainer(internal.ContainerCreateConfig{
-		Port:          kebStorageTestConfig.Port,
-		User:          kebStorageTestConfig.User,
-		Password:      kebStorageTestConfig.Password,
-		Name:          kebStorageTestConfig.Name,
-		Host:          kebStorageTestConfig.Host,
-		ContainerName: "keb-storage-tests",
-		Image:         "postgres:11",
-	})
-
-	if err != nil || container == nil {
-		log.Fatal(err)
-	}
-	defer cleanupContainer()
-
-	port, err := internal.ExtractPortFromContainer(*container)
-	if err != nil {
-		log.Fatal(err)
-	}
-	kebStorageTestConfig.Port = port
-
-	exitVal = m.Run()
-}
-
-// dont set defaults
-func emptyConfig() storage.Config {
-	return storage.Config{
-		User:            "",
-		Password:        "",
-		Host:            "",
-		Port:            "",
-		Name:            "",
-		SSLMode:         "",
-		SSLRootCert:     "",
-		SecretKey:       "",
-		MaxOpenConns:    0,
-		MaxIdleConns:    0,
-		ConnMaxLifetime: 0,
-	}
-}
-
-func testConfig() storage.Config {
 	return storage.Config{
 		Host:            kebStorageTestHostname,
 		User:            kebStorageTestDbUser,
@@ -104,53 +42,154 @@ func testConfig() storage.Config {
 	}
 }
 
-func prepareStorageTestEnvironment(t *testing.T) (func(), storage.Config, error) {
-	testDbConnection, err := postsql.WaitForDatabaseAccess(kebStorageTestConfig.ConnectionURL(), 1000, 10*time.Millisecond, logrus.New())
+func TestMain(m *testing.M) {
+	exitVal := 0
+	defer func() {
+		os.Exit(exitVal)
+	}()
 
-	cleanupFunc := func() {
-		_, err := testDbConnection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
+	config := brokerStorageTestConfig()
+	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
+
+	docker, err := internal.NewDockerHandler()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cleanupContainer, err := docker.CreateDBContainer(internal.ContainerCreateRequest{
+		Port:          config.Port,
+		User:          config.User,
+		Password:      config.Password,
+		Name:          config.Name,
+		Host:          config.Host,
+		ContainerName: "keb-storage-tests",
+		Image:         "postgres:11",
+	})
+	log.Print("container started")
+	defer func() {
+		log.Println("cleaning up")
+		if cleanupContainer != nil {
+			err := cleanupContainer()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+	if err != nil {
+		log.Println("error while starting container")
+		log.Fatal(err)
+	}
+
+	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
+
+	exitVal = m.Run()
+}
+
+func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
+	config := brokerStorageTestConfig()
+	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
+	storage, connection, err := storage.NewFromConfig(config, events.Config{}, storage.NewEncrypter(config.SecretKey), logrus.StandardLogger())
+	failOnIncorrectDB(connection, config)
+	failOnNotEmptyDb(connection, storage)
+
+	migrations := "./../../../../resources/keb/migrations/"
+	files, err := os.ReadDir(migrations)
+	if err != nil {
+		return nil, nil, fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
+	}
+
+	tx, err := connection.BeginTx(context.Background(), nil)
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), "up.sql") {
+			content, err := os.ReadFile(migrations + file.Name())
+			if err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					return nil, nil, fmt.Errorf("while reading migration files: %w file: %s, rollback error: %s", err, file.Name(), rollbackErr)
+				}
+				return nil, nil, fmt.Errorf("while reading migration files: %w file: %s", err, file.Name())
+			}
+			if _, err = tx.Exec(string(content)); err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					return nil, nil, fmt.Errorf("while applying migration files: %w file: %s, rollback error: %s", err, file.Name(), rollbackErr)
+				}
+				return nil, nil, fmt.Errorf("while applying migration files: %w file: %s", err, file.Name())
+			}
+		}
+	}
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, nil, fmt.Errorf("while committing migration files: %w", commitErr)
+	}
+
+	cleanup := func() error {
+		failOnIncorrectDB(connection, config)
+
+		/*_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 			postsql.InstancesTableName,
 			postsql.OperationTableName,
 			postsql.OrchestrationTableName,
 			postsql.RuntimeStateTableName,
 		))
 		if err != nil {
-			err = fmt.Errorf("failed to clear DB tables: %w", err)
-			assert.NoError(t, err)
-		}
+			return fmt.Errorf("failed to clear DB tables: %w", err)
+		}*/
+		return nil
 	}
 
-	initialized, err := postsql.CheckIfDatabaseInitialized(testDbConnection)
+	return cleanup, storage, nil
+}
+
+func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
+	if db == nil {
+		return
+	}
+	row := db.QueryRow("SELECT CURRENT_DATABASE();")
+	var result string
+	err := row.Scan(&result)
 	if err != nil {
-		if testDbConnection != nil {
-			err := testDbConnection.Close()
-			assert.Nil(t, err, "Failed to close db connection")
-		}
-		return nil, emptyConfig(), fmt.Errorf("while checking DB initialization: %w", err)
-	} else if initialized {
-		return cleanupFunc, kebStorageTestConfig, nil
+		panic("cannot check if db has test prefix")
+	}
+	has := strings.HasPrefix(result, "test")
+	if !has {
+		panic("db has not test prefix")
+	}
+	equal := strings.EqualFold(result, config.Name)
+	if !equal {
+		panic(fmt.Sprintf("db: %s is not equal to config: %s", result, config.Name))
+	}
+}
+
+func failOnNotEmptyDb(db *dbr.Connection, storage storage.BrokerStorage) {
+	rowsExists := func(table string) bool {
+		var rowResult string
+		result := db.QueryRow(fmt.Sprintf(`SELECT CASE
+         WHEN EXISTS (SELECT * FROM %s LIMIT 1) THEN 1
+         ELSE 0
+       END`, table))
+		result.Scan(rowResult)
+		return strings.EqualFold(rowResult, "1")
 	}
 
-	dirPath := "./../../../../resources/keb/migrations/"
-	files, err := ioutil.ReadDir(dirPath)
+	_, len1, len2, err := storage.Instances().List(dbmodel.InstanceFilter{})
 	if err != nil {
-		log.Printf("cannot read files from keb migrations directory %s", dirPath)
-		return nil, emptyConfig(), fmt.Errorf("while reading migration data: %w", err)
+		panic(fmt.Sprintf("while checking len data for: %s", postsql.InstancesTableName))
+	}
+	if len1 > 0 || len2 > 0 {
+		panic(fmt.Sprintf("storage for: %s is not empty", postsql.InstancesTableName))
 	}
 
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "up.sql") {
-			v, err := ioutil.ReadFile(dirPath + file.Name())
-			if err != nil {
-				log.Printf("cannot read migration file %s", file.Name())
-			}
-			if _, err = testDbConnection.Exec(string(v)); err != nil {
-				log.Printf("cannot apply migration file %s", file.Name())
-				return nil, emptyConfig(), fmt.Errorf("while applying migration files: %w", err)
-			}
-		}
+	_, len1, len2, err = storage.Operations().ListOperations(dbmodel.OperationFilter{})
+	if err != nil {
+		panic(fmt.Sprintf("while checking len data for: %s", postsql.OperationTableName))
 	}
-	log.Printf("migration applied to database")
+	if len1 > 0 || len2 > 0 {
+		panic(fmt.Sprintf("storage for: %s is not empty", postsql.OperationTableName))
+	}
 
-	return cleanupFunc, kebStorageTestConfig, nil
+	if rowsExists(postsql.OperationTableName) {
+		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
+	}
+
+	if rowsExists(postsql.InstancesTableName) {
+		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
+	}
 }

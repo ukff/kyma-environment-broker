@@ -4,12 +4,9 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,14 +14,13 @@ import (
 func TestOrchestration(t *testing.T) {
 
 	t.Run("Orchestrations", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		givenOrchestration := fixture.FixOrchestration("test")
 		givenOrchestration.Type = orchestration.UpgradeKymaOrchestration

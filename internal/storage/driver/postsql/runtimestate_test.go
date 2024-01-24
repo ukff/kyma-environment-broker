@@ -3,16 +3,13 @@ package postsql_test
 import (
 	"testing"
 	"time"
-
+	
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-
+	
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,14 +17,13 @@ import (
 func TestRuntimeState(t *testing.T) {
 
 	t.Run("should insert and fetch RuntimeState", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		fixID := "test"
 		givenRuntimeState := fixture.FixRuntimeState(fixID, fixID, fixID)
@@ -52,14 +48,13 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should insert and fetch RuntimeState with Reconciler input", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		fixRuntimeStateID := uuid.NewString()
 		fixRuntimeID := "runtimeID"
@@ -89,14 +84,13 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should distinguish between latest RuntimeStates with and without Reconciler input", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		fixRuntimeID := "runtimeID"
 
@@ -152,14 +146,13 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		fixRuntimeID := "runtimeID"
 		fixKymaVersion := "2.0.3"
@@ -211,14 +204,13 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version stored only in the kyma_version field", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		fixRuntimeID := "runtimeID"
 		fixKymaVersion := "2.0.3"
@@ -264,14 +256,13 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with OIDC config", func(t *testing.T) {
-		cleanup, cfg, err := prepareStorageTestEnvironment(t)
-		require.NoError(t, err)
-		defer cleanup()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		fixRuntimeID := "runtimeID"
 		fixKymaVersion := "2.0.4"
