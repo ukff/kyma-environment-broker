@@ -115,15 +115,6 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		return cleanup, fmt.Errorf("during container startup: %w", err)
 	}
 	
-	statusCh, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			panic(err)
-		}
-	case <-statusCh:
-	}
-	
 	return cleanup, nil
 }
 
