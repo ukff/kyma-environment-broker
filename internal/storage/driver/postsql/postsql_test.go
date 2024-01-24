@@ -111,7 +111,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	failOnIncorrectDB(connection, config)
 	// failOnNotEmptyDb(connection, storage)
 	
-	err = runMigrations(Up)
+	err = runMigrations(connection, Up)
 	if err != nil {
 		return nil, nil, fmt.Errorf("while applying migration files: %w", err)
 	}
@@ -120,7 +120,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	cleanup := func() error {
 		failOnIncorrectDB(connection, config)
 		fmt.Println("cleaning up")
-		err := runMigrations(Down)
+		err := runMigrations(connection, Down)
 		if err != nil {
 			return fmt.Errorf("failed to clear DB tables: %w", err)
 		}
@@ -131,7 +131,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	return cleanup, storage, nil
 }
 
-func runMigrations(order migrationOrder) error {
+func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 	if order != Up && order != Down {
 		return fmt.Errorf("unknown migration order")
 	}
