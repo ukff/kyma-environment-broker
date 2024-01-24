@@ -89,6 +89,15 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	config := brokerStorageTestConfig()
 	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
 	storage, connection, err := storage.NewFromConfig(config, events.Config{}, storage.NewEncrypter(config.SecretKey), logrus.StandardLogger())
+	if err != nil {
+		return nil, nil, fmt.Errorf("while creating storage: %w", err)
+	}
+	if connection == nil {
+		return nil, nil, fmt.Errorf("connection is nil")
+	}
+	if storage == nil {
+		return nil, nil, fmt.Errorf("storage is nil")
+	}
 	failOnIncorrectDB(connection, config)
 	failOnNotEmptyDb(connection, storage)
 	
