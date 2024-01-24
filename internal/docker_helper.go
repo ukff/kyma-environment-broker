@@ -10,7 +10,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
 type DockerHelper struct {
@@ -63,6 +65,10 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		}
 	}
 	
+	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{config.Port})
+	if err != nil {
+		return nil, fmt.Errorf("while parsing ports specs: %w", err)
+	}
 	log.Println("creating container...")
 	response, err := d.client.ContainerCreate(context.Background(),
 		&container.Config{
@@ -73,8 +79,20 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 				fmt.Sprintf("POSTGRES_DB=%s", config.Name),
 			},
 		},
-		nil,
-		nil,
+		&container.HostConfig{
+			NetworkMode:     "default",
+			PublishAllPorts: false,
+			PortBindings:    parsedPortSpecs,
+		},
+		&network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				"localhost": {
+					Aliases: []string{
+						config.Host,
+					},
+				},
+			},
+		},
 		nil,
 		config.ContainerName)
 	log.Printf("container started with ID: %s", response.ID)
