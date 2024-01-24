@@ -1,7 +1,6 @@
 package postsql_test
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -110,32 +109,26 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 		return nil, nil, fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
 	}
 	
-	tx, err := connection.BeginTx(context.Background(), nil)
+	// tx, err := connection.BeginTx(context.Background(), nil)
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
 			content, err := os.ReadFile(migrations + file.Name())
 			if err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					return nil, nil, fmt.Errorf("while reading migration files: %w file: %s, rollback error: %s", err, file.Name(), rollbackErr)
-				}
 				return nil, nil, fmt.Errorf("while reading migration files: %w file: %s", err, file.Name())
 			}
-			if _, err = tx.Exec(string(content)); err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					return nil, nil, fmt.Errorf("while applying migration files: %w file: %s, rollback error: %s", err, file.Name(), rollbackErr)
-				}
+			if _, err = connection.Exec(string(content)); err != nil {
 				return nil, nil, fmt.Errorf("while applying migration files: %w file: %s", err, file.Name())
 			}
 		}
 	}
 	
-	if commitErr := tx.Commit(); commitErr != nil {
+	/*if commitErr := tx.Commit(); commitErr != nil {
 		err := tx.Rollback()
 		if err != nil {
 			return nil, nil, err
 		}
 		return nil, nil, fmt.Errorf("while committing migration files: %w", commitErr)
-	}
+	}*/
 	fmt.Println("migration files applied")
 	
 	cleanup := func() error {
