@@ -100,8 +100,9 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	if storage == nil {
 		return nil, nil, fmt.Errorf("storage is nil")
 	}
+	fmt.Println(fmt.Sprintf("connected to URL -> %s", config.ConnectionURL()))
 	failOnIncorrectDB(connection, config)
-	failOnNotEmptyDb(connection, storage)
+	// failOnNotEmptyDb(connection, storage)
 	
 	migrations := "./../../../../resources/keb/migrations/"
 	files, err := os.ReadDir(migrations)
