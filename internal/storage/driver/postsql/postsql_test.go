@@ -161,8 +161,8 @@ func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
 	row := db.QueryRow("SELECT CURRENT_DATABASE();")
 	var result string
 	err := row.Scan(&result)
-	if err != nil {
-		panic("cannot check if db has test prefix")
+	if err != nil || result == "" {
+		panic(fmt.Sprintf("cannot check if db has test prefix. %s", err.Error()))
 	}
 	has := strings.HasPrefix(result, "test")
 	if !has {
@@ -176,13 +176,22 @@ func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
 
 func failOnNotEmptyDb(db *dbr.Connection) {
 	tableExists := func(table string) (bool, error) {
-		var rowResult *interface{}
-		result := db.QueryRow(fmt.Sprintf("SELECT to_regclass('%s.%s')", "public", table))
-		err := result.Scan(rowResult)
+		var exists bool
+		result := db.QueryRow(fmt.Sprintf(
+			`
+			SELECT EXISTS (
+			    SELECT FROM
+			        pg_tables
+			    WHERE
+			        schemaname = 'public' AND
+			        tablename  = '%s'
+			);`,
+			table))
+		err := result.Scan(&exists)
 		if err != nil {
 			return false, err
 		}
-		return rowResult != nil, nil
+		return exists, nil
 	}
 
 	exists, err := tableExists(postsql.OperationTableName)
