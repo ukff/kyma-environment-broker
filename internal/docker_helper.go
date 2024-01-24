@@ -65,11 +65,6 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		}
 	}
 
-	/*portMapping := make(map[nat.Port][]nat.PortBinding, 1)
-	portMapping["5432"] = []nat.PortBinding{{
-		HostIP:   config.Host,
-		HostPort: config.Port,
-	}}*/
 	_, parsedPortSpecs, err := nat.ParsePortSpecs([]string{config.Port})
 	if err != nil {
 		return nil, fmt.Errorf("while parsing ports specs: %w", err)
