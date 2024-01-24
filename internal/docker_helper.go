@@ -11,7 +11,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 )
 
 type DockerHelper struct {
@@ -74,20 +73,12 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 				fmt.Sprintf("POSTGRES_DB=%s", config.Name),
 			},
 		},
-		&container.HostConfig{
-			NetworkMode:     "host",
-			PublishAllPorts: false,
-			PortBindings: nat.PortMap{
-				nat.Port(config.Port): []nat.PortBinding{{
-					HostIP:   "127.0.0.1",
-					HostPort: config.Port,
-				}},
-			},
-		},
+		nil,
 		nil,
 		nil,
 		config.ContainerName)
 	log.Printf("container started with ID: %s", response.ID)
+	log.Printf("container started with name: %v", response.Warnings)
 	if err != nil {
 		return nil, fmt.Errorf("during container creation: %w", err)
 	}
