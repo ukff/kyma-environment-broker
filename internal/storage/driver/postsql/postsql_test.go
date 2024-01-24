@@ -22,7 +22,7 @@ func brokerStorageTestConfig() storage.Config {
 		kebStorageTestHostname  = "localhost"
 		kebStorageTestDbUser    = "test"
 		kebStorageTestDbPass    = "test"
-		kebStorageTestDbName    = "testbroker"
+		kebStorageTestDbName    = "atestbroker"
 		kebStorageTestDbPort    = "5430"
 		kebStorageTestSecretKey = "################################"
 	)
@@ -134,7 +134,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	cleanup := func() error {
 		failOnIncorrectDB(connection, config)
 		
-		/*_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
+		_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 			postsql.InstancesTableName,
 			postsql.OperationTableName,
 			postsql.OrchestrationTableName,
@@ -142,7 +142,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 		))
 		if err != nil {
 			return fmt.Errorf("failed to clear DB tables: %w", err)
-		}*/
+		}
 		return nil
 	}
 	
