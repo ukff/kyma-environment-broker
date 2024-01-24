@@ -64,7 +64,13 @@ func TestMain(m *testing.M) {
 		Host:          config.Host,
 		ContainerName: "keb-storage-tests",
 		Image:         "postgres:11",
+		Envs: []string{
+			fmt.Sprintf("POSTGRES_USER=%s", config.User),
+			fmt.Sprintf("POSTGRES_PASSWORD=%s", config.Password),
+			fmt.Sprintf("POSTGRES_DB=%s", config.Name),
+		},
 	})
+	
 	log.Print("container started")
 	defer func() {
 		log.Println("cleaning up")
