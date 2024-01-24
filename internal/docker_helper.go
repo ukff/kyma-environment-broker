@@ -76,7 +76,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		nil,
 		nil,
 		nil,
-		config.ContainerName)
+		"")
 	log.Printf("container started with ID: %s", response.ID)
 	log.Printf("container started with name: %v", response.Warnings)
 	if err != nil {
@@ -103,9 +103,14 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		return cleanupFunc, fmt.Errorf("during container inspect: %w", err)
 	}
 	log.Printf("container inspect: %v", j)
-	_, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
-	if err := <-errCh; err != nil {
-		return cleanupFunc, nil
+	statusCh, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			panic(err)
+		}
+	case status := <-statusCh:
+		fmt.Println(status)
 	}
 	
 	log.Println("container created OK..")
