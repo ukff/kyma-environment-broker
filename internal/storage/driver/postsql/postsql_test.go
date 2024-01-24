@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-	
+
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
@@ -33,7 +33,7 @@ func brokerStorageTestConfig() storage.Config {
 		kebStorageTestDbPort    = "5430"
 		kebStorageTestSecretKey = "################################"
 	)
-	
+
 	return storage.Config{
 		Host:            kebStorageTestHostname,
 		User:            kebStorageTestDbUser,
@@ -53,16 +53,16 @@ func TestMain(m *testing.M) {
 	defer func() {
 		os.Exit(exitVal)
 	}()
-	
+
 	config := brokerStorageTestConfig()
 	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
-	
+
 	docker, err := internal.NewDockerHandler()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer docker.CloseDockerClient()
-	
+
 	cleanupContainer, err := docker.CreateDBContainer(internal.ContainerCreateRequest{
 		Port:          config.Port,
 		User:          config.User,
@@ -72,7 +72,7 @@ func TestMain(m *testing.M) {
 		ContainerName: "keb-storage-tests",
 		Image:         "postgres:11",
 	})
-	
+
 	log.Print("container started")
 	defer func() {
 		log.Println("cleaning up")
@@ -87,9 +87,9 @@ func TestMain(m *testing.M) {
 		log.Println("error while starting container")
 		log.Fatal(err)
 	}
-	
+
 	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
-	
+
 	exitVal = m.Run()
 }
 
@@ -109,13 +109,13 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	fmt.Println(fmt.Sprintf("connected to URL -> %s", config.ConnectionURL()))
 	failOnIncorrectDB(connection, config)
 	failOnNotEmptyDb(connection)
-	
+
 	err = runMigrations(connection, Up)
 	if err != nil {
 		return nil, nil, fmt.Errorf("while applying migration files: %w", err)
 	}
 	fmt.Println("migration files applied")
-	
+
 	cleanup := func() error {
 		failOnIncorrectDB(connection, config)
 		fmt.Println("cleaning up")
@@ -126,7 +126,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 		fmt.Println("cleaned up")
 		return nil
 	}
-	
+
 	return cleanup, storage, nil
 }
 
@@ -134,23 +134,23 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 	if order != Up && order != Down {
 		return fmt.Errorf("unknown migration order")
 	}
-	
+
 	migrations := "./../../../../resources/keb/migrations/"
 	files, err := os.ReadDir(migrations)
 	if err != nil {
 		return fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
 	}
-	
+
 	suffix := ""
 	if order == Down {
 		suffix = "down.sql"
 		slices.Reverse(files)
 	}
-	
+
 	if order == Up {
 		suffix = "up.sql"
 	}
-	
+
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), suffix) {
 			content, err := os.ReadFile(migrations + file.Name())
@@ -162,7 +162,7 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -194,12 +194,12 @@ func failOnNotEmptyDb(db *dbr.Connection) {
 		fmt.Println(fmt.Sprintf("table lookup result: %s", rowResult))
 		return rowResult != ""
 	}
-	
+
 	if tableExists(postsql.InstancesTableName) {
 		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
 	}
-	
-	if tableExists(postsql.InstancesTableName) {
-		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
+
+	if tableExists(postsql.OperationTableName) {
+		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
 	}
 }
