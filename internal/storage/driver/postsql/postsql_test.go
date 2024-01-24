@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
@@ -109,7 +108,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	}
 	fmt.Println(fmt.Sprintf("connected to URL -> %s", config.ConnectionURL()))
 	failOnIncorrectDB(connection, config)
-	// failOnNotEmptyDb(connection, storage)
+	failOnNotEmptyDb(connection)
 	
 	err = runMigrations(connection, Up)
 	if err != nil {
@@ -187,39 +186,20 @@ func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
 	}
 }
 
-func failOnNotEmptyDb(db *dbr.Connection, storage storage.BrokerStorage) {
-	/*rowsExists := func(table string) bool {
-			var rowResult string
-			result := db.QueryRow(fmt.Sprintf(`SELECT CASE
-	         WHEN EXISTS (SELECT * FROM %s LIMIT 1) THEN 1
-	         ELSE 0
-	       END`, table))
-			result.Scan(rowResult)
-			return strings.EqualFold(rowResult, "1")
-		}*/
-	
-	_, len1, len2, err := storage.Instances().List(dbmodel.InstanceFilter{})
-	if err != nil {
-		panic(fmt.Sprintf("while checking len data for: %s , %s", postsql.InstancesTableName, err.Error()))
-	}
-	if len1 > 0 || len2 > 0 {
-		panic(fmt.Sprintf("storage for: %s is not empty", postsql.InstancesTableName))
+func failOnNotEmptyDb(db *dbr.Connection) {
+	tableExists := func(table string) bool {
+		var rowResult string
+		result := db.QueryRow(fmt.Sprintf("SELECT to_regclass('%s.%s')", "public", table))
+		result.Scan(rowResult)
+		fmt.Println(fmt.Sprintf("table lookup result: %s", rowResult))
+		return rowResult != ""
 	}
 	
-	_, len1, len2, err = storage.Operations().ListOperations(dbmodel.OperationFilter{})
-	if err != nil {
-		panic(fmt.Sprintf("while checking len data for: %s , %s", postsql.OperationTableName, err.Error()))
-	}
-	if len1 > 0 || len2 > 0 {
-		panic(fmt.Sprintf("storage for: %s is not empty", postsql.OperationTableName))
+	if tableExists(postsql.InstancesTableName) {
+		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
 	}
 	
-	/*
-		if rowsExists(postsql.InstancesTableName) {
-			panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
-		}
-	
-		if rowsExists(postsql.InstancesTableName) {
-			panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
-		}*/
+	if tableExists(postsql.InstancesTableName) {
+		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
+	}
 }
