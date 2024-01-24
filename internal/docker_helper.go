@@ -73,11 +73,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 				fmt.Sprintf("POSTGRES_DB=%s", config.Name),
 			},
 		},
-		&container.HostConfig{
-			NetworkMode:     "default",
-			PublishAllPorts: false,
-			AutoRemove:      true,
-		},
+		nil,
 		nil,
 		nil,
 		config.ContainerName)
