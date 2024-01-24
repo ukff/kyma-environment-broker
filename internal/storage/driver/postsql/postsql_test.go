@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	kebStorageTestHostname  = "localhost"
+	kebStorageTestHostname  = "testnetwork"
 	kebStorageTestDbUser    = "testuser"
 	kebStorageTestDbPass    = "testpass"
 	kebStorageTestDbName    = "testbroker"
