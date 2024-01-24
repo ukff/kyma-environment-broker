@@ -176,7 +176,7 @@ func failOnIncorrectDB(db *dbr.Connection, config storage.Config) {
 
 func failOnNotEmptyDb(db *dbr.Connection) {
 	tableExists := func(table string) (bool, error) {
-		var rowResult interface{}
+		var rowResult *interface{}
 		result := db.QueryRow(fmt.Sprintf("SELECT to_regclass('%s.%s')", "public", table))
 		err := result.Scan(rowResult)
 		if err != nil {
