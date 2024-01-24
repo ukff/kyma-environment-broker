@@ -7,7 +7,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -17,6 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -134,6 +137,87 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateConfig) (func(), 
 	}
 
 	return cleanupFunc, created, nil
+}
+
+func (d *DockerHelper) isDockerTestNetworkPresent() (bool, error) {
+	filterBy := filters.NewArgs()
+	filterBy.Add("name", testDockerUserNetwork)
+	filterBy.Add("driver", "bridge")
+	list, err := d.client.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
+
+	if err == nil {
+		return len(list) == 1, nil
+	}
+
+	return false, fmt.Errorf("while testing network availbility: %w", err)
+}
+
+func (d *DockerHelper) createTestNetworkForDB() (*types.NetworkResource, error) {
+	createdNetworkResponse, err := d.client.NetworkCreate(context.Background(), testDockerUserNetwork, types.NetworkCreate{Driver: "bridge"})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create docker user network: %w", err)
+	}
+
+	filterBy := filters.NewArgs()
+	filterBy.Add("id", createdNetworkResponse.ID)
+	list, err := d.client.NetworkList(context.Background(), types.NetworkListOptions{Filters: filterBy})
+
+	if err != nil || len(list) != 1 {
+		return nil, fmt.Errorf("network not found or not created: %w", err)
+	}
+
+	return &list[0], nil
+}
+
+func (d *DockerHelper) EnsureTestNetworkForDB(t *testing.T, ctx context.Context) (func(), error) {
+	exec.Command("systemctl start docker.service")
+
+	networkPresent, err := d.isDockerTestNetworkPresent()
+	if networkPresent && err == nil {
+		return func() {}, nil
+	}
+
+	createdNetwork, err := d.createTestNetworkForDB()
+
+	if err != nil {
+		return func() {}, fmt.Errorf("while creating test network: %w", err)
+	}
+	cleanupFunc := func() {
+		err = d.client.NetworkRemove(ctx, createdNetwork.ID)
+		assert.NoError(t, err)
+		time.Sleep(1 * time.Second)
+	}
+
+	return cleanupFunc, nil
+}
+
+func (d *DockerHelper) SetupTestNetworkForDB() (cleanupFunc func(), err error) {
+	exec.Command("systemctl start docker.service")
+
+	networkPresent, err := d.isDockerTestNetworkPresent()
+	if networkPresent && err == nil {
+		return func() {}, nil
+	}
+
+	createdNetwork, err := d.createTestNetworkForDB()
+
+	if err != nil {
+		return func() {}, fmt.Errorf("while creating test network: %w", err)
+	}
+
+	cleanupFunc = func() {
+		err = d.client.NetworkRemove(context.Background(), createdNetwork.ID)
+		if err != nil {
+			err = fmt.Errorf("failed to remove docker network: %w + %s", err, testDockerUserNetwork)
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	if err != nil {
+		return cleanupFunc, fmt.Errorf("while DB setup: %w", err)
+	} else {
+		return cleanupFunc, nil
+	}
 }
 
 func waitForContainer(cli *client.Client, containerId string, text string) error {

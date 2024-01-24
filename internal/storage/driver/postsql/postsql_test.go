@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	kebStorageTestHostname  = "testhost"
+	kebStorageTestHostname  = "localhost"
 	kebStorageTestDbUser    = "testuser"
 	kebStorageTestDbPass    = "testpass"
 	kebStorageTestDbName    = "testbroker"
@@ -39,6 +39,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cleanupNetwork, err := dockerHandler.SetupTestNetworkForDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cleanupNetwork()
 
 	kebStorageTestConfig = testConfig()
 
