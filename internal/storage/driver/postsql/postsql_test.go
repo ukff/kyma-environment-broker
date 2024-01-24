@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-	
+
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
@@ -24,10 +24,10 @@ func brokerStorageTestConfig() storage.Config {
 		kebStorageTestDbUser    = "test"
 		kebStorageTestDbPass    = "test"
 		kebStorageTestDbName    = "testbroker"
-		kebStorageTestDbPort    = "5432"
+		kebStorageTestDbPort    = "5431"
 		kebStorageTestSecretKey = "################################"
 	)
-	
+
 	return storage.Config{
 		Host:            kebStorageTestHostname,
 		User:            kebStorageTestDbUser,
@@ -47,15 +47,15 @@ func TestMain(m *testing.M) {
 	defer func() {
 		os.Exit(exitVal)
 	}()
-	
+
 	config := brokerStorageTestConfig()
 	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
-	
+
 	docker, err := internal.NewDockerHandler()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	cleanupContainer, err := docker.CreateDBContainer(internal.ContainerCreateRequest{
 		Port:          config.Port,
 		User:          config.User,
@@ -79,9 +79,9 @@ func TestMain(m *testing.M) {
 		log.Println("error while starting container")
 		log.Fatal(err)
 	}
-	
+
 	fmt.Println(fmt.Sprintf("connection URL -> %s", config.ConnectionURL()))
-	
+
 	exitVal = m.Run()
 }
 
@@ -91,13 +91,13 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	storage, connection, err := storage.NewFromConfig(config, events.Config{}, storage.NewEncrypter(config.SecretKey), logrus.StandardLogger())
 	failOnIncorrectDB(connection, config)
 	failOnNotEmptyDb(connection, storage)
-	
+
 	migrations := "./../../../../resources/keb/migrations/"
 	files, err := os.ReadDir(migrations)
 	if err != nil {
 		return nil, nil, fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
 	}
-	
+
 	tx, err := connection.BeginTx(context.Background(), nil)
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
@@ -119,10 +119,10 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, nil, fmt.Errorf("while committing migration files: %w", commitErr)
 	}
-	
+
 	cleanup := func() error {
 		failOnIncorrectDB(connection, config)
-		
+
 		/*_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 			postsql.InstancesTableName,
 			postsql.OperationTableName,
@@ -134,7 +134,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 		}*/
 		return nil
 	}
-	
+
 	return cleanup, storage, nil
 }
 
@@ -168,7 +168,7 @@ func failOnNotEmptyDb(db *dbr.Connection, storage storage.BrokerStorage) {
 		result.Scan(rowResult)
 		return strings.EqualFold(rowResult, "1")
 	}
-	
+
 	_, len1, len2, err := storage.Instances().List(dbmodel.InstanceFilter{})
 	if err != nil {
 		panic(fmt.Sprintf("while checking len data for: %s", postsql.InstancesTableName))
@@ -176,7 +176,7 @@ func failOnNotEmptyDb(db *dbr.Connection, storage storage.BrokerStorage) {
 	if len1 > 0 || len2 > 0 {
 		panic(fmt.Sprintf("storage for: %s is not empty", postsql.InstancesTableName))
 	}
-	
+
 	_, len1, len2, err = storage.Operations().ListOperations(dbmodel.OperationFilter{})
 	if err != nil {
 		panic(fmt.Sprintf("while checking len data for: %s", postsql.OperationTableName))
@@ -184,11 +184,11 @@ func failOnNotEmptyDb(db *dbr.Connection, storage storage.BrokerStorage) {
 	if len1 > 0 || len2 > 0 {
 		panic(fmt.Sprintf("storage for: %s is not empty", postsql.OperationTableName))
 	}
-	
+
 	if rowsExists(postsql.OperationTableName) {
 		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
 	}
-	
+
 	if rowsExists(postsql.InstancesTableName) {
 		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
 	}
