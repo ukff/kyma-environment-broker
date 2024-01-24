@@ -22,7 +22,7 @@ func brokerStorageTestConfig() storage.Config {
 		kebStorageTestHostname  = "localhost"
 		kebStorageTestDbUser    = "test"
 		kebStorageTestDbPass    = "test"
-		kebStorageTestDbName    = "atestbroker"
+		kebStorageTestDbName    = "testbroker"
 		kebStorageTestDbPort    = "5430"
 		kebStorageTestSecretKey = "################################"
 	)
@@ -101,7 +101,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	}
 	fmt.Println(fmt.Sprintf("connected to URL -> %s", config.ConnectionURL()))
 	failOnIncorrectDB(connection, config)
-	// failOnNotEmptyDb(connection, storage)
+	failOnNotEmptyDb(connection, storage)
 	
 	migrations := "./../../../../resources/keb/migrations/"
 	files, err := os.ReadDir(migrations)
