@@ -130,6 +130,10 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	}
 	
 	if commitErr := tx.Commit(); commitErr != nil {
+		err := tx.Rollback()
+		if err != nil {
+			return nil, nil, err
+		}
 		return nil, nil, fmt.Errorf("while committing migration files: %w", commitErr)
 	}
 	fmt.Println("migration files applied")
