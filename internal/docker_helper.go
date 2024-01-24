@@ -90,9 +90,9 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateConfig) (func(), 
 		},
 		&network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
-				testDockerUserNetwork: {
+				"localhost": {
 					Aliases: []string{
-						"localhost",
+						testDockerUserNetwork,
 					},
 				},
 			},
