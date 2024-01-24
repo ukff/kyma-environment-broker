@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -117,9 +116,6 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 	if err != nil {
 		return cleanupFunc, fmt.Errorf("during container inspect: %w", err)
 	}
-	log.Printf("container inspect: %v", j)
-	res2B, _ := json.Marshal(j)
-	fmt.Println(string(res2B))
 
 	/*statusCh, errCh := d.client.ContainerWait(context.Background(), response.ID, container.WaitConditionNotRunning)
 	select {
@@ -127,7 +123,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		if err != nil {
 			panic(err)
 		}
-	case <-statusCh:
+	case <-statusCh:ś
 	}*/
 
 	log.Println("container created OK..")

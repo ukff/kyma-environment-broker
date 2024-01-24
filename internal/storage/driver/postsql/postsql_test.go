@@ -102,7 +102,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	}
 	fmt.Println(fmt.Sprintf("connected to URL -> %s", config.ConnectionURL()))
 	failOnIncorrectDB(connection, config)
-	// failOnNotEmptyDb(connection, storage)
+	failOnNotEmptyDb(connection, storage)
 
 	migrations := "./../../../../resources/keb/migrations/"
 	files, err := os.ReadDir(migrations)
@@ -136,7 +136,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 	cleanup := func() error {
 		failOnIncorrectDB(connection, config)
 
-		/*_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
+		_, err = connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s, %s, %s, %s RESTART IDENTITY CASCADE",
 			postsql.InstancesTableName,
 			postsql.OperationTableName,
 			postsql.OrchestrationTableName,
@@ -144,7 +144,7 @@ func GetStorageForTests() (func() error, storage.BrokerStorage, error) {
 		))
 		if err != nil {
 			return fmt.Errorf("failed to clear DB tables: %w", err)
-		}*/
+		}
 		return nil
 	}
 
