@@ -142,12 +142,18 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 		return fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
 	}
 	
+	suffix := ""
 	if order == Down {
+		suffix = "down.sql"
 		slices.Reverse(files)
 	}
 	
+	if order == Up {
+		suffix = "up.sql"
+	}
+	
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "up.sql") {
+		if strings.HasSuffix(file.Name(), suffix) {
 			content, err := os.ReadFile(migrations + file.Name())
 			if err != nil {
 				return fmt.Errorf("while reading migration files: %w file: %s", err, file.Name())
