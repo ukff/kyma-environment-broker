@@ -13,7 +13,7 @@ type Config struct {
 	User        string `envconfig:"default=postgres"`
 	Password    string `envconfig:"default=password"`
 	Host        string `envconfig:"default=localhost"`
-	Port        string `envconfig:"default=5431"`
+	Port        string `envconfig:"default=5432"`
 	Name        string `envconfig:"default=broker"`
 	SSLMode     string `envconfig:"default=disable"`
 	SSLRootCert string `envconfig:"optional"`
