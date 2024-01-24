@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
