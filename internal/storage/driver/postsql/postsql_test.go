@@ -24,7 +24,7 @@ func brokerStorageTestConfig() storage.Config {
 		kebStorageTestDbUser    = "test"
 		kebStorageTestDbPass    = "test"
 		kebStorageTestDbName    = "testbroker"
-		kebStorageTestDbPort    = "5432"
+		kebStorageTestDbPort    = "5430"
 		kebStorageTestSecretKey = "################################"
 	)
 
