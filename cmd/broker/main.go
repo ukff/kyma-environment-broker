@@ -1,6 +1,6 @@
 package main
 
-	import (
+import (
 	"context"
 	"fmt"
 	"io"
@@ -72,8 +72,8 @@ package main
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-	func init() {
-		rand.Seed(time.Now().UTC().UnixNano())
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 // Config holds configuration for the whole application
@@ -254,7 +254,7 @@ func main() {
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)
 
 	reconcilerClient := reconciler.NewReconcilerClient(http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler)
-	// test
+
 	// create kubernetes client
 	k8sCfg, err := config.GetConfig()
 	fatalOnError(err)
