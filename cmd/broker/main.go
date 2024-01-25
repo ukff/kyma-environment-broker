@@ -72,8 +72,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	func init() {
+		rand.Seed(time.Now().UTC().UnixNano())
 }
 
 // Config holds configuration for the whole application
