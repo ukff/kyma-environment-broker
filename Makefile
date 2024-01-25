@@ -16,8 +16,8 @@ checks: check-go-mod-tidy ## run different Go related checks
 .PHONY: go-lint
 go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
 	git --version
-	golangci-lint run -v --new
-	
+	golangci-lint run -v
+
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
