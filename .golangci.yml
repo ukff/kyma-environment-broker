@@ -5,6 +5,8 @@ output:
   print-issued-lines: true
   print-linter-name: true
   uniq-by-line: false
+issues:
+  new: false
 linters:
   disable-all: true
   enable:
