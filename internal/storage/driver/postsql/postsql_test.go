@@ -20,7 +20,8 @@ import (
 type migrationOrder int
 
 const (
-	Up migrationOrder = iota
+	migrationsPath                = "./../../../../resources/keb/migrations/"
+	Up             migrationOrder = iota
 	Down
 )
 
@@ -123,7 +124,6 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 		return fmt.Errorf("unknown migration order")
 	}
 
-	migrations := "./../../../../resources/keb/migrations/"
 	files, err := os.ReadDir(migrations)
 	if err != nil {
 		return fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
@@ -141,7 +141,7 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), suffix) {
-			content, err := os.ReadFile(migrations + file.Name())
+			content, err := os.ReadFile(migrationsPath + file.Name())
 			if err != nil {
 				return fmt.Errorf("while reading migration files: %w file: %s", err, file.Name())
 			}
