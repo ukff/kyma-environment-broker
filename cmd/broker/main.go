@@ -254,7 +254,7 @@ func main() {
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)
 
 	reconcilerClient := reconciler.NewReconcilerClient(http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler)
-
+	// test
 	// create kubernetes client
 	k8sCfg, err := config.GetConfig()
 	fatalOnError(err)
