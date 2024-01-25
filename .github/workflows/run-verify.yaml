@@ -30,7 +30,7 @@ jobs:
         go-version-file: 'go.mod'
         
     - name: Go linter
-      run: make go-linter
+      run: make go-lint
 
   run-go-checks:
     runs-on: ubuntu-latest
