@@ -21,13 +21,13 @@ checks: check-go-mod-tidy ## run different Go related checks
 
 .PHONY: go-lint
 go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
-	golangci-lint run -v
+	golangci-lint run -v -c ../../.golangci.yaml
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
 		GOBIN= go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
-		echo golangci installed in $(GOBIN) with version: $(shell golangci-lint version --format short); \
+		echo golangci installed in $(GOBIN) with version: $(shell command golangci-lint version --format short); \
 	fi;
 	
 ##@ Tests
