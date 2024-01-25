@@ -124,9 +124,9 @@ func runMigrations(connection *dbr.Connection, order migrationOrder) error {
 		return fmt.Errorf("unknown migration order")
 	}
 
-	files, err := os.ReadDir(migrations)
+	files, err := os.ReadDir(migrationsPath)
 	if err != nil {
-		return fmt.Errorf("while reading migration data: %w in directory :%s", err, migrations)
+		return fmt.Errorf("while reading migration data: %w in directory :%s", err, migrationsPath)
 	}
 
 	suffix := ""
