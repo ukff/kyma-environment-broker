@@ -18,6 +18,7 @@ go-lint: go-lint-install ## linter config in file at root of project -> '.golang
 	golangci-lint run -v --new-from-rev=HEAD~
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
+	@echo git --version
 	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
