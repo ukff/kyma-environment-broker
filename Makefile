@@ -34,7 +34,6 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 
 .PHONY: test 
 test: ## run Go tests
-	go get -d ./...
 	go test ./...
 
 ##@ Go checks 
