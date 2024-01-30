@@ -34,7 +34,6 @@ jobs:
       with:
         version: v1.55.2
         skip-cache: true
-        only-new-issues: true
         args: --timeout 2m0s
 
   run-go-checks:
