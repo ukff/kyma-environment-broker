@@ -30,12 +30,8 @@ jobs:
         go-version-file: 'go.mod'
         
     - name: Go linter
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: v1.55.2
-        skip-cache: true
-        args: --timeout 2m0s
-
+      run: make go-lint
+    
   run-go-checks:
     runs-on: ubuntu-latest
     steps:
