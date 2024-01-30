@@ -12,7 +12,6 @@ import (
 	gruntime "runtime"
 	"runtime/pprof"
 	"sort"
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
@@ -70,6 +69,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"time"
 )
 
 func init() {
