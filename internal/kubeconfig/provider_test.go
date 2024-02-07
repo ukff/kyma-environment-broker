@@ -4,20 +4,20 @@ import (
 	"context"
 	"testing"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"k8s.io/apimachinery/pkg/util/wait"
-	
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	
+
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	
+
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -33,11 +33,11 @@ func TestSecretProvider_NoValueInSecret(t *testing.T) {
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}
-	
+
 	// when
 	_, errKubeconfig := provider.KubeconfigForRuntimeID("runtime00")
 	_, errClient := provider.K8sClientForRuntimeID("runtime00")
-	
+
 	// then
 	assert.Error(t, errKubeconfig)
 	assert.Error(t, errClient)
@@ -49,11 +49,11 @@ func TestSecretProvider_NoSecret(t *testing.T) {
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}
-	
+
 	// when
 	_, errKubeconfig := provider.KubeconfigForRuntimeID("runtime00")
 	_, errClient := provider.K8sClientForRuntimeID("runtime00")
-	
+
 	// then
 	assert.Error(t, errKubeconfig)
 	assert.Error(t, errClient)
@@ -76,17 +76,17 @@ func TestSecretProvider_BadKubeconfig(t *testing.T) {
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}
-	
+
 	// when
 	_, errClient := provider.K8sClientForRuntimeID("runtime00")
-	
+
 	// then
 	assert.Error(t, errClient)
 }
 
 func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	// Given
-	
+
 	// prepare envtest to provide valid kubeconfig
 	internal.SetupEnvtest(t)
 	env := envtest.Environment{
@@ -105,7 +105,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	require.NoError(t, errEnvTest)
 	defer env.Stop()
 	kubeconfig := createKubeconfigFileForRestConfig(*config)
-	
+
 	// prepare a k8s client to store a secret with kubeconfig
 	kcpClient := fake.NewClientBuilder().Build()
 	kcpClient.Create(context.Background(), &v1.Secret{
@@ -120,11 +120,11 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}
-	
+
 	// when
 	kubeconfig, errKubeconfig := provider.KubeconfigForRuntimeID("runtime00")
 	k8sClient, errClient := provider.K8sClientForRuntimeID("runtime00")
-	
+
 	// then
 	assert.NotEmpty(t, kubeconfig)
 	assert.NotNil(t, k8sClient)
@@ -138,7 +138,7 @@ func createKubeconfigFileForRestConfig(restConfig rest.Config) []byte {
 		clusterName = "cluster"
 		contextName = "context"
 	)
-	
+
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters[clusterName] = &clientcmdapi.Cluster{
 		Server:                   restConfig.Host,
