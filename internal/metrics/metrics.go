@@ -3,18 +3,19 @@ package metrics
 import (
 	debug "github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
-	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter) {
-	opResultCollector := NewOperationResultCollector()
-	opDurationCollector := NewOperationDurationCollector()
-	stepResultCollector := NewStepResultCollector()
-	prometheus.MustRegister(opResultCollector, opDurationCollector, stepResultCollector)
 	debug.Log("register NewOperationsCollector start")
 	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
 	debug.Log("register NewOperationsCollector end")
+
+	/*opResultCollector := NewOperationResultCollector()
+	opDurationCollector := NewOperationDurationCollector()
+	stepResultCollector := NewStepResultCollector()
+	prometheus.MustRegister(opResultCollector, opDurationCollector, stepResultCollector)
+
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
 
 	sub.Subscribe(process.ProvisioningStepProcessed{}, opResultCollector.OnProvisioningStepProcessed)
@@ -31,4 +32,5 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	sub.Subscribe(process.OperationSucceeded{}, opResultCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
+	*/
 }
