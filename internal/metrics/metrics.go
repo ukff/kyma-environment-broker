@@ -11,6 +11,10 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
 	debug.Log("register NewOperationsCollector end")
 
+	debug.Log("register NewInstancesCollector start")
+	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
+	debug.Log("register NewInstancesCollector start")
+
 	/*opResultCollector := NewOperationResultCollector()
 	opDurationCollector := NewOperationDurationCollector()
 	stepResultCollector := NewStepResultCollector()

@@ -27,6 +27,7 @@ type InstancesCollector struct {
 }
 
 func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector {
+	internal.Log("NewInstancesCollector created")
 	return &InstancesCollector{
 		statsGetter: statsGetter,
 
@@ -49,6 +50,7 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector
 }
 
 func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
+	internal.Log("InstancesCollector Describe called")
 	ch <- c.instancesDesc
 	ch <- c.instancesPerGAIDDesc
 	ch <- c.licenseTypeDesc
@@ -56,6 +58,8 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+	internal.Log("InstancesCollector Collect called")
+
 	stats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
 		logrus.Error(err)
