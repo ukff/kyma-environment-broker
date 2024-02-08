@@ -140,6 +140,8 @@ replace (
 	// Version required by github.com/Peripli/service-manager@v0.23.3
 	github.com/antlr/antlr4/runtime/Go/antlr => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210826220005-b48c857c3a0e
 
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.17.0
+
 	// include fix https://github.com/satori/go.uuid/pull/75 https://nvd.nist.gov/vuln/detail/CVE-2021-3538
 	github.com/satori/go.uuid => github.com/satori/go.uuid v0.0.0-20181028125025-b2ce2384e17b
 
