@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	debug "github.com/kyma-project/kyma-environment-broker"
 	"github.com/kyma-project/kyma-environment-broker/common/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -409,6 +410,7 @@ func (s *operations) GetNotFinishedOperationsByType(operationType internal.Opera
 func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationStats, error) {
 	entries, err := s.NewReadSession().GetOperationStats()
 	if err != nil {
+		debug.Log(fmt.Sprintf("error while getting operation stats: %s", err.Error()))
 		return nil, err
 	}
 	result := make(map[string]internal.OperationStats)
@@ -430,6 +432,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 			result[e.PlanID].Deprovisioning[domain.LastOperationState(e.State)] += 1
 		}
 	}
+	debug.Log(fmt.Sprintf("GetOperationStatsByPlan result: %d ", len(result)))
 	return result, nil
 }
 
@@ -451,7 +454,7 @@ func calFailedStatusForOrchestration(entries []dbmodel.OperationStatEntry) ([]st
 			if status == Failed {
 				failedFound = true
 			}
-			//In Progress/Retrying/Succeeded means new operation for same instance_id is ongoing/succeeded.
+			// In Progress/Retrying/Succeeded means new operation for same instance_id is ongoing/succeeded.
 			if status == Succeeded || status == Retrying || status == InProgress {
 				invalidFailed = true
 			}
@@ -602,7 +605,7 @@ func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID 
 		filter.States = states
 	}
 
-	//excluded "failed" states
+	// excluded "failed" states
 	if !filterFailedFound || (filterFailedFound && len(filter.States) > 0) {
 		operations, count, totalCount, err = s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)
 		if err != nil {
@@ -610,7 +613,7 @@ func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID 
 		}
 	}
 
-	//only for "failed" states
+	// only for "failed" states
 	if filterFailedFound {
 		filter = dbmodel.OperationFilter{States: []string{"failed"}}
 		failedOperations, failedCount, failedtotalCount, err := s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)

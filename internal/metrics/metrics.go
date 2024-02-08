@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	debug "github.com/kyma-project/kyma-environment-broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,7 +12,9 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	opDurationCollector := NewOperationDurationCollector()
 	stepResultCollector := NewStepResultCollector()
 	prometheus.MustRegister(opResultCollector, opDurationCollector, stepResultCollector)
+	debug.Log("register NewOperationsCollector start")
 	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
+	debug.Log("register NewOperationsCollector end")
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
 
 	sub.Subscribe(process.ProvisioningStepProcessed{}, opResultCollector.OnProvisioningStepProcessed)
