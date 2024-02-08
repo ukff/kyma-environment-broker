@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	debug "github.com/kyma-project/kyma-environment-broker"
+	debug "github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"

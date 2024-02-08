@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	debug "github.com/kyma-project/kyma-environment-broker"
 	"github.com/kyma-project/kyma-environment-broker/common/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -410,7 +409,7 @@ func (s *operations) GetNotFinishedOperationsByType(operationType internal.Opera
 func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationStats, error) {
 	entries, err := s.NewReadSession().GetOperationStats()
 	if err != nil {
-		debug.Log(fmt.Sprintf("error while getting operation stats: %s", err.Error()))
+		internal.Log(fmt.Sprintf("error while getting operation stats: %s", err.Error()))
 		return nil, err
 	}
 	result := make(map[string]internal.OperationStats)
@@ -432,7 +431,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 			result[e.PlanID].Deprovisioning[domain.LastOperationState(e.State)] += 1
 		}
 	}
-	debug.Log(fmt.Sprintf("GetOperationStatsByPlan result: %d ", len(result)))
+	internal.Log(fmt.Sprintf("GetOperationStatsByPlan result: %d ", len(result)))
 	return result, nil
 }
 

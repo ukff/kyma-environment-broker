@@ -3,7 +3,6 @@ package metrics
 import (
 	"fmt"
 
-	debug "github.com/kyma-project/kyma-environment-broker"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -66,7 +65,7 @@ type OperationsCollector struct {
 
 func NewOperationsCollector(statsGetter OperationsStatsGetter) *OperationsCollector {
 	opStats := make(map[string]OperationStat, len(supportedPlansIDs))
-	debug.Log(fmt.Sprintf("supportedPlansIDs: %v", supportedPlansIDs))
+	internal.Log(fmt.Sprintf("supportedPlansIDs: %v", supportedPlansIDs))
 	for _, p := range supportedPlansIDs {
 		opStats[p] = OperationStat{
 			inProgressProvisioning: prometheus.NewDesc(
@@ -102,7 +101,7 @@ func NewOperationsCollector(statsGetter OperationsStatsGetter) *OperationsCollec
 		}
 	}
 
-	debug.Log(fmt.Sprintf("opStats: %v", opStats))
+	internal.Log(fmt.Sprintf("opStats: %v", opStats))
 
 	return &OperationsCollector{
 		statsGetter:    statsGetter,
@@ -140,13 +139,13 @@ func (c *OperationsCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *OperationsCollector) Collect(ch chan<- prometheus.Metric) {
-	debug.Log("start collect")
+	internal.Log("start collect")
 	stats, err := c.statsGetter.GetOperationStatsByPlan()
 	if err != nil {
-		debug.Log(fmt.Sprintf("error while getting operation stats: %s", err.Error()))
+		internal.Log(fmt.Sprintf("error while getting operation stats: %s", err.Error()))
 		return
 	}
-	debug.Log(fmt.Sprintf("operation count: %d", len(stats)))
+	internal.Log(fmt.Sprintf("operation count: %d", len(stats)))
 
 	for planID, ops := range c.operationStats {
 		collect(ch,
@@ -181,7 +180,7 @@ func (c *OperationsCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 	}
 
-	debug.Log(fmt.Sprintf("operation stats collected: %d", len(c.operationStats)))
+	internal.Log(fmt.Sprintf("operation stats collected: %d", len(c.operationStats)))
 }
 
 func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
