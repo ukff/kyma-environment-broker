@@ -35,9 +35,10 @@ type OperationDTO struct {
 }
 
 type OperationStatEntry struct {
+	ID         string
 	Type       string
 	State      string
-	PlanID     string
+	PlanID     sql.NullString
 	InstanceID string
 }
 
