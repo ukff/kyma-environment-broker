@@ -432,6 +432,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 			result[planId].Deprovisioning[domain.LastOperationState(entry.State)] += 1
 		}
 	}
+
 	return result, nil
 }
 
