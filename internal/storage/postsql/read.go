@@ -592,7 +592,7 @@ func (r readSession) getOrchestration(condition dbr.Builder) (dbmodel.Orchestrat
 
 func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
-	_, err := r.session.SelectBySql(fmt.Sprintf("select id, type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s",
+	_, err := r.session.SelectBySql(fmt.Sprintf("select type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s",
 		OperationTableName)).Load(&rows)
 	return rows, err
 }

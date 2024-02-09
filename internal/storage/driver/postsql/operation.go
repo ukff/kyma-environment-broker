@@ -413,9 +413,10 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 	}
 	result := make(map[string]internal.OperationStats)
 
+	operationsWithoutPlan := 0
 	for _, entry := range entries {
 		if !entry.PlanID.Valid || entry.PlanID.String == "" {
-			log.Infof("PlanID is not set for operation %s, skipping", entry.ID)
+			operationsWithoutPlan++
 			continue
 		}
 		planId := entry.PlanID.String
@@ -432,6 +433,10 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 			result[planId].Deprovisioning[domain.LastOperationState(entry.State)] += 1
 		}
 	}
+	if operationsWithoutPlan > 0 {
+		log.Errorf("planID is not set for %d operations, please check the data", operationsWithoutPlan)
+	}
+
 	return result, nil
 }
 
