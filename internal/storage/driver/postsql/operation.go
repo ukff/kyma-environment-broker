@@ -414,24 +414,24 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 	}
 	result := make(map[string]internal.OperationStats)
 
-	for _, e := range entries {
-		if e.PlanID == "" {
+	for _, entry := range entries {
+		if !entry.PlanID.Valid || entry.PlanID.String == "" {
 			continue
 		}
-		if _, ok := result[e.PlanID]; !ok {
-			result[e.PlanID] = internal.OperationStats{
+		planId := entry.PlanID.String
+		if _, ok := result[planId]; !ok {
+			result[planId] = internal.OperationStats{
 				Provisioning:   make(map[domain.LastOperationState]int),
 				Deprovisioning: make(map[domain.LastOperationState]int),
 			}
 		}
-		switch internal.OperationType(e.Type) {
+		switch internal.OperationType(entry.Type) {
 		case internal.OperationTypeProvision:
-			result[e.PlanID].Provisioning[domain.LastOperationState(e.State)] += 1
+			result[planId].Provisioning[domain.LastOperationState(entry.State)] += 1
 		case internal.OperationTypeDeprovision:
-			result[e.PlanID].Deprovisioning[domain.LastOperationState(e.State)] += 1
+			result[planId].Deprovisioning[domain.LastOperationState(entry.State)] += 1
 		}
 	}
-	internal.Log(fmt.Sprintf("GetOperationStatsByPlan result: %d ", len(result)))
 	return result, nil
 }
 
