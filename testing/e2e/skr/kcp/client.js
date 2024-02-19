@@ -367,8 +367,9 @@ class KCPWrapper {
         // kcp reconciliations info -i <scheduling-id> -o json
         await this.getReconciliationsInfo(i.schedulingID);
       }
-    } catch {
-      console.log('skipping reconciliation logging: error in reconcileInformationLog');
+    } catch (error) {
+      debug(error);
+      console.log(`skipping reconciliation logging: error in reconcileInformationLog: ${error}`);
     }
   }
 
