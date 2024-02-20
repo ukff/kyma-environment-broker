@@ -130,6 +130,8 @@ func fqName(operationType internal.OperationType, state domain.LastOperationStat
 }
 
 func (c *OperationsCollector) Describe(ch chan<- *prometheus.Desc) {
+	fmt.Println("Describe OperationsCollector called")
+
 	for _, op := range c.operationStats {
 		op.Describe(ch)
 	}
@@ -137,6 +139,8 @@ func (c *OperationsCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *OperationsCollector) Collect(ch chan<- prometheus.Metric) {
+	fmt.Println("Collector OperationsCollector called")
+
 	// SQL CALL
 	stats, err := c.statsGetter.GetOperationStatsByPlan()
 	if err != nil {

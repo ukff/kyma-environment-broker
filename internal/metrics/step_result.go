@@ -43,11 +43,13 @@ func NewStepResultCollector() *StepResultCollector {
 }
 
 func (c *StepResultCollector) Describe(ch chan<- *prometheus.Desc) {
+	fmt.Println("Describe StepResultCollector called")
 	c.provisioningResultGauge.Describe(ch)
 	c.deprovisioningResultGauge.Describe(ch)
 }
 
 func (c *StepResultCollector) Collect(ch chan<- prometheus.Metric) {
+	fmt.Println("Collector StepResultCollector called")
 	c.provisioningResultGauge.Collect(ch)
 	c.deprovisioningResultGauge.Collect(ch)
 }

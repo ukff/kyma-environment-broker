@@ -39,11 +39,13 @@ func NewOperationDurationCollector() *OperationDurationCollector {
 }
 
 func (c *OperationDurationCollector) Describe(ch chan<- *prometheus.Desc) {
+	fmt.Println("Describe OperationDurationCollector called")
 	c.provisioningHistogram.Describe(ch)
 	c.deprovisioningHistogram.Describe(ch)
 }
 
 func (c *OperationDurationCollector) Collect(ch chan<- prometheus.Metric) {
+	fmt.Println("Collector OperationDurationCollector called")
 	c.provisioningHistogram.Collect(ch)
 	c.deprovisioningHistogram.Collect(ch)
 }

@@ -83,6 +83,7 @@ func NewOperationResultCollector() *OperationResultCollector {
 }
 
 func (c *OperationResultCollector) Describe(ch chan<- *prometheus.Desc) {
+	fmt.Println("Describe OperationResultCollector called")
 	c.provisioningResultGauge.Describe(ch)
 	c.deprovisioningResultGauge.Describe(ch)
 	c.upgradeKymaResultGauge.Describe(ch)
@@ -90,6 +91,7 @@ func (c *OperationResultCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *OperationResultCollector) Collect(ch chan<- prometheus.Metric) {
+	fmt.Println("Collector OperationResultCollector called")
 	c.provisioningResultGauge.Collect(ch)
 	c.deprovisioningResultGauge.Collect(ch)
 	c.upgradeKymaResultGauge.Collect(ch)

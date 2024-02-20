@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"fmt"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -49,6 +51,7 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector
 }
 
 func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
+	fmt.Println("Describe InstancesCollector called")
 	ch <- c.instancesDesc
 	ch <- c.instancesPerGAIDDesc
 	ch <- c.licenseTypeDesc
@@ -56,6 +59,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+	fmt.Println("Collector InstancesCollector called")
 	// SQL CALL
 	stats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
