@@ -10,10 +10,19 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	opResultCollector := NewOperationResultCollector()
 	opDurationCollector := NewOperationDurationCollector()
 	stepResultCollector := NewStepResultCollector()
+
 	prometheus.MustRegister(opResultCollector, opDurationCollector, stepResultCollector)
+
+	// This ones connect to DATABASE
+	// Question -> when it is called?
 	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
 
+	// This one acts per event
+	// PubSub - Publisher and Subscriber
+	// Publisher Publish -> call event handler for given event
+	// Subscriber Subscribe -> It adds event handler to event (only register handlers, does not call them)
+	// This way dont lookup to database, but only to current events.
 	sub.Subscribe(process.ProvisioningStepProcessed{}, opResultCollector.OnProvisioningStepProcessed)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opResultCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.UpgradeKymaStepProcessed{}, opResultCollector.OnUpgradeKymaStepProcessed)

@@ -56,6 +56,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+	// SQL CALL
 	stats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
 		logrus.Error(err)
@@ -67,6 +68,7 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
+	// SQL CALL
 	stats2, err := c.statsGetter.GetERSContextStats()
 	if err != nil {
 		logrus.Error(err)

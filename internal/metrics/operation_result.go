@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	prometheusNamespace = "compass"
+	prometheusNamespace = "lj"
 	prometheusSubsystem = "keb"
 
 	resultFailed        float64 = 0

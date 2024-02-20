@@ -105,6 +105,7 @@ func (s *opsMetricService) updateMetrics() (err error) {
 	return nil
 }
 
+// Every 30 seconds ask Operation DB, use cache for it
 func (s *opsMetricService) run(ctx context.Context) {
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update operations metrics", err)

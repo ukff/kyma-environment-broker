@@ -137,6 +137,7 @@ func (c *OperationsCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *OperationsCollector) Collect(ch chan<- prometheus.Metric) {
+	// SQL CALL
 	stats, err := c.statsGetter.GetOperationStatsByPlan()
 	if err != nil {
 		logrus.Errorf("unable to get operation stats from db: %s", err.Error())
