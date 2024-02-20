@@ -47,7 +47,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 
 	if err != nil {
-		log.Error("kubernetes client not set")
+		log.Errorf("kubernetes client not set: %w", err)
 		return s.operationManager.OperationFailed(operation, "kubernetes client not set", nil, log)
 	}
 

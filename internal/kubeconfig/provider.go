@@ -28,10 +28,10 @@ func (p *SecretProvider) KubeconfigForRuntimeID(runtimeId string) ([]byte, error
 	kubeConfigSecret := &v1.Secret{}
 	err := p.kcpK8sClient.Get(context.Background(), p.objectKey(runtimeId), kubeConfigSecret)
 	if errors.IsNotFound(err) {
-		return nil, NewNotFoundError(err.Error())
+		return nil, NewNotFoundError("secret not found")
 	}
 	if err != nil {
-		return nil, fmt.Errorf("while getting secret from kcp for runtimeId=%s : %w", runtimeId, err)
+		return nil, fmt.Errorf("while getting secret from kcp for runtimeId=%s", runtimeId)
 	}
 	config, ok := kubeConfigSecret.Data["config"]
 	if !ok {
