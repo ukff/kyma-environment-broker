@@ -1,8 +1,6 @@
 package metrics
 
 import (
-	"fmt"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -15,7 +13,6 @@ import (
 // - compass_keb_instances_total - total number of all instances
 // - compass_keb_global_account_id_instances_total - total number of all instances per global account
 // - compass_keb_ers_context_license_type_total - count of instances grouped by license types
-
 type InstancesStatsGetter interface {
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
@@ -52,34 +49,30 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector
 }
 
 func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
-	fmt.Println("Describe InstancesCollector called")
 	ch <- c.instancesDesc
 	ch <- c.instancesPerGAIDDesc
 	ch <- c.licenseTypeDesc
 }
 
 // Collect implements the prometheus.Collector interface.
-func (c *InstancesCollector) Collect(prometheusChannel chan<- prometheus.Metric) {
-	fmt.Println("Collector InstancesCollector called")
-	// SQL CALL
-	instanceStats, err := c.statsGetter.GetInstanceStats()
+func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+	stats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
 		logrus.Error(err)
 	} else {
-		collect(prometheusChannel, c.instancesDesc, instanceStats.TotalNumberOfInstances)
+		collect(ch, c.instancesDesc, stats.TotalNumberOfInstances)
 
-		for globalAccountID, value := range instanceStats.PerGlobalAccountID {
-			collect(prometheusChannel, c.instancesPerGAIDDesc, value, globalAccountID)
+		for globalAccountID, num := range stats.PerGlobalAccountID {
+			collect(ch, c.instancesPerGAIDDesc, num, globalAccountID)
 		}
 	}
 
-	// SQL CALL
-	ersStats, err := c.statsGetter.GetERSContextStats()
+	stats2, err := c.statsGetter.GetERSContextStats()
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
-	for key, value := range ersStats.LicenseType {
-		collect(prometheusChannel, c.licenseTypeDesc, value, key)
+	for t, num := range stats2.LicenseType {
+		collect(ch, c.licenseTypeDesc, num, t)
 	}
 }

@@ -12,10 +12,8 @@ import (
 )
 
 // OperationDurationCollector provides histograms which describes the time of provisioning/deprovisioning operations:
-
 // - compass_keb_provisioning_duration_minutes
 // - compass_keb_deprovisioning_duration_minutes
-
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec
@@ -41,13 +39,11 @@ func NewOperationDurationCollector() *OperationDurationCollector {
 }
 
 func (c *OperationDurationCollector) Describe(ch chan<- *prometheus.Desc) {
-	fmt.Println("Describe OperationDurationCollector called")
 	c.provisioningHistogram.Describe(ch)
 	c.deprovisioningHistogram.Describe(ch)
 }
 
 func (c *OperationDurationCollector) Collect(ch chan<- prometheus.Metric) {
-	fmt.Println("Collector OperationDurationCollector called")
 	c.provisioningHistogram.Collect(ch)
 	c.deprovisioningHistogram.Collect(ch)
 }
