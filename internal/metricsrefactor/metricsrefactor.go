@@ -23,25 +23,26 @@ func log(msg string, error bool) {
 	m.Lock()
 	defer m.Unlock()
 	if error {
-		logrus.Error(msg)
+		logrus.Errorf("@debug (error) -> %s", msg)
 		return
 	}
-	logrus.Info(msg)
+	logrus.Infof("@debug (info) -> %s", msg)
 }
 
 // Tests
-func OperationStepProcessedHandler(ctx context.Context, ev interface{}) {
+func OperationStepProcessedHandler(ctx context.Context, ev interface{}) error {
 	log("OperationStepProcessedHandler called", false)
 	op, ok := ev.(process.OperationStepProcessed)
 	if !ok {
 		log("expected process.OperationStepProcessed but got %+v", true)
-		return
+		return nil
 	}
 
 	log("setting of OperationStepProcessedHandler metric...", false)
 	m := metric.WithLabelValues(op.Operation.ID, op.Operation.InstanceID, string(op.Operation.Type), string(op.Operation.State))
 	m.Set(float64(1))
 	log("metric set OperationStepProcessedHandler", false)
+	return nil
 }
 
 func OperationSucceededHandler(ctx context.Context, ev interface{}) error {
