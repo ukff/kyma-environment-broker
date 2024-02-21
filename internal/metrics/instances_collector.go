@@ -15,6 +15,7 @@ import (
 // - compass_keb_instances_total - total number of all instances
 // - compass_keb_global_account_id_instances_total - total number of all instances per global account
 // - compass_keb_ers_context_license_type_total - count of instances grouped by license types
+
 type InstancesStatsGetter interface {
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
@@ -58,27 +59,27 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 // Collect implements the prometheus.Collector interface.
-func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+func (c *InstancesCollector) Collect(prometheusChannel chan<- prometheus.Metric) {
 	fmt.Println("Collector InstancesCollector called")
 	// SQL CALL
-	stats, err := c.statsGetter.GetInstanceStats()
+	instanceStats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
 		logrus.Error(err)
 	} else {
-		collect(ch, c.instancesDesc, stats.TotalNumberOfInstances)
+		collect(prometheusChannel, c.instancesDesc, instanceStats.TotalNumberOfInstances)
 
-		for globalAccountID, num := range stats.PerGlobalAccountID {
-			collect(ch, c.instancesPerGAIDDesc, num, globalAccountID)
+		for globalAccountID, value := range instanceStats.PerGlobalAccountID {
+			collect(prometheusChannel, c.instancesPerGAIDDesc, value, globalAccountID)
 		}
 	}
 
 	// SQL CALL
-	stats2, err := c.statsGetter.GetERSContextStats()
+	ersStats, err := c.statsGetter.GetERSContextStats()
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
-	for t, num := range stats2.LicenseType {
-		collect(ch, c.licenseTypeDesc, num, t)
+	for key, value := range ersStats.LicenseType {
+		collect(prometheusChannel, c.licenseTypeDesc, value, key)
 	}
 }

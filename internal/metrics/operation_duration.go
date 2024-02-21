@@ -12,8 +12,10 @@ import (
 )
 
 // OperationDurationCollector provides histograms which describes the time of provisioning/deprovisioning operations:
+
 // - compass_keb_provisioning_duration_minutes
 // - compass_keb_deprovisioning_duration_minutes
+
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec
