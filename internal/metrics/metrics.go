@@ -35,9 +35,9 @@ func Setup(ctx context.Context, subscriber event.Subscriber, db operationsGetter
 	subscriber.Subscribe(process.DeprovisioningStepProcessed{}, opResultCollector.OnDeprovisioningStepProcessed)
 	subscriber.Subscribe(process.UpgradeKymaStepProcessed{}, opResultCollector.OnUpgradeKymaStepProcessed)
 	subscriber.Subscribe(process.UpgradeClusterStepProcessed{}, opResultCollector.OnUpgradeClusterStepProcessed)
-	subscriber.Subscribe(process.OperationStepProcessed{}, opResultCollector.OnOperationStepProcessed)
 	subscriber.Subscribe(process.OperationSucceeded{}, metricsre.TestHandler)*/
 
+	subscriber.Subscribe(process.OperationStepProcessed{}, metricsrefactor.OperationStepProcessedHandler)
 	subscriber.Subscribe(process.OperationSucceeded{}, metricsrefactor.OperationSucceededHandler)
 
 	/*subscriber.Subscribe(process.ProvisioningSucceeded{}, opResultCollector.OnProvisioningSucceeded)

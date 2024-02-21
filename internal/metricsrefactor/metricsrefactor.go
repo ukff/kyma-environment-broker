@@ -29,6 +29,21 @@ func log(msg string, error bool) {
 	logrus.Info(msg)
 }
 
+// Tests
+func OperationStepProcessedHandler(ctx context.Context, ev interface{}) {
+	log("OperationStepProcessedHandler called", false)
+	op, ok := ev.(process.OperationStepProcessed)
+	if !ok {
+		log("expected process.OperationStepProcessed but got %+v", true)
+		return
+	}
+
+	log("setting of OperationStepProcessedHandler metric...", false)
+	m := metric.WithLabelValues(op.Operation.ID, op.Operation.InstanceID, string(op.Operation.Type), string(op.Operation.State))
+	m.Set(float64(1))
+	log("metric set OperationStepProcessedHandler", false)
+}
+
 func OperationSucceededHandler(ctx context.Context, ev interface{}) error {
 	log("OperationSucceededHandler called", false)
 	op, ok := ev.(process.OperationSucceeded)
@@ -37,10 +52,10 @@ func OperationSucceededHandler(ctx context.Context, ev interface{}) error {
 		return nil
 	}
 
-	log("setting metric...", false)
+	log("setting of OperationSucceededHandler metric...", false)
 	m := metric.WithLabelValues(op.Operation.ID, op.Operation.InstanceID, string(op.Operation.Type), string(op.Operation.State))
 	m.Set(float64(1))
-	log("metric set", false)
+	log("metric OperationSucceededHandler set", false)
 
 	return nil
 }
