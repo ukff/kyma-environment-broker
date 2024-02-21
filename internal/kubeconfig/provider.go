@@ -57,13 +57,17 @@ func (p *SecretProvider) K8sClientForRuntimeID(runtimeID string) (client.Client,
 	}
 	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("while creating rest config from kubeconfig")
 	}
 
 	k8sCli, err := client.New(restCfg, client.Options{
 		Scheme: scheme.Scheme,
 	})
-	return k8sCli, err
+	if err != nil {
+		return nil, fmt.Errorf("while creating k8s client")
+	}
+
+	return k8sCli, nil
 }
 
 type FakeProvider struct {
