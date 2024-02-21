@@ -14,7 +14,7 @@ var (
 	metric = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "lj_operations_test",
 		Help: "The total number of processed events",
-	}, []string{"operation_id", "instance_id", "plan_id", "type", "state"})
+	}, []string{"operation_id", "instance_id", "type", "state"})
 )
 
 var m sync.Mutex
