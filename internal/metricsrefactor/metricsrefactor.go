@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
@@ -17,11 +16,18 @@ var (
 	}, []string{"operation_id", "instance_id", "type", "state"})
 )
 
-var m sync.Mutex
+type operation struct {
+	ID         string
+	InstanceID string
+	Type       string
+	State      string
+}
+
+var logMu sync.Mutex
 
 func log(msg string, error bool) {
-	m.Lock()
-	defer m.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
 	if error {
 		logrus.Errorf("@debug (error) -> %s", msg)
 		return
@@ -29,34 +35,26 @@ func log(msg string, error bool) {
 	logrus.Infof("@debug (info) -> %s", msg)
 }
 
-// Tests
-func OperationStepProcessedHandler(ctx context.Context, ev interface{}) error {
-	log("OperationStepProcessedHandler called", false)
-	op, ok := ev.(process.OperationStepProcessed)
-	if !ok {
-		log("expected process.OperationStepProcessed but got %+v", true)
-		return nil
+func getOperationDataFromGenericEvent(event interface{}) *operation {
+	op := event.(map[string]interface{})["Operation"].(map[string]interface{})
+	return &operation{
+		ID:         op["ID"].(string),
+		InstanceID: op["InstanceID"].(string),
+		Type:       op["Type"].(string),
+		State:      op["State"].(string),
 	}
-
-	log("setting of OperationStepProcessedHandler metric...", false)
-	m := metric.WithLabelValues(op.Operation.ID, op.Operation.InstanceID, string(op.Operation.Type), string(op.Operation.State))
-	m.Set(float64(1))
-	log("metric set OperationStepProcessedHandler", false)
-	return nil
 }
 
-func OperationSucceededHandler(ctx context.Context, ev interface{}) error {
-	log("OperationSucceededHandler called", false)
-	op, ok := ev.(process.OperationSucceeded)
-	if !ok {
-		log("expected process.OperationSucceeded but got %+v", true)
-		return nil
-	}
-
-	log("setting of OperationSucceededHandler metric...", false)
-	m := metric.WithLabelValues(op.Operation.ID, op.Operation.InstanceID, string(op.Operation.Type), string(op.Operation.State))
+// Tests
+func OperationStepProcessedHandler(ctx context.Context, ev interface{}) error {
+	// dont dont anything since this are only test metrics
+	defer func() {
+		if r := recover(); r != nil {
+			log("recovered panic in f", true)
+		}
+	}()
+	op := getOperationDataFromGenericEvent(ev)
+	m := metric.WithLabelValues(op.ID, op.InstanceID, op.Type, op.State)
 	m.Set(float64(1))
-	log("metric OperationSucceededHandler set", false)
-
 	return nil
 }
