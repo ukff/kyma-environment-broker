@@ -1,6 +1,7 @@
 package metricsv2
 
 // test package for exposing real metrics and analyze on plutono to further develop
+// dont fail anything since it is just test function which is used for gathering informations before development
 
 import (
 	"context"
@@ -25,7 +26,7 @@ var (
 		Name:      "operations_total_counter",
 		Help:      "Results of operations (total count)",
 	}, []string{"type", "state"})
-	mutex = sync.Mutex{}
+	handlerMutex = sync.Mutex{}
 )
 
 func Register(sub event.Subscriber) {
@@ -44,7 +45,6 @@ func Register(sub event.Subscriber) {
 	}
 }
 
-// dont fail anything since it is just test function which is used for gathering informations before development
 func Handler(ctx context.Context, ev interface{}) error {
 	logrus.Info("metricsv2 test handler called")
 	defer func() {
@@ -52,8 +52,8 @@ func Handler(ctx context.Context, ev interface{}) error {
 			logrus.Errorf("recovered in test metrics: %v", r)
 		}
 	}()
-	mutex.Lock()
-	defer mutex.Unlock()
+	handlerMutex.Lock()
+	defer handlerMutex.Unlock()
 
 	switch data := ev.(type) {
 	case process.ProvisioningSucceeded:
