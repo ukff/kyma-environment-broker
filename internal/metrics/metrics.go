@@ -5,6 +5,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter) {
@@ -31,6 +32,17 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
 	// test of metrics for upcoming new implementation
-	sub.Subscribe(process.ProvisioningSucceeded{}, metricsv2.Handler)
-	sub.Subscribe(process.OperationStepProcessed{}, metricsv2.Handler)
+	metricsv2err := prometheus.Register(metricsv2.ProvisionedInstancesCounter)
+	if metricsv2err != nil {
+		logrus.Errorf("Error while registering ProvisionedInstancesCounter: %s", metricsv2err.Error())
+	} else {
+		sub.Subscribe(process.ProvisioningSucceeded{}, metricsv2.Handler)
+	}
+
+	metricsv2err = prometheus.Register(metricsv2.OperationsCounter)
+	if metricsv2err != nil {
+		logrus.Errorf("Error while registering OperationsCounter: %s", metricsv2err.Error())
+	} else {
+		sub.Subscribe(process.OperationStepProcessed{}, metricsv2.Handler)
+	}
 }

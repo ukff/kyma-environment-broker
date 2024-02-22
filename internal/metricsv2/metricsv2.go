@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	provisionedInstancesCounter = prometheus.NewCounter(prometheus.CounterOpts{
+	ProvisionedInstancesCounter = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "keb",
 		Subsystem: "test",
 		Name:      "provisioned_counter",
 		Help:      "counter of successfully provisioned instances",
 	})
-	operationsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	OperationsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "keb",
 		Subsystem: "test",
 		Name:      "operations_total_counter",
@@ -41,10 +41,10 @@ func Handler(ctx context.Context, ev interface{}) error {
 	switch data := ev.(type) {
 	case process.ProvisioningSucceeded:
 		// keb_test_provisioned_counter X
-		provisionedInstancesCounter.Inc()
+		ProvisionedInstancesCounter.Inc()
 	case process.OperationStepProcessed:
 		// keb_test_result_operations_total_counter{type="provision", state="in progress"} X
-		operationsCounter.WithLabelValues(string(data.Operation.Type), string(data.Operation.State)).Inc()
+		OperationsCounter.WithLabelValues(string(data.Operation.Type), string(data.Operation.State)).Inc()
 	default:
 		logrus.Error("ev type not supported")
 	}
