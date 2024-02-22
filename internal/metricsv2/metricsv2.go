@@ -15,7 +15,7 @@ var (
 		Name:      "provisioned_counter",
 		Help:      "counter of successfully provisioned instances",
 	})
-	operationsCounter = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	operationsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "keb",
 		Subsystem: "test",
 		Name:      "operations_total_counter",
