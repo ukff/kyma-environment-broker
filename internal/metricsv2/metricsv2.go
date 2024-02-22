@@ -1,5 +1,7 @@
 package metricsv2
 
+// test package for exposing real metrics and analyze on plutono to further develop
+
 import (
 	"context"
 	"sync"
