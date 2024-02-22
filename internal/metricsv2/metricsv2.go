@@ -2,6 +2,7 @@ package metricsv2
 
 import (
 	"context"
+	"sync"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,15 +22,19 @@ var (
 		Name:      "operations_total_counter",
 		Help:      "Results of operations (total count)",
 	}, []string{"type", "state"})
+	mutex = sync.Mutex{}
 )
 
 // dont fail anything since it is just test function which is used for gathering informations before development
 func Handler(ctx context.Context, ev interface{}) error {
+	logrus.Info("metricsv2 test handler called")
 	defer func() {
 		if r := recover(); r != nil {
 			logrus.Errorf("recovered in test metrics: %v", r)
 		}
 	}()
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	switch data := ev.(type) {
 	case process.ProvisioningSucceeded:
