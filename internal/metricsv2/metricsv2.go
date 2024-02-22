@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	provisionedInstances = prometheus.NewGauge(prometheus.GaugeOpts{
+	provisionedInstances = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "keb",
 		Subsystem: "test",
 		Name:      "provisioned",
