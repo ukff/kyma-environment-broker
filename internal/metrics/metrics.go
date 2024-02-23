@@ -31,6 +31,5 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
 	// test of metrics for upcoming new implementation
-	sub.Subscribe(process.ProvisioningSucceeded{}, metricsv2.Handler)
-	sub.Subscribe(process.OperationStepProcessed{}, metricsv2.Handler)
+	metricsv2.Register(sub)
 }
