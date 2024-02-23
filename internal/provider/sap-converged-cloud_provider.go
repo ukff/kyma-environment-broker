@@ -7,15 +7,12 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 const (
 	DefaultSapConvergedCloudRegion         = "eu-de-1"
-	DefaultExposureClass                   = "converged-cloud-internet"
 	DefaultSapConvergedCloudMachineType    = "g_c2_m8"
 	DefaultOldSapConvergedCloudMachineType = "g_c4_m16"
 	DefaultSapConvergedCloudMultiZoneCount = 3
@@ -23,7 +20,6 @@ const (
 
 type SapConvergedCloudInput struct {
 	MultiZone              bool
-	FloatingPoolName       string
 	IncludeNewMachineTypes bool
 }
 
@@ -47,12 +43,9 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 			AutoScalerMax:     20,
 			MaxSurge:          1,
 			MaxUnavailable:    0,
-			ExposureClassName: ptr.String(DefaultExposureClass),
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
 					Zones:                ZonesForSapConvergedCloud(DefaultSapConvergedCloudRegion, zonesCount),
-					FloatingPoolName:     p.FloatingPoolName,
-					CloudProfileName:     "converged-cloud-cp",
 					LoadBalancerProvider: "f5",
 				},
 			},

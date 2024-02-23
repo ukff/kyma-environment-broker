@@ -652,8 +652,6 @@ func TestSapConvergedCloud(t *testing.T) {
 		providerSpecificConfig: {
 			openStackConfig: {
 				zones: ["z1"],
-				floatingPoolName: "fp",
-				cloudProfileName: "cp",
 				loadBalancerProvider: "lbp"
 			},
 		}

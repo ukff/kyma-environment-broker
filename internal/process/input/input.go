@@ -35,7 +35,6 @@ type Config struct {
 	MachineImageVersion               string                 `envconfig:"optional"`
 	TrialNodesNumber                  int                    `envconfig:"optional"`
 	DefaultTrialProvider              internal.CloudProvider `envconfig:"default=Azure"` // could be: Azure, AWS, GCP, SapConvergedCloud, unknown
-	SapConvergedCloudFloatingPoolName string                 `envconfig:"default=FloatingIP-external-kyma-01"`
 	AutoUpdateKubernetesVersion       bool                   `envconfig:"default=false"`
 	AutoUpdateMachineImageVersion     bool                   `envconfig:"default=false"`
 	MultiZoneCluster                  bool                   `envconfig:"default=false"`

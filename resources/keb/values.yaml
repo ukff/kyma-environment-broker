@@ -162,9 +162,6 @@ provisioner:
   deprovisioningTimeout: "5h"
   gardenerClusterStepTimeout: "3m"
 
-  sapConvergedCloud:
-    floatingPoolName: "FloatingIP-external-kyma-01"
-
   gardener:
     # name of the secret with kubeconfig to the gardener cluster
     secretName: "gardener"

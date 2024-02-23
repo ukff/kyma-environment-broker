@@ -105,8 +105,6 @@ spec:
               value: "{{ .Values.provisioner.gardenerClusterStepTimeout }}"
             - name: APP_PROVISIONER_DEFAULT_GARDENER_SHOOT_PURPOSE
               value: "{{ .Values.gardener.defaultShootPurpose }}"
-            - name: APP_PROVISIONER_SAP_CONVERGED_CLOUD_FLOATING_POOL_NAME
-              value: "{{ .Values.provisioner.sapConvergedCloud.floatingPoolName }}"
             - name: APP_PROVISIONER_DEFAULT_TRIAL_PROVIDER
               value: "{{ .Values.gardener.defaultTrialProvider }}"
             - name: APP_PORT
