@@ -33,3 +33,8 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	// test of metrics for upcoming new implementation
 	metricsv2.Register(sub)
 }
+
+// 1. Count events in DB ->
+// /metrics <- prometheus
+// // NoSQL -> 1 file
+//
