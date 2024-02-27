@@ -53,13 +53,15 @@ func TestCheckClusterConfigurationStep_ClusterReady(t *testing.T) {
 	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
 	operation.ClusterConfigurationVersion = 1
 	recClient := reconciler.NewFakeClient()
-	recClient.ApplyClusterConfig(reconcilerApi.Cluster{
-		RuntimeID:    operation.RuntimeID,
-		RuntimeInput: reconcilerApi.RuntimeInput{},
-		KymaConfig:   reconcilerApi.KymaConfig{},
-		Metadata:     reconcilerApi.Metadata{},
-		Kubeconfig:   "kubeconfig",
-	})
+	recClient.ApplyClusterConfig(
+		reconcilerApi.Cluster{
+			RuntimeID:    operation.RuntimeID,
+			RuntimeInput: reconcilerApi.RuntimeInput{},
+			KymaConfig:   reconcilerApi.KymaConfig{},
+			Metadata:     reconcilerApi.Metadata{},
+			Kubeconfig:   "kubeconfig",
+		},
+	)
 	recClient.ChangeClusterState(operation.RuntimeID, 1, reconcilerApi.StatusReady)
 
 	step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
@@ -74,31 +76,37 @@ func TestCheckClusterConfigurationStep_ClusterReady(t *testing.T) {
 }
 
 func TestCheckClusterConfigurationStep_InProgress(t *testing.T) {
-	for _, state := range []reconcilerApi.Status{reconcilerApi.StatusReconciling, reconcilerApi.StatusReconcilePending} {
-		t.Run(fmt.Sprintf("shopuld repeat for state %s", state), func(t *testing.T) {
-			st := storage.NewMemoryStorage()
-			operation := fixture.FixProvisioningOperation("op-id", "inst-id")
-			operation.ClusterConfigurationVersion = 1
-			recClient := reconciler.NewFakeClient()
-			recClient.ApplyClusterConfig(reconcilerApi.Cluster{
-				RuntimeID:    operation.RuntimeID,
-				RuntimeInput: reconcilerApi.RuntimeInput{},
-				KymaConfig:   reconcilerApi.KymaConfig{},
-				Metadata:     reconcilerApi.Metadata{},
-				Kubeconfig:   "kubeconfig",
-			})
-			recClient.ChangeClusterState(operation.RuntimeID, 1, state)
+	for _, state := range []reconcilerApi.Status{
+		reconcilerApi.StatusReconciling, reconcilerApi.StatusReconcilePending,
+	} {
+		t.Run(
+			fmt.Sprintf("shopuld repeat for state %s", state), func(t *testing.T) {
+				st := storage.NewMemoryStorage()
+				operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+				operation.ClusterConfigurationVersion = 1
+				recClient := reconciler.NewFakeClient()
+				recClient.ApplyClusterConfig(
+					reconcilerApi.Cluster{
+						RuntimeID:    operation.RuntimeID,
+						RuntimeInput: reconcilerApi.RuntimeInput{},
+						KymaConfig:   reconcilerApi.KymaConfig{},
+						Metadata:     reconcilerApi.Metadata{},
+						Kubeconfig:   "kubeconfig",
+					},
+				)
+				recClient.ChangeClusterState(operation.RuntimeID, 1, state)
 
-			step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
-			st.Operations().InsertOperation(operation)
+				step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
+				st.Operations().InsertOperation(operation)
 
-			// when
-			_, d, err := step.Run(operation, logger.NewLogSpy().Logger)
+				// when
+				_, d, err := step.Run(operation, logger.NewLogSpy().Logger)
 
-			// then
-			require.NoError(t, err)
-			assert.True(t, d > 0)
-		})
+				// then
+				require.NoError(t, err)
+				assert.True(t, d > 0)
+			},
+		)
 	}
 }
 
@@ -107,13 +115,16 @@ func TestCheckClusterConfigurationStep_ClusterFailed(t *testing.T) {
 	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
 	operation.ClusterConfigurationVersion = 1
 	recClient := reconciler.NewFakeClient()
-	recClient.ApplyClusterConfig(reconcilerApi.Cluster{
-		RuntimeID:    operation.RuntimeID,
-		RuntimeInput: reconcilerApi.RuntimeInput{},
-		KymaConfig:   reconcilerApi.KymaConfig{},
-		Metadata:     reconcilerApi.Metadata{},
-		Kubeconfig:   "kubeconfig",
-	})
+	recClient.ApplyClusterConfig(
+		reconcilerApi.Cluster{
+			RuntimeID:    operation.RuntimeID,
+			RuntimeInput: reconcilerApi.RuntimeInput{},
+			KymaConfig:   reconcilerApi.KymaConfig{},
+			Metadata:     reconcilerApi.Metadata{},
+			Kubeconfig:   "kubeconfig",
+		},
+	)
+
 	recClient.ChangeClusterState(operation.RuntimeID, 1, reconcilerApi.StatusError)
 
 	step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
@@ -131,7 +142,9 @@ func fixOperationCreateRuntime(t *testing.T, planID, region string) internal.Ope
 	return fixOperationCreateRuntimeWithPlatformRegion(t, planID, region, "")
 }
 
-func fixOperationCreateRuntimeWithPlatformRegion(t *testing.T, planID, region, platformRegion string) internal.Operation {
+func fixOperationCreateRuntimeWithPlatformRegion(
+	t *testing.T, planID, region, platformRegion string,
+) internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(operationID, instanceID)
 	provisioningOperation.State = domain.InProgress
 	provisioningOperation.InputCreator = fixInputCreator(t)
@@ -185,24 +198,28 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	optComponentsSvc := &inputAutomock.OptionalComponentService{}
 
 	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return([]string{})
-	optComponentsSvc.On("ExecuteDisablers", internal.ComponentConfigurationInputList{
-		{
-			Component:     "to-remove-component",
-			Namespace:     "kyma-system",
-			Configuration: nil,
+	optComponentsSvc.On(
+		"ExecuteDisablers", internal.ComponentConfigurationInputList{
+			{
+				Component:     "to-remove-component",
+				Namespace:     "kyma-system",
+				Configuration: nil,
+			},
+			{
+				Component:     "keb",
+				Namespace:     "kyma-system",
+				Configuration: nil,
+			},
 		},
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}).Return(internal.ComponentConfigurationInputList{
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}, nil)
+	).Return(
+		internal.ComponentConfigurationInputList{
+			{
+				Component:     "keb",
+				Namespace:     "kyma-system",
+				Configuration: nil,
+			},
+		}, nil,
+	)
 
 	kymaComponentList := []internal.KymaComponent{
 		{
@@ -215,15 +232,20 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 		},
 	}
 	componentsProvider := &inputAutomock.ComponentListProvider{}
-	componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(kymaComponentList, nil)
+	componentsProvider.On(
+		"AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"),
+		mock.AnythingOfType("*internal.ConfigForPlan"),
+	).Return(kymaComponentList, nil)
 	defer componentsProvider.AssertExpectations(t)
 
 	cli := fake.NewClientBuilder().WithRuntimeObjects(fixConfigMap(kymaVersion)).Build()
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(context.TODO(), cli, logrus.New(), kymaVersion),
 		kebConfig.NewConfigMapKeysValidator(),
-		kebConfig.NewConfigMapConverter())
-	ibf, err := input.NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(), componentsProvider,
+		kebConfig.NewConfigMapConverter(),
+	)
+	ibf, err := input.NewInputBuilderFactory(
+		optComponentsSvc, runtime.NewDisabledComponentsProvider(), componentsProvider,
 		configProvider, input.Config{
 			KubernetesVersion:             k8sVersion,
 			DefaultGardenerShootPurpose:   shootPurpose,
@@ -231,7 +253,8 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 			AutoUpdateMachineImageVersion: autoUpdateMachineImageVersion,
 			MultiZoneCluster:              true,
 			ControlPlaneFailureTolerance:  "zone",
-		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
+		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false,
+	)
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{

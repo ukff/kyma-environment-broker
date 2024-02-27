@@ -13,10 +13,7 @@ import (
 	"runtime/pprof"
 	"sort"
 	"time"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
-
+	
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
@@ -32,9 +29,11 @@ import (
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
+	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/ias"
@@ -212,11 +211,29 @@ func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
 	}
 }
 
+func ConnectToKubernetesCluster() {
+
+}
+
 func main() {
 	apiextensionsv1.AddToScheme(scheme.Scheme)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
+	// set up signals so we handle the first shutdown signal gracefully
+	stopCh := make(chan struct{})
+	gruntime.HandleCrash(func(i gruntime.Crash) {
+		log.Printf("error: %+v", i.Err)
+		cancel()
+		close(stopCh)
+	}
+	// set up signals so we handle the first shutdown signal gracefully
+	stopCh := make(chan struct{})
+	gruntime.HandleCrash(func(i gruntime.Crash) {
+		log.Printf("error: %+v", i.Err)
+		cancel()
+		close(stopCh)
+	
+	}
 	// create and fill config
 	var cfg Config
 	err := envconfig.InitWithPrefix(&cfg, "APP")
@@ -245,15 +262,23 @@ func main() {
 	health.NewServer(cfg.Host, cfg.StatusPort, logs).ServeAsync()
 	go periodicProfile(logger, cfg.Profiler)
 
-	logs.Infof("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout)
+	logs.Infof(
+		"Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout,
+		cfg.Provisioner.DeprovisioningTimeout,
+	)
 	logs.Infof("Setting reconciler timeout: provisioning=%s", cfg.Reconciler.ProvisioningTimeout)
-	logs.Infof("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update)
+	logs.Infof(
+		"Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning,
+		cfg.Deprovisioning, cfg.Update,
+	)
 	logs.Infof("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled)
 
 	// create provisioner client
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)
 
-	reconcilerClient := reconciler.NewReconcilerClient(http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler)
+	reconcilerClient := reconciler.NewReconcilerClient(
+		http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler,
+	)
 
 	// create kubernetes client
 	k8sCfg, err := config.GetConfig()
@@ -268,7 +293,9 @@ func main() {
 	if cfg.DbInMemory {
 		db = storage.NewMemoryStorage()
 	} else {
-		store, conn, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher, logs.WithField("service", "storage"))
+		store, conn, err := storage.NewFromConfig(
+			cfg.Database, cfg.Events, cipher, logs.WithField("service", "storage"),
+		)
 		fatalOnError(err)
 		db = store
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
@@ -277,9 +304,11 @@ func main() {
 
 	// Customer Notification
 	clientHTTPForNotification := httputil.NewClient(60, true)
-	notificationClient := notification.NewClient(clientHTTPForNotification, notification.ClientConfig{
-		URL: cfg.Notification.Url,
-	})
+	notificationClient := notification.NewClient(
+		clientHTTPForNotification, notification.ClientConfig{
+			URL: cfg.Notification.Url,
+		},
+	)
 	notificationBuilder := notification.NewBundleBuilder(notificationClient, cfg.Notification)
 
 	// Register disabler. Convention:
@@ -298,7 +327,8 @@ func main() {
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logs, cfg.KymaVersion),
 		kebConfig.NewConfigMapKeysValidator(),
-		kebConfig.NewConfigMapConverter())
+		kebConfig.NewConfigMapConverter(),
+	)
 	componentsProvider := runtime.NewComponentsProvider()
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)
 	fatalOnError(err)
@@ -318,20 +348,28 @@ func main() {
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err)
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentsProvider,
-		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues, cfg.Broker.IncludeNewMachineTypesInSchema)
+	inputFactory, err := input.NewInputBuilderFactory(
+		optComponentsSvc, disabledComponentsProvider, componentsProvider,
+		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues,
+		cfg.Broker.IncludeNewMachineTypesInSchema,
+	)
 	fatalOnError(err)
 
 	edpClient := edp.NewClient(cfg.EDP, logs.WithField("service", "edpClient"))
 
-	panicOnError(cfg.Avs.ReadMaintenanceModeDuringUpgradeAlwaysDisabledGAIDsFromYaml(
-		cfg.AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath))
+	panicOnError(
+		cfg.Avs.ReadMaintenanceModeDuringUpgradeAlwaysDisabledGAIDsFromYaml(
+			cfg.AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath,
+		),
+	)
 	avsClient, err := avs.NewClient(ctx, cfg.Avs, logs)
 	fatalOnError(err)
 	avsDel := avs.NewDelegator(avsClient, cfg.Avs, db.Operations())
 	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
-	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.ExternalTesterDisabled, externalEvalAssistant)
+	externalEvalCreator := provisioning.NewExternalEvalCreator(
+		avsDel, cfg.Avs.ExternalTesterDisabled, externalEvalAssistant,
+	)
 	upgradeEvalManager := avs.NewEvaluationManager(avsDel, cfg.Avs)
 
 	// IAS
@@ -339,11 +377,13 @@ func main() {
 	if cfg.IAS.TLSRenegotiationEnable {
 		clientHTTPForIAS = httputil.NewRenegotiationTLSClient(30, cfg.IAS.SkipCertVerification)
 	}
-	iasClient := ias.NewClient(clientHTTPForIAS, ias.ClientConfig{
-		URL:    cfg.IAS.URL,
-		ID:     cfg.IAS.UserID,
-		Secret: cfg.IAS.UserSecret,
-	})
+	iasClient := ias.NewClient(
+		clientHTTPForIAS, ias.ClientConfig{
+			URL:    cfg.IAS.URL,
+			ID:     cfg.IAS.UserID,
+			Secret: cfg.IAS.UserSecret,
+		},
+	)
 	bundleBuilder := ias.NewBundleBuilder(iasClient, cfg.IAS)
 
 	// application event broker
@@ -356,23 +396,42 @@ func main() {
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 
 	// define steps
-	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
-	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, db.RuntimeStates())
+	accountVersionMapping := runtimeversion.NewAccountVersionMapping(
+		ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs,
+	)
+	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(
+		cfg.KymaVersion, accountVersionMapping, db.RuntimeStates(),
+	)
 
 	// run queues
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
-	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
+	provisionManager := process.NewStagedManager(
+		db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"),
+	)
+	provisionQueue := NewProvisioningProcessingQueue(
+		ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
 		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
-		runtimeOverrides, edpClient, accountProvider, reconcilerClient, skrK8sClientProvider, cli, logs)
+		runtimeOverrides, edpClient, accountProvider, reconcilerClient, skrK8sClientProvider, cli, logs,
+	)
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
-		avsDel, internalEvalAssistant, externalEvalAssistant, bundleBuilder, edpClient, accountProvider, reconcilerClient,
-		skrK8sClientProvider, cli, configProvider, logs)
+	deprovisionManager := process.NewStagedManager(
+		db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning,
+		logs.WithField("deprovisioning", "manager"),
+	)
+	deprovisionQueue := NewDeprovisioningProcessingQueue(
+		ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
+		avsDel, internalEvalAssistant, externalEvalAssistant, bundleBuilder, edpClient, accountProvider,
+		reconcilerClient,
+		skrK8sClientProvider, cli, configProvider, logs,
+	)
 
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
-		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, skrK8sClientProvider, cli, logs)
+	updateManager := process.NewStagedManager(
+		db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"),
+	)
+	updateQueue := NewUpdateProcessingQueue(
+		ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
+		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, skrK8sClientProvider,
+		cli, logs,
+	)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err)
@@ -380,36 +439,59 @@ func main() {
 	// create server
 	router := mux.NewRouter()
 
-	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults)
+	createAPI(
+		router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs,
+		inputFactory.GetPlanDefaults,
+	)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
 
 	// create SKR kubeconfig endpoint
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient, skrK8sClientProvider)
-	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, logs.WithField("service", "kubeconfigHandle"))
+	kcHandler := kubeconfig.NewHandler(
+		db, kcBuilder, cfg.Kubeconfig.AllowOrigins, logs.WithField("service", "kubeconfigHandle"),
+	)
 	kcHandler.AttachRoutes(router)
 
-	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
-	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
+	runtimeLister := orchestration.NewRuntimeLister(
+		db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs,
+	)
+	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(
+		dynamicGardener, gardenerNamespace, runtimeLister, logs,
+	)
 
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, reconcilerClient, notificationBuilder, skrK8sClientProvider, logs, cli, 1)
-	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
-		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1)
+	kymaQueue := NewKymaOrchestrationProcessingQueue(
+		ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, nil, time.Minute,
+		runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, reconcilerClient,
+		notificationBuilder, skrK8sClientProvider, logs, cli, 1,
+	)
+	clusterQueue := NewClusterOrchestrationProcessingQueue(
+		ctx, db, provisionerClient, eventBroker, inputFactory,
+		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1,
+	)
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs)
+	orchestrationHandler := orchestrate.NewOrchestrationHandler(
+		db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs,
+	)
 
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, logs)
 		fatalOnError(err)
-		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, logs)
+		err = processOperationsInProgressByType(
+			internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, logs,
+		)
 		fatalOnError(err)
 		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, logs)
 		fatalOnError(err)
-		err = reprocessOrchestrations(orchestrationExt.UpgradeKymaOrchestration, db.Orchestrations(), db.Operations(), kymaQueue, logs)
+		err = reprocessOrchestrations(
+			orchestrationExt.UpgradeKymaOrchestration, db.Orchestrations(), db.Operations(), kymaQueue, logs,
+		)
 		fatalOnError(err)
-		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, logs)
+		err = reprocessOrchestrations(
+			orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, logs,
+		)
 		fatalOnError(err)
 	} else {
 		logger.Info("Skipping processing operation in progress on start")
@@ -426,7 +508,10 @@ func main() {
 	orchestrationHandler.AttachRoutes(router)
 
 	// create list runtimes endpoint
-	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient)
+	runtimeHandler := runtime.NewHandler(
+		db.Instances(), db.Operations(), db.RuntimeStates(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion,
+		provisionerClient,
+	)
 	runtimeHandler.AttachRoutes(router)
 
 	// create expiration endpoint
@@ -434,9 +519,14 @@ func main() {
 	expirationHandler.AttachRoutes(router)
 
 	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
-	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
-		logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
-	})
+	svr := handlers.CustomLoggingHandler(
+		os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
+			logs.Infof(
+				"Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path,
+				params.StatusCode, params.Size,
+			)
+		},
+	)
 
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr))
 }
@@ -458,16 +548,24 @@ func isVersionFollowingSemanticVersioning(version string) bool {
 	return false
 }
 
-func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults) {
+func createAPI(
+	router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config,
+	db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger,
+	logs logrus.FieldLogger, planDefaults broker.PlanDefaults,
+) {
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
 	fatalOnError(err)
 
-	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
+	debugSink, err := lager.NewRedactingSink(
+		lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{},
+	)
 	fatalOnError(err)
 	logger.RegisterSink(debugSink)
-	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
+	errorSink, err := lager.NewRedactingSink(
+		lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{},
+	)
 	fatalOnError(err)
 	logger.RegisterSink(errorSink)
 
@@ -479,13 +577,18 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs),
-		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(),
+		ProvisionEndpoint: broker.NewProvision(
+			cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(),
 			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
-			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig),
+			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig,
+		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
-		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
-			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.UpdateSubAccountMovementEnabled, updateQueue, defaultPlansConfig,
-			planDefaults, logs, cfg.KymaDashboardConfig),
+		UpdateEndpoint: broker.NewUpdate(
+			cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
+			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.UpdateSubAccountMovementEnabled, updateQueue,
+			defaultPlansConfig,
+			planDefaults, logs, cfg.KymaDashboardConfig,
+		),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs),
@@ -505,13 +608,17 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	}
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(
+		db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter,
+	)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
 	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
 }
 
 // queues all in progress operations by type
-func processOperationsInProgressByType(opType internal.OperationType, op storage.Operations, queue *process.Queue, log logrus.FieldLogger) error {
+func processOperationsInProgressByType(
+	opType internal.OperationType, op storage.Operations, queue *process.Queue, log logrus.FieldLogger,
+) error {
 	operations, err := op.GetNotFinishedOperationsByType(opType)
 	if err != nil {
 		return fmt.Errorf("while getting in progress operations from storage: %w", err)
@@ -523,23 +630,37 @@ func processOperationsInProgressByType(opType internal.OperationType, op storage
 	return nil
 }
 
-func reprocessOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log logrus.FieldLogger) error {
-	if err := processCancelingOrchestrations(orchestrationType, orchestrationsStorage, operationsStorage, queue, log); err != nil {
+func reprocessOrchestrations(
+	orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations,
+	operationsStorage storage.Operations, queue *process.Queue, log logrus.FieldLogger,
+) error {
+	if err := processCancelingOrchestrations(
+		orchestrationType, orchestrationsStorage, operationsStorage, queue, log,
+	); err != nil {
 		return fmt.Errorf("while processing canceled %s orchestrations: %w", orchestrationType, err)
 	}
-	if err := processOrchestration(orchestrationType, orchestrationExt.InProgress, orchestrationsStorage, queue, log); err != nil {
+	if err := processOrchestration(
+		orchestrationType, orchestrationExt.InProgress, orchestrationsStorage, queue, log,
+	); err != nil {
 		return fmt.Errorf("while processing in progress %s orchestrations: %w", orchestrationType, err)
 	}
-	if err := processOrchestration(orchestrationType, orchestrationExt.Pending, orchestrationsStorage, queue, log); err != nil {
+	if err := processOrchestration(
+		orchestrationType, orchestrationExt.Pending, orchestrationsStorage, queue, log,
+	); err != nil {
 		return fmt.Errorf("while processing pending %s orchestrations: %w", orchestrationType, err)
 	}
-	if err := processOrchestration(orchestrationType, orchestrationExt.Retrying, orchestrationsStorage, queue, log); err != nil {
+	if err := processOrchestration(
+		orchestrationType, orchestrationExt.Retrying, orchestrationsStorage, queue, log,
+	); err != nil {
 		return fmt.Errorf("while processing retrying %s orchestrations: %w", orchestrationType, err)
 	}
 	return nil
 }
 
-func processOrchestration(orchestrationType orchestrationExt.Type, state string, orchestrationsStorage storage.Orchestrations, queue *process.Queue, log logrus.FieldLogger) error {
+func processOrchestration(
+	orchestrationType orchestrationExt.Type, state string, orchestrationsStorage storage.Orchestrations,
+	queue *process.Queue, log logrus.FieldLogger,
+) error {
 	filter := dbmodel.OrchestrationFilter{
 		Types:  []string{string(orchestrationType)},
 		States: []string{state},
@@ -548,9 +669,11 @@ func processOrchestration(orchestrationType orchestrationExt.Type, state string,
 	if err != nil {
 		return fmt.Errorf("while getting %s %s orchestrations from storage: %w", state, orchestrationType, err)
 	}
-	sort.Slice(orchestrations, func(i, j int) bool {
-		return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
-	})
+	sort.Slice(
+		orchestrations, func(i, j int) bool {
+			return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
+		},
+	)
 
 	for _, o := range orchestrations {
 		queue.Add(o.OrchestrationID)
@@ -561,7 +684,10 @@ func processOrchestration(orchestrationType orchestrationExt.Type, state string,
 
 // processCancelingOrchestrations reprocess orchestrations with canceling state only when some in progress operations exists
 // reprocess only one orchestration to not clog up the orchestration queue on start
-func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log logrus.FieldLogger) error {
+func processCancelingOrchestrations(
+	orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations,
+	operationsStorage storage.Operations, queue *process.Queue, log logrus.FieldLogger,
+) error {
 	filter := dbmodel.OrchestrationFilter{
 		Types:  []string{string(orchestrationType)},
 		States: []string{orchestrationExt.Canceling},
@@ -570,24 +696,35 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 	if err != nil {
 		return fmt.Errorf("while getting canceling %s orchestrations from storage: %w", orchestrationType, err)
 	}
-	sort.Slice(orchestrations, func(i, j int) bool {
-		return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
-	})
+	sort.Slice(
+		orchestrations, func(i, j int) bool {
+			return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
+		},
+	)
 
 	for _, o := range orchestrations {
 		count := 0
 		err = nil
 		if orchestrationType == orchestrationExt.UpgradeKymaOrchestration {
-			_, count, _, err = operationsStorage.ListUpgradeKymaOperationsByOrchestrationID(o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}})
+			_, count, _, err = operationsStorage.ListUpgradeKymaOperationsByOrchestrationID(
+				o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}},
+			)
 		} else if orchestrationType == orchestrationExt.UpgradeClusterOrchestration {
-			_, count, _, err = operationsStorage.ListUpgradeClusterOperationsByOrchestrationID(o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}})
+			_, count, _, err = operationsStorage.ListUpgradeClusterOperationsByOrchestrationID(
+				o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}},
+			)
 		}
 		if err != nil {
-			return fmt.Errorf("while listing %s operations for orchestration %s: %w", orchestrationType, o.OrchestrationID, err)
+			return fmt.Errorf(
+				"while listing %s operations for orchestration %s: %w", orchestrationType, o.OrchestrationID, err,
+			)
 		}
 
 		if count > 0 {
-			log.Infof("Resuming the processing of %s %s orchestration ID: %s", orchestrationExt.Canceling, orchestrationType, o.OrchestrationID)
+			log.Infof(
+				"Resuming the processing of %s %s orchestration ID: %s", orchestrationExt.Canceling, orchestrationType,
+				o.OrchestrationID,
+			)
 			queue.Add(o.OrchestrationID)
 			return nil
 		}
@@ -598,13 +735,15 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 func initClient(cfg *rest.Config) (client.Client, error) {
 	mapper, err := apiutil.NewDiscoveryRESTMapper(cfg)
 	if err != nil {
-		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
-			mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
-			if err != nil {
-				return false, nil
-			}
-			return true, nil
-		})
+		err = wait.Poll(
+			time.Second, time.Minute, func() (bool, error) {
+				mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
+				if err != nil {
+					return false, nil
+				}
+				return true, nil
+			},
+		)
 		if err != nil {
 			return nil, fmt.Errorf("while waiting for client mapper: %w", err)
 		}
