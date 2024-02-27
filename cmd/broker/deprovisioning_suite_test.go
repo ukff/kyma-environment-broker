@@ -89,7 +89,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	iasFakeClient := ias.NewFakeClient()
 	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
 
-	edpClient := fixEDPClient()
+	edpClient := fixEDPClient(t)
 	reconcilerClient := reconciler.NewFakeClient()
 
 	accountProvider := fixAccountProvider()
@@ -97,8 +97,10 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionManager.SpeedUp(1000)
 	scheme := runtime.NewScheme()
-	apiextensionsv1.AddToScheme(scheme)
-	corev1.AddToScheme(scheme)
+	err = apiextensionsv1.AddToScheme(scheme)
+	assert.NoError(t, err)
+	err = corev1.AddToScheme(scheme)
+	assert.NoError(t, err)
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	sch := internal.NewSchemeForTests()
@@ -263,13 +265,14 @@ func (s *DeprovisioningSuite) AssertInstanceNotRemoved(instanceId string) {
 	assert.NotNil(s.t, instance)
 }
 
-func fixEDPClient() *edp.FakeClient {
+func fixEDPClient(t *testing.T) *edp.FakeClient {
 	client := edp.NewFakeClient()
-	client.CreateDataTenant(edp.DataTenantPayload{
+	err := client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
 	})
+	assert.NoError(t, err)
 
 	metadataTenantKeys := []string{
 		edp.MaasConsumerEnvironmentKey,
@@ -279,10 +282,11 @@ func fixEDPClient() *edp.FakeClient {
 	}
 
 	for _, key := range metadataTenantKeys {
-		client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
+		err = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
 		})
+		assert.NoError(t, err)
 	}
 
 	return client

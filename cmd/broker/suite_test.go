@@ -373,7 +373,8 @@ func (s *OrchestrationSuite) CreateProvisionedRuntime(options RuntimeOptions) st
 	require.NoError(s.t, err)
 
 	provisioningOperation.InputCreator = fixture.FixInputCreator(internal.Azure)
-	s.provisionerClient.Provision(provisioningOperation)
+	_, err = s.provisionerClient.Provision(provisioningOperation)
+	require.NoError(s.t, err)
 
 	return runtimeID
 }
@@ -772,7 +773,8 @@ func (s *ProvisioningSuite) CreateUnsuspension(options RuntimeOptions) string {
 	suspensionOp := internal.NewSuspensionOperationWithID("susp-id", instance)
 	suspensionOp.CreatedAt = time.Now().AddDate(0, 0, -10)
 	suspensionOp.State = domain.Succeeded
-	s.storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+	err = s.storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+	require.NoError(s.t, err)
 
 	s.provisioningQueue.Add(operation.ID)
 	return operation.ID
@@ -799,7 +801,8 @@ func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(
 			return false, nil
 		}
 
-		unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		assert.NoError(s.t, err)
 		err = s.k8sKcpCli.Update(context.Background(), gardenerCluster)
 		return err == nil, nil
 	})
