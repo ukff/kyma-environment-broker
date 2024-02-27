@@ -125,7 +125,9 @@ func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation
 }
 
 // UpdateProvisioningOperation updates ProvisioningOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateProvisioningOperation(op internal.ProvisioningOperation) (*internal.ProvisioningOperation, error) {
+func (s *operations) UpdateProvisioningOperation(op internal.ProvisioningOperation) (
+	*internal.ProvisioningOperation, error,
+) {
 	op.UpdatedAt = time.Now()
 	dto, err := s.provisioningOperationToDTO(&op)
 
@@ -139,7 +141,9 @@ func (s *operations) UpdateProvisioningOperation(op internal.ProvisioningOperati
 	return &op, lastErr
 }
 
-func (s *operations) ListProvisioningOperationsByInstanceID(instanceID string) ([]internal.ProvisioningOperation, error) {
+func (s *operations) ListProvisioningOperationsByInstanceID(instanceID string) (
+	[]internal.ProvisioningOperation, error,
+) {
 
 	operations, err := s.listOperationsByInstanceIdAndType(instanceID, internal.OperationTypeProvision)
 	if err != nil {
@@ -196,7 +200,9 @@ func (s *operations) GetDeprovisioningOperationByID(operationID string) (*intern
 }
 
 // GetDeprovisioningOperationByInstanceID fetches the latest DeprovisioningOperation by given instanceID, returns error if not found
-func (s *operations) GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error) {
+func (s *operations) GetDeprovisioningOperationByInstanceID(instanceID string) (
+	*internal.DeprovisioningOperation, error,
+) {
 	operation, err := s.getByTypeAndInstanceID(instanceID, internal.OperationTypeDeprovision)
 	if err != nil {
 		return nil, err
@@ -210,7 +216,9 @@ func (s *operations) GetDeprovisioningOperationByInstanceID(instanceID string) (
 }
 
 // UpdateDeprovisioningOperation updates DeprovisioningOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error) {
+func (s *operations) UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (
+	*internal.DeprovisioningOperation, error,
+) {
 	operation.UpdatedAt = time.Now()
 
 	dto, err := s.deprovisioningOperationToDTO(&operation)
@@ -224,7 +232,9 @@ func (s *operations) UpdateDeprovisioningOperation(operation internal.Deprovisio
 }
 
 // ListDeprovisioningOperationsByInstanceID
-func (s *operations) ListDeprovisioningOperationsByInstanceID(instanceID string) ([]internal.DeprovisioningOperation, error) {
+func (s *operations) ListDeprovisioningOperationsByInstanceID(instanceID string) (
+	[]internal.DeprovisioningOperation, error,
+) {
 	operations, err := s.listOperationsByInstanceIdAndType(instanceID, internal.OperationTypeDeprovision)
 	if err != nil {
 		return nil, err
@@ -324,7 +334,9 @@ func (s *operations) ListUpgradeKymaOperationsByInstanceID(instanceID string) ([
 }
 
 // UpdateUpgradeKymaOperation updates UpgradeKymaOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateUpgradeKymaOperation(operation internal.UpgradeKymaOperation) (*internal.UpgradeKymaOperation, error) {
+func (s *operations) UpdateUpgradeKymaOperation(operation internal.UpgradeKymaOperation) (
+	*internal.UpgradeKymaOperation, error,
+) {
 	operation.UpdatedAt = time.Now()
 	dto, err := s.upgradeKymaOperationToDTO(&operation)
 	if err != nil {
@@ -342,18 +354,20 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	operation := dbmodel.OperationDTO{}
 	op := internal.Operation{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operation, lastErr = session.GetLastOperation(instanceID)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operation, lastErr = session.GetLastOperation(instanceID)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, lastErr
 	}
@@ -388,18 +402,22 @@ func (s *operations) GetOperationByID(operationID string) (*internal.Operation, 
 	return &op, nil
 }
 
-func (s *operations) GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error) {
+func (s *operations) GetNotFinishedOperationsByType(operationType internal.OperationType) (
+	[]internal.Operation, error,
+) {
 	session := s.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		dto, err := session.GetNotFinishedOperationsByType(operationType)
-		if err != nil {
-			log.Errorf("while getting operations from the storage: %v", err)
-			return false, nil
-		}
-		operations = dto
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			dto, err := session.GetNotFinishedOperationsByType(operationType)
+			if err != nil {
+				log.Errorf("while getting operations from the storage: %v", err)
+				return false, nil
+			}
+			operations = dto
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +440,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 			result[planId] = internal.OperationStats{
 				Provisioning:   make(map[domain.LastOperationState]int),
 				Deprovisioning: make(map[domain.LastOperationState]int),
-				Update: make(map[domain.LastOperationState]int,
+				Update:         make(map[domain.LastOperationState]int),
 			}
 		}
 		switch internal.OperationType(entry.Type) {
@@ -489,15 +507,17 @@ func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (
 func (s *operations) GetOperationsForIDs(operationIDList []string) ([]internal.Operation, error) {
 	session := s.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		dto, err := session.GetOperationsForIDs(operationIDList)
-		if err != nil {
-			log.Errorf("while getting operations from the storage: %v", err)
-			return false, nil
-		}
-		operations = dto
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			dto, err := session.GetOperationsForIDs(operationIDList)
+			if err != nil {
+				log.Errorf("while getting operations from the storage: %v", err)
+				return false, nil
+			}
+			operations = dto
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -513,14 +533,16 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 		operations  = make([]dbmodel.OperationDTO, 0)
 	)
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, size, total, lastErr = session.ListOperations(filter)
-		if lastErr != nil {
-			log.Errorf("while getting operations from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, size, total, lastErr = session.ListOperations(filter)
+			if lastErr != nil {
+				log.Errorf("while getting operations from the storage: %v", lastErr)
+				return false, nil
+			}
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, -1, -1, err
 	}
@@ -530,7 +552,9 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 	return result, size, total, err
 }
 
-func (s *operations) fetchFailedStatusForOrchestration(entries []dbmodel.OperationDTO) ([]dbmodel.OperationDTO, int, int) {
+func (s *operations) fetchFailedStatusForOrchestration(entries []dbmodel.OperationDTO) (
+	[]dbmodel.OperationDTO, int, int,
+) {
 	resPerInstanceID := make(map[string][]dbmodel.OperationDTO)
 	for _, entry := range entries {
 		resPerInstanceID[entry.InstanceID] = append(resPerInstanceID[entry.InstanceID], entry)
@@ -562,7 +586,9 @@ func (s *operations) fetchFailedStatusForOrchestration(entries []dbmodel.Operati
 	return failedDatas, len(failedDatas), len(failedDatas)
 }
 
-func (s *operations) showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error) {
+func (s *operations) showUpgradeKymaOperationDTOByOrchestrationID(
+	orchestrationID string, filter dbmodel.OperationFilter,
+) ([]dbmodel.OperationDTO, int, int, error) {
 	session := s.NewReadSession()
 	var (
 		operations        = make([]dbmodel.OperationDTO, 0)
@@ -573,18 +599,20 @@ func (s *operations) showUpgradeKymaOperationDTOByOrchestrationID(orchestrationI
 	if failedFilterFound {
 		filter.States = []string{}
 	}
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", lastErr)
 	}
@@ -594,7 +622,9 @@ func (s *operations) showUpgradeKymaOperationDTOByOrchestrationID(orchestrationI
 	return operations, count, totalCount, nil
 }
 
-func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeKymaOperation, int, int, error) {
+func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(
+	orchestrationID string, filter dbmodel.OperationFilter,
+) ([]internal.UpgradeKymaOperation, int, int, error) {
 	var (
 		operations        = make([]dbmodel.OperationDTO, 0)
 		err               error
@@ -616,7 +646,9 @@ func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID 
 	// only for "failed" states
 	if filterFailedFound {
 		filter = dbmodel.OperationFilter{States: []string{"failed"}}
-		failedOperations, failedCount, failedtotalCount, err := s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)
+		failedOperations, failedCount, failedtotalCount, err := s.showUpgradeKymaOperationDTOByOrchestrationID(
+			orchestrationID, filter,
+		)
 		if err != nil {
 			return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", err)
 		}
@@ -632,25 +664,29 @@ func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID 
 	return ret, count, totalCount, nil
 }
 
-func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error) {
+func (s *operations) ListOperationsByOrchestrationID(
+	orchestrationID string, filter dbmodel.OperationFilter,
+) ([]internal.Operation, int, int, error) {
 	session := s.NewReadSession()
 	var (
 		operations        = make([]dbmodel.OperationDTO, 0)
 		lastErr           error
 		count, totalCount int
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", lastErr)
 	}
@@ -691,19 +727,23 @@ func (s *operations) removeIndex(arr []string, index int) []string {
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
 	session := s.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		var err error
-		operations, err = session.ListOperationsInTimeRange(from, to)
-		if err != nil {
-			if dberr.IsNotFound(err) {
-				return true, nil
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			var err error
+			operations, err = session.ListOperationsInTimeRange(from, to)
+			if err != nil {
+				if dberr.IsNotFound(err) {
+					return true, nil
+				}
+				return false, fmt.Errorf("while listing the operations from the storage: %w", err)
 			}
-			return false, fmt.Errorf("while listing the operations from the storage: %w", err)
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("while getting operations in range %v-%v: %w", from.Format(time.RFC822), to.Format(time.RFC822), err)
+		return nil, fmt.Errorf(
+			"while getting operations in range %v-%v: %w", from.Format(time.RFC822), to.Format(time.RFC822), err,
+		)
 	}
 	ret, err := s.toOperationList(operations)
 	if err != nil {
@@ -736,7 +776,9 @@ func (s *operations) GetUpdatingOperationByID(operationID string) (*internal.Upd
 	return ret, nil
 }
 
-func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperation) (*internal.UpdatingOperation, error) {
+func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperation) (
+	*internal.UpdatingOperation, error,
+) {
 	session := s.NewWriteSession()
 	operation.UpdatedAt = time.Now()
 	dto, err := s.updateOperationToDTO(&operation)
@@ -745,22 +787,24 @@ func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperatio
 	}
 
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		lastErr = session.UpdateOperation(dto)
-		if lastErr != nil && dberr.IsNotFound(lastErr) {
-			_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
-			if lastErr != nil {
-				log.Errorf("while getting operation: %v", lastErr)
-				return false, nil
-			}
+	_ = wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			lastErr = session.UpdateOperation(dto)
+			if lastErr != nil && dberr.IsNotFound(lastErr) {
+				_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
+				if lastErr != nil {
+					log.Errorf("while getting operation: %v", lastErr)
+					return false, nil
+				}
 
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			log.Warn(lastErr.Error())
-			return false, lastErr
-		}
-		return true, nil
-	})
+				// the operation exists but the version is different
+				lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
+				log.Warn(lastErr.Error())
+				return false, lastErr
+			}
+			return true, nil
+		},
+	)
 	operation.Version = operation.Version + 1
 	return &operation, lastErr
 }
@@ -770,14 +814,16 @@ func (s *operations) ListUpdatingOperationsByInstanceID(instanceID string) ([]in
 	session := s.NewReadSession()
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpdate)
-		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpdate)
+			if lastErr != nil {
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
+			}
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, lastErr
 	}
@@ -800,7 +846,9 @@ func (s *operations) InsertUpgradeClusterOperation(operation internal.UpgradeClu
 }
 
 // UpdateUpgradeClusterOperation updates UpgradeClusterOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClusterOperation) (*internal.UpgradeClusterOperation, error) {
+func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClusterOperation) (
+	*internal.UpgradeClusterOperation, error,
+) {
 	session := s.NewWriteSession()
 	operation.UpdatedAt = time.Now()
 	dto, err := s.upgradeClusterOperationToDTO(&operation)
@@ -809,22 +857,24 @@ func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClu
 	}
 
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		lastErr = session.UpdateOperation(dto)
-		if lastErr != nil && dberr.IsNotFound(lastErr) {
-			_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
-			if lastErr != nil {
-				log.Errorf("while getting operation: %v", lastErr)
-				return false, nil
-			}
+	_ = wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			lastErr = session.UpdateOperation(dto)
+			if lastErr != nil && dberr.IsNotFound(lastErr) {
+				_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
+				if lastErr != nil {
+					log.Errorf("while getting operation: %v", lastErr)
+					return false, nil
+				}
 
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			log.Warn(lastErr.Error())
-			return false, lastErr
-		}
-		return true, nil
-	})
+				// the operation exists but the version is different
+				lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
+				log.Warn(lastErr.Error())
+				return false, lastErr
+			}
+			return true, nil
+		},
+	)
 	operation.Version = operation.Version + 1
 	return &operation, lastErr
 }
@@ -844,18 +894,24 @@ func (s *operations) GetUpgradeClusterOperationByID(operationID string) (*intern
 }
 
 // ListUpgradeClusterOperationsByInstanceID Lists all upgrade cluster operations for the given instance
-func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string) ([]internal.UpgradeClusterOperation, error) {
+func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string) (
+	[]internal.UpgradeClusterOperation, error,
+) {
 	session := s.NewReadSession()
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpgradeCluster)
-		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, lastErr = session.GetOperationsByTypeAndInstanceID(
+				instanceID, internal.OperationTypeUpgradeCluster,
+			)
+			if lastErr != nil {
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
+			}
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, lastErr
 	}
@@ -868,25 +924,29 @@ func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string)
 }
 
 // ListUpgradeClusterOperationsByOrchestrationID Lists upgrade cluster operations for the given orchestration, according to filter(s) and/or pagination
-func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeClusterOperation, int, int, error) {
+func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(
+	orchestrationID string, filter dbmodel.OperationFilter,
+) ([]internal.UpgradeClusterOperation, int, int, error) {
 	session := s.NewReadSession()
 	var (
 		operations        = make([]dbmodel.OperationDTO, 0)
 		lastErr           error
 		count, totalCount int
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", lastErr)
 	}
@@ -1022,7 +1082,9 @@ func (s *operations) toProvisioningOperationList(ops []dbmodel.OperationDTO) ([]
 	return result, nil
 }
 
-func (s *operations) toDeprovisioningOperationList(ops []dbmodel.OperationDTO) ([]internal.DeprovisioningOperation, error) {
+func (s *operations) toDeprovisioningOperationList(ops []dbmodel.OperationDTO) (
+	[]internal.DeprovisioningOperation, error,
+) {
 	result := make([]internal.DeprovisioningOperation, 0)
 
 	for _, op := range ops {
@@ -1195,7 +1257,9 @@ func (s *operations) toUpgradeClusterOperation(op *dbmodel.OperationDTO) (*inter
 	return &operation, nil
 }
 
-func (s *operations) toUpgradeClusterOperationList(ops []dbmodel.OperationDTO) ([]internal.UpgradeClusterOperation, error) {
+func (s *operations) toUpgradeClusterOperationList(ops []dbmodel.OperationDTO) (
+	[]internal.UpgradeClusterOperation, error,
+) {
 	result := make([]internal.UpgradeClusterOperation, 0)
 
 	for _, op := range ops {
@@ -1278,18 +1342,20 @@ func (s *operations) getByID(id string) (*dbmodel.OperationDTO, error) {
 	session := s.NewReadSession()
 	operation := dbmodel.OperationDTO{}
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operation, lastErr = session.GetOperationByID(id)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operation with id %s not exist", id)
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operation, lastErr = session.GetOperationByID(id)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("Operation with id %s not exist", id)
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 
 	if err != nil {
 		return nil, err
@@ -1301,15 +1367,17 @@ func (s *operations) getByID(id string) (*dbmodel.OperationDTO, error) {
 func (s *operations) insert(dto dbmodel.OperationDTO) error {
 	session := s.NewWriteSession()
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		lastErr = session.InsertOperation(dto)
-		if lastErr != nil {
-			log.Errorf("while insert operation: %v", lastErr)
-			return false, nil
-		}
-		// TODO: insert link to orchestration
-		return true, nil
-	})
+	_ = wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			lastErr = session.InsertOperation(dto)
+			if lastErr != nil {
+				log.Errorf("while insert operation: %v", lastErr)
+				return false, nil
+			}
+			// TODO: insert link to orchestration
+			return true, nil
+		},
+	)
 	return lastErr
 }
 
@@ -1317,18 +1385,20 @@ func (s *operations) getByInstanceID(id string) (*dbmodel.OperationDTO, error) {
 	session := s.NewReadSession()
 	operation := dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operation, lastErr = session.GetOperationByInstanceID(id)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("operation does not exist")
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operation, lastErr = session.GetOperationByInstanceID(id)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("operation does not exist")
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 
 	return &operation, err
 }
@@ -1337,18 +1407,20 @@ func (s *operations) getByTypeAndInstanceID(id string, opType internal.Operation
 	session := s.NewReadSession()
 	operation := dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operation, lastErr = session.GetOperationByTypeAndInstanceID(id, opType)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("operation does not exist")
-				return false, lastErr
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operation, lastErr = session.GetOperationByTypeAndInstanceID(id, opType)
+			if lastErr != nil {
+				if dberr.IsNotFound(lastErr) {
+					lastErr = dberr.NotFound("operation does not exist")
+					return false, lastErr
+				}
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+			return true, nil
+		},
+	)
 
 	return &operation, err
 }
@@ -1357,38 +1429,44 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 	session := s.NewWriteSession()
 
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		lastErr = session.UpdateOperation(operation)
-		if lastErr != nil && dberr.IsNotFound(lastErr) {
-			_, lastErr = s.NewReadSession().GetOperationByID(operation.ID)
-			if lastErr != nil {
-				log.Errorf("while getting operation: %v", lastErr)
-				return false, nil
-			}
+	_ = wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			lastErr = session.UpdateOperation(operation)
+			if lastErr != nil && dberr.IsNotFound(lastErr) {
+				_, lastErr = s.NewReadSession().GetOperationByID(operation.ID)
+				if lastErr != nil {
+					log.Errorf("while getting operation: %v", lastErr)
+					return false, nil
+				}
 
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
-			log.Warn(lastErr.Error())
-			return false, lastErr
-		}
-		return true, nil
-	})
+				// the operation exists but the version is different
+				lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
+				log.Warn(lastErr.Error())
+				return false, lastErr
+			}
+			return true, nil
+		},
+	)
 	return lastErr
 }
 
-func (s *operations) listOperationsByInstanceIdAndType(instanceId string, operationType internal.OperationType) ([]dbmodel.OperationDTO, error) {
+func (s *operations) listOperationsByInstanceIdAndType(
+	instanceId string, operationType internal.OperationType,
+) ([]dbmodel.OperationDTO, error) {
 	session := s.NewReadSession()
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceId, operationType)
-		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceId, operationType)
+			if lastErr != nil {
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
+			}
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, lastErr
 	}
@@ -1400,14 +1478,16 @@ func (s *operations) listOperationsByType(operationType internal.OperationType) 
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, lastErr = session.ListOperationsByType(operationType)
-		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, lastErr = session.ListOperationsByType(operationType)
+			if lastErr != nil {
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
+			}
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, lastErr
 	}
@@ -1419,14 +1499,16 @@ func (s *operations) listOperationsByInstanceId(instanceId string) ([]dbmodel.Op
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, lastErr = session.GetOperationsByInstanceID(instanceId)
-		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
+	err := wait.PollImmediate(
+		defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+			operations, lastErr = session.GetOperationsByInstanceID(instanceId)
+			if lastErr != nil {
+				log.Errorf("while reading operation from the storage: %v", lastErr)
+				return false, nil
+			}
+			return true, nil
+		},
+	)
 	if err != nil {
 		return nil, lastErr
 	}
