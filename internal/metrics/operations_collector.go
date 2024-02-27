@@ -18,6 +18,9 @@ import (
 // - compass_keb_operations_{plan_name}_deprovisioning_failed_total
 // - compass_keb_operations_{plan_name}_deprovisioning_in_progress_total
 // - compass_keb_operations_{plan_name}_deprovisioning_succeeded_total
+// - compass_keb_operations_{plan_name}_update_failed_total
+// - compass_keb_operations_{plan_name}_update_in_progress_total
+// - compass_keb_operations_{plan_name}_update_succeeded_total
 
 var (
 	supportedPlansIDs = []string{
@@ -39,12 +42,15 @@ type OperationsStatsGetter interface {
 type OperationStat struct {
 	failedProvisioning   *prometheus.Desc
 	failedDeprovisioning *prometheus.Desc
+	failedUpdate         *prometheus.Desc
 
 	succeededProvisioning   *prometheus.Desc
 	succeededDeprovisioning *prometheus.Desc
+	succeededUpdate         *prometheus.Desc
 
 	inProgressProvisioning   *prometheus.Desc
 	inProgressDeprovisioning *prometheus.Desc
+	inProgressUpdate         *prometheus.Desc
 }
 
 func (c *OperationStat) Describe(ch chan<- *prometheus.Desc) {
@@ -55,6 +61,10 @@ func (c *OperationStat) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.inProgressDeprovisioning
 	ch <- c.succeededDeprovisioning
 	ch <- c.failedDeprovisioning
+
+	ch <- c.inProgressUpdate
+	ch <- c.succeededUpdate
+	ch <- c.failedUpdate
 }
 
 type OperationsCollector struct {
@@ -72,32 +82,56 @@ func NewOperationsCollector(statsGetter OperationsStatsGetter) *OperationsCollec
 				fqName(internal.OperationTypeProvision, domain.InProgress),
 				"The number of provisioning operations in progress",
 				[]string{"plan_id"},
-				nil),
+				nil,
+			),
 			succeededProvisioning: prometheus.NewDesc(
 				fqName(internal.OperationTypeProvision, domain.Succeeded),
 				"The number of succeeded provisioning operations",
 				[]string{"plan_id"},
-				nil),
+				nil,
+			),
 			failedProvisioning: prometheus.NewDesc(
 				fqName(internal.OperationTypeProvision, domain.Failed),
 				"The number of failed provisioning operations",
 				[]string{"plan_id"},
-				nil),
+				nil,
+			),
 			inProgressDeprovisioning: prometheus.NewDesc(
 				fqName(internal.OperationTypeDeprovision, domain.InProgress),
 				"The number of deprovisioning operations in progress",
 				[]string{"plan_id"},
-				nil),
+				nil,
+			),
 			succeededDeprovisioning: prometheus.NewDesc(
 				fqName(internal.OperationTypeDeprovision, domain.Succeeded),
 				"The number of succeeded deprovisioning operations",
 				[]string{"plan_id"},
-				nil),
+				nil,
+			),
 			failedDeprovisioning: prometheus.NewDesc(
 				fqName(internal.OperationTypeDeprovision, domain.Failed),
 				"The number of failed deprovisioning operations",
 				[]string{"plan_id"},
-				nil),
+				nil,
+			),
+			inProgressUpdate: prometheus.NewDesc(
+				fqName(internal.OperationTypeUpdate, domain.Succeeded),
+				"The number of update operations in progress",
+				[]string{"plan_id"},
+				nil,
+			),
+			succeededUpdate: prometheus.NewDesc(
+				fqName(internal.OperationTypeProvision, domain.Succeeded),
+				"The number of succeeded update operations",
+				[]string{"plan_id"},
+				nil,
+			),
+			failedUpdate: prometheus.NewDesc(
+				fqName(internal.OperationTypeUpdate, domain.Failed),
+				"The number of failed update operations",
+				[]string{"plan_id"},
+				nil,
+			),
 		}
 	}
 
@@ -114,6 +148,8 @@ func fqName(operationType internal.OperationType, state domain.LastOperationStat
 		opType = "provisioning"
 	case internal.OperationTypeDeprovision:
 		opType = "deprovisioning"
+	case internal.OperationTypeUpdate:
+		opType = "update"
 	}
 
 	var st string
@@ -144,34 +180,58 @@ func (c *OperationsCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for planID, ops := range c.operationStats {
-		collect(ch,
+		collect(
+			ch,
 			ops.inProgressProvisioning,
 			stats[planID].Provisioning[domain.InProgress],
 			planID,
 		)
-		collect(ch,
+		collect(
+			ch,
 			ops.succeededProvisioning,
 			stats[planID].Provisioning[domain.Succeeded],
 			planID,
 		)
-		collect(ch,
+		collect(
+			ch,
 			ops.failedProvisioning,
 			stats[planID].Provisioning[domain.Failed],
 			planID,
 		)
-		collect(ch,
+		collect(
+			ch,
 			ops.inProgressDeprovisioning,
 			stats[planID].Deprovisioning[domain.InProgress],
 			planID,
 		)
-		collect(ch,
+		collect(
+			ch,
 			ops.succeededDeprovisioning,
 			stats[planID].Deprovisioning[domain.Succeeded],
 			planID,
 		)
-		collect(ch,
+		collect(
+			ch,
 			ops.failedDeprovisioning,
 			stats[planID].Deprovisioning[domain.Failed],
+			planID,
+		)
+		collect(
+			ch,
+			ops.inProgressUpdate,
+			stats[planID].Update[domain.InProgress],
+			planID,
+		)
+		collect(
+			ch,
+			ops.succeededUpdate,
+			stats[planID].Update[domain.Succeeded],
+			planID,
+		)
+		collect(
+			ch,
+			ops.failedUpdate,
+			stats[planID].Update[domain.Failed],
 			planID,
 		)
 	}
@@ -183,7 +243,8 @@ func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labe
 		desc,
 		prometheus.GaugeValue,
 		float64(value),
-		labelValues...)
+		labelValues...,
+	)
 
 	if err != nil {
 		logrus.Errorf("unable to register metric %s", err.Error())

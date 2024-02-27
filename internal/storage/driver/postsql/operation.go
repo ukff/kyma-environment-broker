@@ -422,6 +422,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 			result[planId] = internal.OperationStats{
 				Provisioning:   make(map[domain.LastOperationState]int),
 				Deprovisioning: make(map[domain.LastOperationState]int),
+				Update: make(map[domain.LastOperationState]int,
 			}
 		}
 		switch internal.OperationType(entry.Type) {

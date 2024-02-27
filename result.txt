@@ -1,0 +1,138 @@
+common/orchestration/client_test.go:371:16                   errcheck   Error return value of `buf.ReadFrom` is not checked
+common/orchestration/strategies/parallel.go:232:24           errcheck   Error return value of `p.executor.Reschedule` is not checked
+internal/test_utils.go:35:20                                 errcheck   Error return value is not checked
+internal/test_utils.go:36:29                                 errcheck   Error return value is not checked
+internal/provisioner/client_test.go:464:10                   errcheck   Error return value of `rw.Write` is not checked
+internal/provisioner/fake_client.go:163:90                   errcheck   Error return value of `(k8s.io/client-go/dynamic.ResourceInterface).Create` is not checked
+internal/storage/driver/memory/runtime_state_test.go:33:22   errcheck   Error return value of `runtimeStates.Insert` is not checked
+internal/storage/driver/memory/runtime_state_test.go:34:22   errcheck   Error return value of `runtimeStates.Insert` is not checked
+internal/storage/driver/memory/runtime_state_test.go:35:22   errcheck   Error return value of `runtimeStates.Insert` is not checked
+internal/environmentscleanup/service_test.go:47:35           errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Instances).Insert` is not checked
+internal/environmentscleanup/service_test.go:51:35           errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Instances).Insert` is not checked
+internal/environmentscleanup/service_test.go:105:35          errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Instances).Insert` is not checked
+internal/broker/client_test.go:210:9                         errcheck   Error return value of `w.Write` is not checked
+internal/broker/client_test.go:227:9                         errcheck   Error return value of `w.Write` is not checked
+internal/broker/client_test.go:243:10                        errcheck   Error return value of `w.Write` is not checked
+internal/broker/instance_update_test.go:59:45                errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Provisioning).InsertProvisioningOperation` is not checked
+internal/broker/instance_update_test.go:60:47                errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Deprovisioning).InsertDeprovisioningOperation` is not checked
+internal/broker/instance_update_test.go:61:45                errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Provisioning).InsertProvisioningOperation` is not checked
+internal/broker/instance_update_test.go:126:45               errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Provisioning).InsertProvisioningOperation` is not checked
+internal/broker/instance_update_test.go:263:47               errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Deprovisioning).InsertDeprovisioningOperation` is not checked
+internal/broker/instance_update_test.go:275:12               errcheck   Error return value of `svc.Update` is not checked
+internal/broker/instance_update_test.go:322:12               errcheck   Error return value of `svc.Update` is not checked
+internal/broker/instance_update_test.go:400:47               errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Deprovisioning).InsertDeprovisioningOperation` is not checked
+cmd/accountcleanup/main.go:70:26                             errcheck   Error return value of `cleaner.HaltIstioSidecar` is not checked
+internal/kubeconfig/provider_test.go:27:18                   errcheck   Error return value of `kcpClient.Create` is not checked
+internal/kubeconfig/provider_test.go:67:18                   errcheck   Error return value of `kcpClient.Create` is not checked
+internal/kubeconfig/provider_test.go:97:11                   errcheck   Error return value of `wait.Poll` is not checked
+internal/kubeconfig/provider_test.go:106:16                  errcheck   Error return value of `env.Stop` is not checked
+internal/kubeconfig/provider_test.go:111:18                  errcheck   Error return value of `kcpClient.Create` is not checked
+internal/process/steps/gardener_cluster.go:190:29            errcheck   Error return value of `unstructured.SetNestedField` is not checked
+internal/process/steps/gardener_cluster.go:194:29            errcheck   Error return value of `unstructured.SetNestedField` is not checked
+internal/process/steps/gardener_cluster.go:195:29            errcheck   Error return value of `unstructured.SetNestedField` is not checked
+internal/process/steps/gardener_cluster_test.go:61:20        errcheck   Error return value of `os.InsertOperation` is not checked
+internal/process/steps/gardener_cluster_test.go:104:20       errcheck   Error return value of `os.InsertOperation` is not checked
+internal/process/steps/gardener_cluster_test.go:140:20       errcheck   Error return value of `os.InsertOperation` is not checked
+internal/process/steps/kyma_template_test.go:18:33           errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Operations).InsertOperation` is not checked
+cmd/trialcleanup/main.go:80:26                               errcheck   Error return value of `cleaner.HaltIstioSidecar` is not checked
+internal/avs/client.go:269:9                                 errcheck   Error return value of `io.Copy` is not checked
+internal/avs/model_test.go:55:16                             errcheck   Error return value of `json.Unmarshal` is not checked
+cmd/deprovisionretrigger/main.go:70:26                       errcheck   Error return value of `cleaner.HaltIstioSidecar` is not checked
+internal/process/staged_manager_test.go:36:13                errcheck   Error return value of `mgr.AddStep` is not checked
+internal/process/staged_manager_test.go:37:13                errcheck   Error return value of `mgr.AddStep` is not checked
+internal/process/staged_manager_test.go:38:13                errcheck   Error return value of `mgr.AddStep` is not checked
+internal/process/staged_manager_test.go:42:13                errcheck   Error return value of `mgr.Execute` is not checked
+internal/process/staged_manager_test.go:66:13                errcheck   Error return value of `mgr.Execute` is not checked
+internal/process/staged_manager_test.go:109:13               errcheck   Error return value of `mgr.Execute` is not checked
+internal/process/staged_manager_test.go:143:44               errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Operations).InsertOperation` is not checked
+internal/process/staged_manager_test.go:253:20               errcheck   Error return value of `h.OnStepProcessed` is not checked
+internal/process/staged_manager_test.go:255:19               errcheck   Error return value of `h.OnStepExecuted` is not checked
+internal/process/staged_manager_test.go:314:44               errcheck   Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Operations).InsertOperation` is not checked
+internal/provider/sap-converged-cloud_provider.go:37         goimports  File is not `goimports`-ed
+internal/process/input/input.go:29                           goimports  File is not `goimports`-ed
+common/hyperscaler/account_pool.go:108:9                     govet      composites: github.com/kyma-project/kyma-environment-broker/common/gardener.Shoot struct literal uses unkeyed fields
+common/hyperscaler/account_pool.go:151:10                    govet      composites: github.com/kyma-project/kyma-environment-broker/common/gardener.SecretBinding struct literal uses unkeyed fields
+common/hyperscaler/account_pool.go:163:11                    govet      composites: github.com/kyma-project/kyma-environment-broker/common/gardener.SecretBinding struct literal uses unkeyed fields
+common/hyperscaler/shared_pool.go:67:11                      govet      composites: github.com/kyma-project/kyma-environment-broker/common/gardener.SecretBinding struct literal uses unkeyed fields
+common/hyperscaler/shared_pool.go:71:8                       govet      composites: github.com/kyma-project/kyma-environment-broker/common/gardener.Shoot struct literal uses unkeyed fields
+common/orchestration/resolver.go:139:13                      govet      composites: github.com/kyma-project/kyma-environment-broker/common/gardener.Shoot struct literal uses unkeyed fields
+internal/process/steps/kyma_template.go:52:9                 govet      composites: github.com/kyma-project/kyma-environment-broker/internal.UpgradeKymaOperation struct literal uses unkeyed fields
+internal/process/steps/lifecycle_manager_kubeconfig.go:97:9  govet      composites: github.com/kyma-project/kyma-environment-broker/internal.UpgradeKymaOperation struct literal uses unkeyed fields
+internal/process/upgrade_kyma/apply_kyma_step.go:25:9        govet      composites: github.com/kyma-project/kyma-environment-broker/internal.UpgradeKymaOperation struct literal uses unkeyed fields
+common/orchestration/resolver_test.go:208:16                 govet      copylocks: assignment copies lock value to client.Fake: k8s.io/client-go/testing.Fake
+cmd/broker/deprovisioning_suite_test.go:54:7                 govet      lostcancel: the cancel function returned by context.WithTimeout should be called, not discarded, to avoid a context leak
+cmd/broker/suite_test.go:127:7                               govet      lostcancel: the cancel function returned by context.WithTimeout should be called, not discarded, to avoid a context leak
+cmd/broker/suite_test.go:594:7                               govet      lostcancel: the cancel function returned by context.WithTimeout should be called, not discarded, to avoid a context leak
+internal/dto.go:193:2                                        govet      structtag: struct field tag `json:"networking,omitempty""` not compatible with reflect.StructTag.Get: key:"value" pairs not separated by spaces
+internal/process/staged_manager_test.go:202:2                govet      unreachable: unreachable code
+internal/storage/driver/memory/operation.go:199:2            govet      unreachable: unreachable code
+internal/orchestration/manager/upgrade_kyma.go:188:14        govet      unusedresult: result of fmt.Errorf call not used
+::error file=common/orchestration/client_test.go,line=371,col=16::Error return value of `buf.ReadFrom` is not checked (errcheck)
+::error file=common/orchestration/strategies/parallel.go,line=232,col=24::Error return value of `p.executor.Reschedule` is not checked (errcheck)
+::error file=internal/test_utils.go,line=35,col=20::Error return value is not checked (errcheck)
+::error file=internal/test_utils.go,line=36,col=29::Error return value is not checked (errcheck)
+::error file=internal/provisioner/client_test.go,line=464,col=10::Error return value of `rw.Write` is not checked (errcheck)
+::error file=internal/provisioner/fake_client.go,line=163,col=90::Error return value of `(k8s.io/client-go/dynamic.ResourceInterface).Create` is not checked (errcheck)
+::error file=internal/storage/driver/memory/runtime_state_test.go,line=33,col=22::Error return value of `runtimeStates.Insert` is not checked (errcheck)
+::error file=internal/storage/driver/memory/runtime_state_test.go,line=34,col=22::Error return value of `runtimeStates.Insert` is not checked (errcheck)
+::error file=internal/storage/driver/memory/runtime_state_test.go,line=35,col=22::Error return value of `runtimeStates.Insert` is not checked (errcheck)
+::error file=internal/environmentscleanup/service_test.go,line=47,col=35::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Instances).Insert` is not checked (errcheck)
+::error file=internal/environmentscleanup/service_test.go,line=51,col=35::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Instances).Insert` is not checked (errcheck)
+::error file=internal/environmentscleanup/service_test.go,line=105,col=35::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Instances).Insert` is not checked (errcheck)
+::error file=internal/broker/client_test.go,line=210,col=9::Error return value of `w.Write` is not checked (errcheck)
+::error file=internal/broker/client_test.go,line=227,col=9::Error return value of `w.Write` is not checked (errcheck)
+::error file=internal/broker/client_test.go,line=243,col=10::Error return value of `w.Write` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=59,col=45::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Provisioning).InsertProvisioningOperation` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=60,col=47::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Deprovisioning).InsertDeprovisioningOperation` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=61,col=45::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Provisioning).InsertProvisioningOperation` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=126,col=45::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Provisioning).InsertProvisioningOperation` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=263,col=47::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Deprovisioning).InsertDeprovisioningOperation` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=275,col=12::Error return value of `svc.Update` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=322,col=12::Error return value of `svc.Update` is not checked (errcheck)
+::error file=internal/broker/instance_update_test.go,line=400,col=47::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Deprovisioning).InsertDeprovisioningOperation` is not checked (errcheck)
+::error file=cmd/accountcleanup/main.go,line=70,col=26::Error return value of `cleaner.HaltIstioSidecar` is not checked (errcheck)
+::error file=internal/kubeconfig/provider_test.go,line=27,col=18::Error return value of `kcpClient.Create` is not checked (errcheck)
+::error file=internal/kubeconfig/provider_test.go,line=67,col=18::Error return value of `kcpClient.Create` is not checked (errcheck)
+::error file=internal/kubeconfig/provider_test.go,line=97,col=11::Error return value of `wait.Poll` is not checked (errcheck)
+::error file=internal/kubeconfig/provider_test.go,line=106,col=16::Error return value of `env.Stop` is not checked (errcheck)
+::error file=internal/kubeconfig/provider_test.go,line=111,col=18::Error return value of `kcpClient.Create` is not checked (errcheck)
+::error file=internal/process/steps/gardener_cluster.go,line=190,col=29::Error return value of `unstructured.SetNestedField` is not checked (errcheck)
+::error file=internal/process/steps/gardener_cluster.go,line=194,col=29::Error return value of `unstructured.SetNestedField` is not checked (errcheck)
+::error file=internal/process/steps/gardener_cluster.go,line=195,col=29::Error return value of `unstructured.SetNestedField` is not checked (errcheck)
+::error file=internal/process/steps/gardener_cluster_test.go,line=61,col=20::Error return value of `os.InsertOperation` is not checked (errcheck)
+::error file=internal/process/steps/gardener_cluster_test.go,line=104,col=20::Error return value of `os.InsertOperation` is not checked (errcheck)
+::error file=internal/process/steps/gardener_cluster_test.go,line=140,col=20::Error return value of `os.InsertOperation` is not checked (errcheck)
+::error file=internal/process/steps/kyma_template_test.go,line=18,col=33::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Operations).InsertOperation` is not checked (errcheck)
+::error file=cmd/trialcleanup/main.go,line=80,col=26::Error return value of `cleaner.HaltIstioSidecar` is not checked (errcheck)
+::error file=internal/avs/client.go,line=269,col=9::Error return value of `io.Copy` is not checked (errcheck)
+::error file=internal/avs/model_test.go,line=55,col=16::Error return value of `json.Unmarshal` is not checked (errcheck)
+::error file=cmd/deprovisionretrigger/main.go,line=70,col=26::Error return value of `cleaner.HaltIstioSidecar` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=36,col=13::Error return value of `mgr.AddStep` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=37,col=13::Error return value of `mgr.AddStep` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=38,col=13::Error return value of `mgr.AddStep` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=42,col=13::Error return value of `mgr.Execute` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=66,col=13::Error return value of `mgr.Execute` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=109,col=13::Error return value of `mgr.Execute` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=143,col=44::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Operations).InsertOperation` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=253,col=20::Error return value of `h.OnStepProcessed` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=255,col=19::Error return value of `h.OnStepExecuted` is not checked (errcheck)
+::error file=internal/process/staged_manager_test.go,line=314,col=44::Error return value of `(github.com/kyma-project/kyma-environment-broker/internal/storage.Operations).InsertOperation` is not checked (errcheck)
+::error file=internal/provider/sap-converged-cloud_provider.go,line=37::File is not `goimports`-ed (goimports)
+::error file=internal/process/input/input.go,line=29::File is not `goimports`-ed (goimports)
+::error file=common/hyperscaler/account_pool.go,line=108,col=9::composites: github.com/kyma-project/kyma-environment-broker/common/gardener.Shoot struct literal uses unkeyed fields (govet)
+::error file=common/hyperscaler/account_pool.go,line=151,col=10::composites: github.com/kyma-project/kyma-environment-broker/common/gardener.SecretBinding struct literal uses unkeyed fields (govet)
+::error file=common/hyperscaler/account_pool.go,line=163,col=11::composites: github.com/kyma-project/kyma-environment-broker/common/gardener.SecretBinding struct literal uses unkeyed fields (govet)
+::error file=common/hyperscaler/shared_pool.go,line=67,col=11::composites: github.com/kyma-project/kyma-environment-broker/common/gardener.SecretBinding struct literal uses unkeyed fields (govet)
+::error file=common/hyperscaler/shared_pool.go,line=71,col=8::composites: github.com/kyma-project/kyma-environment-broker/common/gardener.Shoot struct literal uses unkeyed fields (govet)
+::error file=common/orchestration/resolver.go,line=139,col=13::composites: github.com/kyma-project/kyma-environment-broker/common/gardener.Shoot struct literal uses unkeyed fields (govet)
+::error file=internal/process/steps/kyma_template.go,line=52,col=9::composites: github.com/kyma-project/kyma-environment-broker/internal.UpgradeKymaOperation struct literal uses unkeyed fields (govet)
+::error file=internal/process/steps/lifecycle_manager_kubeconfig.go,line=97,col=9::composites: github.com/kyma-project/kyma-environment-broker/internal.UpgradeKymaOperation struct literal uses unkeyed fields (govet)
+::error file=internal/process/upgrade_kyma/apply_kyma_step.go,line=25,col=9::composites: github.com/kyma-project/kyma-environment-broker/internal.UpgradeKymaOperation struct literal uses unkeyed fields (govet)
+::error file=common/orchestration/resolver_test.go,line=208,col=16::copylocks: assignment copies lock value to client.Fake: k8s.io/client-go/testing.Fake (govet)
+::error file=cmd/broker/deprovisioning_suite_test.go,line=54,col=7::lostcancel: the cancel function returned by context.WithTimeout should be called, not discarded, to avoid a context leak (govet)
+::error file=cmd/broker/suite_test.go,line=127,col=7::lostcancel: the cancel function returned by context.WithTimeout should be called, not discarded, to avoid a context leak (govet)
+::error file=cmd/broker/suite_test.go,line=594,col=7::lostcancel: the cancel function returned by context.WithTimeout should be called, not discarded, to avoid a context leak (govet)
+::error file=internal/dto.go,line=193,col=2::structtag: struct field tag `json:"networking,omitempty""` not compatible with reflect.StructTag.Get: key:"value" pairs not separated by spaces (govet)
+::error file=internal/process/staged_manager_test.go,line=202,col=2::unreachable: unreachable code (govet)
+::error file=internal/storage/driver/memory/operation.go,line=199,col=2::unreachable: unreachable code (govet)
+::error file=internal/orchestration/manager/upgrade_kyma.go,line=188,col=14::unusedresult: result of fmt.Errorf call not used (govet)

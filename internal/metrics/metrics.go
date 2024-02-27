@@ -7,26 +7,38 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter) {
-	opResultCollector := NewOperationResultCollector()
+const (
+	prometheusNamespace = "kcp"
+	prometheusSubsystem = "keb"
+)
+
+/*var noAction = func(ctx context.Context, ev interface{}) error {
+	return nil
+}*/
+
+func RegisterAll(
+	sub event.Subscriber, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter,
+) {
 	opDurationCollector := NewOperationDurationCollector()
-	stepResultCollector := NewStepResultCollector()
-	prometheus.MustRegister(opResultCollector, opDurationCollector, stepResultCollector)
+	prometheus.MustRegister(opDurationCollector)
 	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
 
-	sub.Subscribe(process.ProvisioningStepProcessed{}, opResultCollector.OnProvisioningStepProcessed)
-	sub.Subscribe(process.DeprovisioningStepProcessed{}, opResultCollector.OnDeprovisioningStepProcessed)
-	sub.Subscribe(process.UpgradeKymaStepProcessed{}, opResultCollector.OnUpgradeKymaStepProcessed)
-	sub.Subscribe(process.UpgradeClusterStepProcessed{}, opResultCollector.OnUpgradeClusterStepProcessed)
-	sub.Subscribe(process.ProvisioningSucceeded{}, opResultCollector.OnProvisioningSucceeded)
+	/*
+		sub.Subscribe(process.ProvisioningStepProcessed{}, noAction)
+		sub.Subscribe(process.DeprovisioningStepProcessed{}, noAction)
+		sub.Subscribe(process.UpgradeKymaStepProcessed{}, noAction)
+		sub.Subscribe(process.UpgradeClusterStepProcessed{}, noAction)
+		sub.Subscribe(process.ProvisioningSucceeded{}, noAction)
+		sub.Subscribe(process.ProvisioningStepProcessed{}, noAction)
+		sub.Subscribe(process.DeprovisioningStepProcessed{}, noAction)
+		sub.Subscribe(process.OperationStepProcessed{}, noAction)
+		sub.Subscribe(process.OperationStepProcessed{}, noAction)
+		sub.Subscribe(process.OperationSucceeded{}, noAction)
+	*/
+
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
-	sub.Subscribe(process.ProvisioningStepProcessed{}, stepResultCollector.OnProvisioningStepProcessed)
-	sub.Subscribe(process.DeprovisioningStepProcessed{}, stepResultCollector.OnDeprovisioningStepProcessed)
-	sub.Subscribe(process.OperationStepProcessed{}, stepResultCollector.OnOperationStepProcessed)
-	sub.Subscribe(process.OperationStepProcessed{}, opResultCollector.OnOperationStepProcessed)
-	sub.Subscribe(process.OperationSucceeded{}, opResultCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 

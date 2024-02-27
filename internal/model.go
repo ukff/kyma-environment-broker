@@ -160,8 +160,8 @@ func (i *Instance) GetSubscriptionGlobalAccoundID() string {
 
 func (i *Instance) GetInstanceDetails() (InstanceDetails, error) {
 	result := i.InstanceDetails
-	//overwrite RuntimeID in InstanceDetails with Instance.RuntimeID
-	//needed for runtimes suspended without clearing RuntimeID in deprovisioning operation
+	// overwrite RuntimeID in InstanceDetails with Instance.RuntimeID
+	// needed for runtimes suspended without clearing RuntimeID in deprovisioning operation
 	result.RuntimeID = i.RuntimeID
 	return result, nil
 }
@@ -390,7 +390,9 @@ type UpgradeClusterOperation struct {
 	Operation
 }
 
-func NewRuntimeState(runtimeID, operationID string, kymaConfig *gqlschema.KymaConfigInput, clusterConfig *gqlschema.GardenerConfigInput) RuntimeState {
+func NewRuntimeState(
+	runtimeID, operationID string, kymaConfig *gqlschema.KymaConfigInput, clusterConfig *gqlschema.GardenerConfigInput,
+) RuntimeState {
 	var (
 		kymaConfigInput    gqlschema.KymaConfigInput
 		clusterConfigInput gqlschema.GardenerConfigInput
@@ -412,7 +414,9 @@ func NewRuntimeState(runtimeID, operationID string, kymaConfig *gqlschema.KymaCo
 	}
 }
 
-func NewRuntimeStateWithReconcilerInput(runtimeID, operationID string, reconcilerInput *reconcilerApi.Cluster) RuntimeState {
+func NewRuntimeStateWithReconcilerInput(
+	runtimeID, operationID string, reconcilerInput *reconcilerApi.Cluster,
+) RuntimeState {
 	return RuntimeState{
 		ID:           uuid.New().String(),
 		CreatedAt:    time.Now(),
@@ -490,6 +494,7 @@ func (r *RuntimeState) buildKymaConfigFromClusterSetup() gqlschema.KymaConfigInp
 type OperationStats struct {
 	Provisioning   map[domain.LastOperationState]int
 	Deprovisioning map[domain.LastOperationState]int
+	Update         map[domain.LastOperationState]int
 }
 
 // InstanceStats provide number of instances per Global Account ID
@@ -509,7 +514,9 @@ func NewProvisioningOperation(instanceID string, parameters ProvisioningParamete
 }
 
 // NewProvisioningOperationWithID creates a fresh (just starting) instance of the ProvisioningOperation with provided ID
-func NewProvisioningOperationWithID(operationID, instanceID string, parameters ProvisioningParameters) (ProvisioningOperation, error) {
+func NewProvisioningOperationWithID(
+	operationID, instanceID string, parameters ProvisioningParameters,
+) (ProvisioningOperation, error) {
 	return ProvisioningOperation{
 		Operation: Operation{
 			ID:                     operationID,
@@ -546,7 +553,10 @@ func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (D
 	return DeprovisioningOperation{
 		Operation: Operation{
 			RuntimeOperation: orchestration.RuntimeOperation{
-				Runtime: orchestration.Runtime{GlobalAccountID: instance.GlobalAccountID, RuntimeID: instance.RuntimeID, Region: instance.ProviderRegion},
+				Runtime: orchestration.Runtime{
+					GlobalAccountID: instance.GlobalAccountID, RuntimeID: instance.RuntimeID,
+					Region: instance.ProviderRegion,
+				},
 			},
 			ID:                     operationID,
 			Version:                0,
@@ -580,7 +590,8 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		UpdatingParameters:     updatingParams,
 		RuntimeOperation: orchestration.RuntimeOperation{
 			Runtime: orchestration.Runtime{
-				Region: instance.ProviderRegion},
+				Region: instance.ProviderRegion,
+			},
 		},
 	}
 	if updatingParams.OIDC != nil {
@@ -617,7 +628,8 @@ func NewSuspensionOperationWithID(operationID string, instance *Instance) Deprov
 			Temporary:              true,
 			RuntimeOperation: orchestration.RuntimeOperation{
 				Runtime: orchestration.Runtime{
-					Region: instance.ProviderRegion},
+					Region: instance.ProviderRegion,
+				},
 			},
 		},
 	}
@@ -663,12 +675,14 @@ func (l ComponentConfigurationInputList) DeepCopy() []*gqlschema.ComponentConfig
 			cpyCfg = append(cpyCfg, mapped)
 		}
 
-		copiedList = append(copiedList, &gqlschema.ComponentConfigurationInput{
-			Component:     component.Component,
-			Namespace:     component.Namespace,
-			SourceURL:     component.SourceURL,
-			Configuration: cpyCfg,
-		})
+		copiedList = append(
+			copiedList, &gqlschema.ComponentConfigurationInput{
+				Component:     component.Component,
+				Namespace:     component.Namespace,
+				SourceURL:     component.SourceURL,
+				Configuration: cpyCfg,
+			},
+		)
 	}
 	return copiedList
 }
