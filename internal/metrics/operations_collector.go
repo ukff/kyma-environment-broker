@@ -121,7 +121,7 @@ func NewOperationsCollector(statsGetter OperationsStatsGetter) *OperationsCollec
 				nil,
 			),
 			succeededUpdate: prometheus.NewDesc(
-				fqName(internal.OperationTypeProvision, domain.Succeeded),
+				fqName(internal.OperationTypeUpdate, domain.Succeeded),
 				"The number of succeeded update operations",
 				[]string{"plan_id"},
 				nil,

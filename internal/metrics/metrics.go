@@ -18,7 +18,7 @@ func RegisterAll(
 	prometheus.MustRegister(opDurationCollector)
 	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
-	
+
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
