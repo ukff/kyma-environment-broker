@@ -115,7 +115,7 @@ func NewOperationsCollector(statsGetter OperationsStatsGetter) *OperationsCollec
 				nil,
 			),
 			inProgressUpdate: prometheus.NewDesc(
-				fqName(internal.OperationTypeUpdate, domain.Succeeded),
+				fqName(internal.OperationTypeUpdate, domain.InProgress),
 				"The number of update operations in progress",
 				[]string{"plan_id"},
 				nil,
