@@ -27,9 +27,9 @@ func Register(ctx context.Context, sub event.Subscriber, db operationsGetter, in
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 	
-	sub.Subscribe(process.ProvisioningFinished{}, opCounters.onOperationFinished)
-	sub.Subscribe(process.DeprovisioningFinished{}, opCounters.onOperationFinished)
-	sub.Subscribe(process.UpdateFinished{}, opCounters.onOperationFinished)
+	sub.Subscribe(process.ProvisioningFinished{}, opCounters.handler)
+	sub.Subscribe(process.DeprovisioningFinished{}, opCounters.handler)
+	sub.Subscribe(process.UpdateFinished{}, opCounters.handler)
 	
 	StartOpsMetricService(ctx, db, logger)
 }

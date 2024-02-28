@@ -11,8 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// OperationsStatsGetter provides metrics, which shows how many operations were done for the following plans:
-
+// operations_counter exposes:
 // - kcp_keb_operations_{plan_name}_provisioning_failed_total
 // - kcp_keb_operations_{plan_name}_provisioning_in_progress_total
 // - kcp_keb_operations_{plan_name}_provisioning_succeeded_total
@@ -60,14 +59,13 @@ func NewOperationsCounters() *operationStats {
 }
 
 func (o *operationStats) Register() {
-	for key, counter := range o.createMetrics() {
+	for key, counter := range o.createCounters() {
 		prometheus.MustRegister(counter)
 		o.operationsCounters[key] = counter
 	}
 }
 
-func (o *operationStats) increaseCounter(operationType internal.OperationType, state domain.LastOperationState, plan broker.PlanID) error {
-	key := o.buildKeyFor(operationType, state, plan)
+func (o *operationStats) increaseCounterByKey(key counterKey) error {
 	if _, ok := o.operationsCounters[key]; !ok {
 		return fmt.Errorf("counter for key %s not found", key)
 	}
@@ -79,9 +77,8 @@ func (o *operationStats) buildKeyFor(operationType internal.OperationType, state
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, state, planID))
 }
 
-func (o *operationStats) buildMetricFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, prometheus.Counter) {
-	key := o.buildKeyFor(operationType, state, planID)
-	return key, prometheus.NewCounter(
+func (o *operationStats) buildCounterFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, prometheus.Counter) {
+	return o.buildKeyFor(operationType, state, planID), prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -94,25 +91,25 @@ func (o *operationStats) buildMetricFor(operationType internal.OperationType, st
 	)
 }
 
-func (o *operationStats) createMetrics() map[counterKey]prometheus.Counter {
-	counters := make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates),)
+func (o *operationStats) createCounters() map[counterKey]prometheus.Counter {
+	result := make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates),)
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
-				key, metric := o.buildMetricFor(operationType, state, plan)
-				counters[key] = metric
+				key, metric := o.buildCounterFor(operationType, state, plan)
+				result[key] = metric
 			}
 		}
 	}
-	return counters
+	return result
 }
 
-func (o *operationStats) onOperationFinished(_ context.Context, operation interface{}) error {
-	switch data := operation.(type) {
+func (o *operationStats) handler(_ context.Context, event interface{}) error {
+	switch data := event.(type) {
 	case process.ProvisioningFinished:
 	case process.DeprovisioningFinished:
 	case process.UpdateFinished:
-		return o.increaseCounter(data.Operation.Type, data.Operation.State, broker.PlanID(data.Operation.Plan))
+		return o.increaseCounterByKey(o.buildKeyFor(data.Operation.Type, data.Operation.State, broker.PlanID(data.Operation.Plan)))
 	}
 	return fmt.Errorf("unexpected event type")
 }
