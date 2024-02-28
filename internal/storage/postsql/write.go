@@ -1,7 +1,6 @@
 package postsql
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -227,8 +226,7 @@ func (ws writeSession) InsertRuntimeState(state dbmodel.RuntimeStateDTO) dberr.E
 		Exec()
 
 	if err != nil {
-		var err *pq.Error
-		if errors.As(err, &err) {
+		if err, ok := err.(*pq.Error); ok {
 			if err.Code == UniqueViolationErrorCode {
 				return dberr.AlreadyExists("RuntimeState with id %s already exist", state.ID)
 			}
@@ -268,7 +266,7 @@ func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 		Exec()
 
 	if err != nil {
-		if errors.Is(err, dbr.ErrNotFound) {
+		if err == dbr.ErrNotFound {
 			return dberr.NotFound("Cannot find Operation with ID:'%s'", op.ID)
 		}
 		return dberr.Internal("Failed to update record to Operation table: %s", err)
