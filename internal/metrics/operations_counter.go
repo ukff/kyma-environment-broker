@@ -48,7 +48,6 @@ var (
 
 type (
 	counterKey string
-
 	operationStats struct {
 		operationsCounters map[counterKey]prometheus.Counter
 	}
@@ -67,9 +66,7 @@ func (o *operationStats) Register() {
 	}
 }
 
-func (o *operationStats) increaseCounter(
-	operationType internal.OperationType, state domain.LastOperationState, plan broker.PlanID,
-) error {
+func (o *operationStats) increaseCounter(operationType internal.OperationType, state domain.LastOperationState, plan broker.PlanID) error {
 	key := o.buildKeyFor(operationType, state, plan)
 	if _, ok := o.operationsCounters[key]; !ok {
 		return fmt.Errorf("counter for key %s not found", key)
@@ -78,15 +75,11 @@ func (o *operationStats) increaseCounter(
 	return nil
 }
 
-func (o *operationStats) buildKeyFor(
-	operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID,
-) counterKey {
+func (o *operationStats) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) counterKey {
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, state, planID))
 }
 
-func (o *operationStats) buildMetricFor(
-	operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID,
-) (counterKey, prometheus.Counter) {
+func (o *operationStats) buildMetricFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, prometheus.Counter) {
 	key := o.buildKeyFor(operationType, state, planID)
 	return key, prometheus.NewCounter(
 		prometheus.CounterOpts{
@@ -102,9 +95,7 @@ func (o *operationStats) buildMetricFor(
 }
 
 func (o *operationStats) createMetrics() map[counterKey]prometheus.Counter {
-	counters := make(
-		map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates),
-	)
+	counters := make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates),)
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
