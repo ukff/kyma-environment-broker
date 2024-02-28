@@ -14,10 +14,7 @@ const (
 	prometheusSubsystem = "keb"
 )
 
-func RegisterAll(
-	ctx context.Context, sub event.Subscriber, db operationsGetter, instanceStatsGetter InstancesStatsGetter,
-	logger logrus.FieldLogger,
-) {
+func Register(ctx context.Context, sub event.Subscriber, db operationsGetter, instanceStatsGetter InstancesStatsGetter, logger logrus.FieldLogger) {
 	opDurationCollector := NewOperationDurationCollector()
 	opCounters := NewOperationsCounters()
 	
@@ -30,7 +27,6 @@ func RegisterAll(
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 	
-	// Operation counters
 	sub.Subscribe(process.ProvisioningFinished{}, opCounters.onOperationFinished)
 	sub.Subscribe(process.DeprovisioningFinished{}, opCounters.onOperationFinished)
 	sub.Subscribe(process.UpdateFinished{}, opCounters.onOperationFinished)
