@@ -77,6 +77,7 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 }
 
+// moved from old internal/metrics/operations_collector.go
 func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
 	m, err := prometheus.NewConstMetric(
 		desc,
