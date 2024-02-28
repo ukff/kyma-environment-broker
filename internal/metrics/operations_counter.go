@@ -9,9 +9,10 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
+	`github.com/sirupsen/logrus`
 )
 
-// operations_counter exposes:
+// exposed metrics:
 // - kcp_keb_operations_{plan_name}_provisioning_failed_total
 // - kcp_keb_operations_{plan_name}_provisioning_in_progress_total
 // - kcp_keb_operations_{plan_name}_provisioning_succeeded_total
@@ -45,15 +46,16 @@ var (
 	}
 )
 
-type (
-	counterKey string
-	operationStats struct {
-		operationsCounters map[counterKey]prometheus.Counter
-	}
-)
+type counterKey string
 
-func NewOperationsCounters() *operationStats {
+type operationStats struct {
+	logger     logrus.FieldLogger
+	operationsCounters map[counterKey]prometheus.Counter
+}
+
+func NewOperationsCounters(logger logrus.FieldLogger) *operationStats {
 	return &operationStats{
+		logger: logger,
 		operationsCounters: make(map[counterKey]prometheus.Counter),
 	}
 }
@@ -105,11 +107,22 @@ func (o *operationStats) createCounters() map[counterKey]prometheus.Counter {
 }
 
 func (o *operationStats) handler(_ context.Context, event interface{}) error {
+	defer func() {
+		if r := recover(); r != nil {
+			o.logger.Errorf("panic recovered while handling operation counter: %v", r)
+		}
+	}()
+	
 	switch data := event.(type) {
 	case process.ProvisioningFinished:
 	case process.DeprovisioningFinished:
 	case process.UpdateFinished:
-		return o.increaseCounterByKey(o.buildKeyFor(data.Operation.Type, data.Operation.State, broker.PlanID(data.Operation.Plan)))
+		err := o.increaseCounterByKey(o.buildKeyFor(data.Operation.Type, data.Operation.State, broker.PlanID(data.Operation.Plan)))
+		if err != nil {
+			o.logger.Errorf("unable to increase counter for operation %s: %s", data.Operation.ID, err)
+			return err
+		}
+		return nil
 	}
 	return fmt.Errorf("unexpected event type")
 }
