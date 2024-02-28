@@ -34,20 +34,17 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector
 			prometheus.BuildFQName(prometheusNamespace, prometheusSubsystem, "instances_total"),
 			"The total number of instances",
 			[]string{},
-			nil,
-		),
+			nil),
 		instancesPerGAIDDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(prometheusNamespace, prometheusSubsystem, "global_account_id_instances_total"),
 			"The total number of instances by Global Account ID",
 			[]string{"global_account_id"},
-			nil,
-		),
+			nil),
 		licenseTypeDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(prometheusNamespace, prometheusSubsystem, "ers_context_license_type_total"),
 			"count of instances grouped by license types",
 			[]string{"license_type"},
-			nil,
-		),
+			nil),
 	}
 }
 
@@ -87,7 +84,7 @@ func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labe
 		float64(value),
 		labelValues...,
 	)
-
+	
 	if err != nil {
 		logrus.Errorf("unable to register metric %s", err.Error())
 		return

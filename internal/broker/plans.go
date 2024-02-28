@@ -100,8 +100,7 @@ func GCPRegions() []string {
 	return []string{
 		"europe-west3",
 		"asia-south1",
-		"us-central1",
-	}
+		"us-central1"}
 }
 
 func AWSRegions(euRestrictedAccess bool) []string {
@@ -109,10 +108,8 @@ func AWSRegions(euRestrictedAccess bool) []string {
 	if euRestrictedAccess {
 		return []string{"eu-central-1"}
 	}
-	return []string{
-		"eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-1",
-		"ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2",
-	}
+	return []string{"eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-1",
+		"ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2"}
 }
 
 func SapConvergedCloudRegions() []string {
@@ -277,49 +274,33 @@ func requiredOwnClusterSchemaProperties() []string {
 	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
 }
 
-func SapConvergedCloudSchema(
-	machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool,
-) *map[string]interface{} {
+func SapConvergedCloudSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, SapConvergedCloudRegions(), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func PreviewSchema(
-	machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool,
-	euAccessRestricted bool,
-) *map[string]interface{} {
+func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.Networking = NewNetworkingSchema()
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func GCPSchema(
-	machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool,
-) *map[string]interface{} {
+func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func AWSSchema(
-	machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool,
-	euAccessRestricted bool,
-) *map[string]interface{} {
+func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func AzureSchema(
-	machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool,
-	euAccessRestricted bool,
-) *map[string]interface{} {
+func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func AzureLiteSchema(
-	machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool,
-	euAccessRestricted bool,
-) *map[string]interface{} {
+func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 
 	properties.AutoScalerMax.Minimum = 2
@@ -334,9 +315,7 @@ func AzureLiteSchema(
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func FreemiumSchema(
-	provider internal.CloudProvider, additionalParams, update bool, euAccessRestricted bool,
-) *map[string]interface{} {
+func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	if update && !additionalParams {
 		return empty()
 	}
@@ -405,9 +384,7 @@ func empty() *map[string]interface{} {
 	return &empty
 }
 
-func createSchemaWithProperties(
-	properties ProvisioningProperties, additionalParams, update bool, requiered []string,
-) *map[string]interface{} {
+func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool, requiered []string) *map[string]interface{} {
 	if additionalParams {
 		properties.IncludeAdditional()
 	}
@@ -441,10 +418,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(
-	plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool,
-	includeNewMachineTypes bool,
-) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, includeNewMachineTypes bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	azureMachinesNames := AzureMachinesNames()
@@ -480,84 +454,38 @@ func Plans(
 		"m5.12xlarge": awsMachinesDisplay["m5.12xlarge"],
 	}
 
-	awsSchema := AWSSchema(
-		awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted,
-	)
-	awsCatalogSchema := AWSSchema(
-		awsCatalogMachinesDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, false, euAccessRestricted,
-	)
+	awsSchema := AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	awsCatalogSchema := AWSSchema(awsCatalogMachinesDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
-	azureSchema := AzureSchema(
-		azureMachinesDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted,
-	)
-	azureLiteSchema := AzureLiteSchema(
-		azureLiteMachinesDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted,
-	)
+	azureSchema := AzureSchema(azureMachinesDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	freemiumSchema := FreemiumSchema(provider, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, false)
 	ownClusterSchema := OwnClusterSchema(false)
-	previewCatalogSchema := PreviewSchema(
-		awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted,
-	)
-	sapConvergedCloudSchema := SapConvergedCloudSchema(
-		sapConvergedCloudMachinesDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false,
-	)
+	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	sapConvergedCloudSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false)
 	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false)
 
 	outputPlans := map[string]domain.ServicePlan{
-		AWSPlanID: defaultServicePlan(
-			AWSPlanID, AWSPlanName, plans, awsSchema,
-			AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted),
-		),
-		GCPPlanID: defaultServicePlan(
-			GCPPlanID, GCPPlanName, plans, gcpSchema,
-			GCPSchema(gcpMachinesDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, true),
-		),
-		SapConvergedCloudPlanID: defaultServicePlan(
-			SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudSchema, SapConvergedCloudSchema(
-				sapConvergedCloudMachinesDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true,
-			),
-		),
-		AzurePlanID: defaultServicePlan(
-			AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(
-				azureMachinesDisplay, azureMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted,
-			),
-		),
-		AzureLitePlanID: defaultServicePlan(
-			AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(
-				azureLiteMachinesDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true,
-				euAccessRestricted,
-			),
-		),
-		FreemiumPlanID: defaultServicePlan(
-			FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema,
-			FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted),
-		),
-		TrialPlanID: defaultServicePlan(
-			TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true),
-		),
-		OwnClusterPlanID: defaultServicePlan(
-			OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true),
-		),
-		PreviewPlanID: defaultServicePlan(
-			PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema,
-			AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted),
-		),
+		AWSPlanID:               defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		GCPPlanID:               defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, true)),
+		SapConvergedCloudPlanID: defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudSchema, SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true)),
+		AzurePlanID:             defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		AzureLitePlanID:         defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		FreemiumPlanID:          defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		TrialPlanID:             defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
+		OwnClusterPlanID:        defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
+		PreviewPlanID:           defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
 	}
 
 	if !includeNewMachineTypes {
-		outputPlans[AWSPlanID] = defaultServicePlan(
-			AWSPlanID, AWSPlanName, plans, awsCatalogSchema,
-			AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted),
-		)
+		outputPlans[AWSPlanID] = defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted))
 	}
 
 	return outputPlans
 }
 
-func defaultServicePlan(
-	id, name string, plans PlansConfig, createParams, updateParams *map[string]interface{},
-) domain.ServicePlan {
+func defaultServicePlan(id, name string, plans PlansConfig, createParams, updateParams *map[string]interface{}) domain.ServicePlan {
 	servicePlan := domain.ServicePlan{
 		ID:          id,
 		Name:        name,
