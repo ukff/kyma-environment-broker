@@ -46,6 +46,18 @@ type ProvisioningSucceeded struct {
 	Operation internal.ProvisioningOperation
 }
 
+type ProvisioningFinished struct {
+	Operation internal.ProvisioningOperation
+}
+
+type DeprovisioningFinished struct {
+	Operation internal.DeprovisioningOperation
+}
+
+type UpdateFinished struct {
+	Operation internal.UpdatingOperation
+}
+
 type OperationStepProcessed struct {
 	StepProcessed
 	OldOperation internal.Operation

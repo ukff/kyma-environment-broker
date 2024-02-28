@@ -13,7 +13,7 @@ import (
 	"runtime/pprof"
 	"sort"
 	"time"
-	
+
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
@@ -211,29 +211,11 @@ func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
 	}
 }
 
-func ConnectToKubernetesCluster() {
-
-}
-
 func main() {
 	apiextensionsv1.AddToScheme(scheme.Scheme)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	// set up signals so we handle the first shutdown signal gracefully
-	stopCh := make(chan struct{})
-	gruntime.HandleCrash(func(i gruntime.Crash) {
-		log.Printf("error: %+v", i.Err)
-		cancel()
-		close(stopCh)
-	}
-	// set up signals so we handle the first shutdown signal gracefully
-	stopCh := make(chan struct{})
-	gruntime.HandleCrash(func(i gruntime.Crash) {
-		log.Printf("error: %+v", i.Err)
-		cancel()
-		close(stopCh)
-	
-	}
+
 	// create and fill config
 	var cfg Config
 	err := envconfig.InitWithPrefix(&cfg, "APP")
@@ -390,8 +372,8 @@ func main() {
 	eventBroker := event.NewPubSub(logs)
 
 	// metrics collectors
-	metrics.RegisterAll(eventBroker, db.Operations(), db.Instances())
-	metrics.StartOpsMetricService(ctx, db.Operations(), logs)
+	metrics.RegisterAll(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 
