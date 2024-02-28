@@ -49,17 +49,12 @@ func StartOpsMetricService(ctx context.Context, db operationsGetter, logger logr
 		lastUpdate: time.Now().Add(-Retention),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
-		operations: promauto.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: prometheusNamespace,
-				Subsystem: prometheusSubsystem,
-				Name:      "operation_result",
-				Help:      "Results of operations",
-			}, []string{
-				"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category",
-				"error_reason",
-			},
-		),
+		operations: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "operation_result",
+			Help:      "Results of operations",
+		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason"}),
 	}
 	go svc.run(ctx)
 }
