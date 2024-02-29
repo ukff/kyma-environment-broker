@@ -56,19 +56,19 @@ var (
 type counterKey string
 
 type operationsCounter struct {
-	logger   logrus.FieldLogger
+	logger  logrus.FieldLogger
 	metrics map[counterKey]prometheus.Counter
 }
 
 func NewOperationsCounters(logger logrus.FieldLogger) *operationsCounter {
 	operationsCounter := &operationsCounter{
-		logger:   logger,
+		logger:  logger,
 		metrics: make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
-				operationsCounter.metrics[stats.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
+				operationsCounter.metrics[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
 					prometheus.CounterOpts{
 						Name: prometheus.BuildFQName(
 							prometheusNamespace,
@@ -81,39 +81,39 @@ func NewOperationsCounters(logger logrus.FieldLogger) *operationsCounter {
 			}
 		}
 	}
-	return stats
+	return operationsCounter
 }
 
-func (op *operationsCounter) MustRegister() {
-	for _, metric := range op.metrics {
+func (opCounter *operationsCounter) MustRegister() {
+	for _, metric := range opCounter.metrics {
 		prometheus.MustRegister(metric)
 	}
 }
 
-func (op *operationsCounter) handler(_ context.Context, event interface{}) error {
+func (opCounter *operationsCounter) handler(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			counter.logger.Errorf("panic recovered while handling operation counter: %v", r)
+			opCounter.logger.Errorf("panic recovered while handling operation counter: %v", r)
 		}
 	}()
 
 	var counterKey counterKey
 	switch payload := event.(type) {
 	case process.ProvisioningFinished:
-		counterKey = counter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
+		counterKey = opCounter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
 	case process.DeprovisioningFinished:
-		counterKey = counter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
+		counterKey = opCounter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
 	case process.UpdateFinished:
-		counterKey = counter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
+		counterKey = opCounter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
 	default:
 		return fmt.Errorf("unexpected event type")
 	}
 
-	if _, exists := counter.counters[counterKey]; !exists {
+	if _, exists := opCounter.metrics[counterKey]; !exists {
 		return errors.Errorf("counter with %s not exists", counterKey)
 	}
 
-	op.metrics[counterKey].Inc()
+	opCounter.metrics[counterKey].Inc()
 
 	return nil
 }

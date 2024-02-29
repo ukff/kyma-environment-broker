@@ -113,10 +113,10 @@ func TestOperationsCounter(t *testing.T) {
 	})
 
 	t.Run("should get correct number of metrics", func(t *testing.T) {
-		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.counters[key1]))
-		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.counters[key2]))
-		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.counters[key3]))
-		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.counters[key4]))
+		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.metrics[key1]))
+		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.metrics[key2]))
+		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.metrics[key3]))
+		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.metrics[key4]))
 	})
 
 	t.Cleanup(func() {
