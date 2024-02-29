@@ -1,16 +1,16 @@
-package metrics
+package metricsv2
 
 import (
 	"context"
 	"fmt"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	`github.com/kyma-project/kyma-environment-broker/internal/process`
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	`github.com/pkg/errors`
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	`github.com/sirupsen/logrus`
+	"github.com/sirupsen/logrus"
 )
 
 // exposed metrics:
@@ -25,7 +25,9 @@ import (
 // - kcp_keb_operations_{plan_name}_update_succeeded_total
 
 const (
-	metricNamePattern = "operations_%s_%s_total"
+	prometheusNamespace = "kcp"
+	prometheusSubsystem = "keb"
+	metricNamePattern   = "operations_%s_%s_total"
 )
 
 var (
@@ -94,7 +96,7 @@ func (o *operationsCounter) handler(_ context.Context, event interface{}) error 
 			o.logger.Errorf("panic recovered while handling operation counter: %v", r)
 		}
 	}()
-	
+
 	var counterKey counterKey
 	switch e := event.(type) {
 	case process.ProvisioningFinished:
@@ -106,11 +108,11 @@ func (o *operationsCounter) handler(_ context.Context, event interface{}) error 
 	default:
 		return fmt.Errorf("unexpected event type")
 	}
-	
+
 	return o.increase(counterKey)
 }
 
-func (o *operationsCounter) increase(key counterKey) error{
+func (o *operationsCounter) increase(key counterKey) error {
 	if _, exists := o.counters[key]; !exists {
 		return errors.Errorf("counter with %s not exists", key)
 	}
