@@ -1,13 +1,16 @@
 package metrics
 
 import (
+	"context"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
-func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter) {
+func Register(ctx context.Context, sub event.Subscriber, db operationsGetter, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter, logger logrus.FieldLogger) {
 	opResultCollector := NewOperationResultCollector()
 	opDurationCollector := NewOperationDurationCollector()
 	stepResultCollector := NewStepResultCollector()

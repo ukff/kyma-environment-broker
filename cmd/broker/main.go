@@ -350,7 +350,7 @@ func main() {
 	eventBroker := event.NewPubSub(logs)
 
 	// metrics collectors
-	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	metrics.Register(ctx, eventBroker, db.Operations(), db.Operations(), db.Instances(), logs)
 
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
