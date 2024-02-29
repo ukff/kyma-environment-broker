@@ -14,19 +14,19 @@ import (
 )
 
 // exposed metrics:
-// - kcp_keb_operations_{plan_name}_provisioning_failed_total
-// - kcp_keb_operations_{plan_name}_provisioning_in_progress_total
-// - kcp_keb_operations_{plan_name}_provisioning_succeeded_total
-// - kcp_keb_operations_{plan_name}_deprovisioning_failed_total
-// - kcp_keb_operations_{plan_name}_deprovisioning_in_progress_total
-// - kcp_keb_operations_{plan_name}_deprovisioning_succeeded_total
-// - kcp_keb_operations_{plan_name}_update_failed_total
-// - kcp_keb_operations_{plan_name}_update_in_progress_total
-// - kcp_keb_operations_{plan_name}_update_succeeded_total
+// - kcp_keb_v2_operations_{plan_name}_provisioning_failed_total
+// - kcp_keb_v2_operations_{plan_name}_provisioning_in_progress_total
+// - kcp_keb_v2_operations_{plan_name}_provisioning_succeeded_total
+// - kcp_keb_v2_operations_{plan_name}_deprovisioning_failed_total
+// - kcp_keb_v2_operations_{plan_name}_deprovisioning_in_progress_total
+// - kcp_keb_v2_operations_{plan_name}_deprovisioning_succeeded_total
+// - kcp_keb_v2_operations_{plan_name}_update_failed_total
+// - kcp_keb_v2_operations_{plan_name}_update_in_progress_total
+// - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
 
 const (
 	prometheusNamespace = "kcp"
-	prometheusSubsystem = "keb"
+	prometheusSubsystem = "keb_v2"
 	metricNamePattern   = "operations_%s_%s_total"
 )
 
