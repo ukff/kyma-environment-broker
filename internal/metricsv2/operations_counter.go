@@ -57,18 +57,18 @@ type counterKey string
 
 type operationsCounter struct {
 	logger   logrus.FieldLogger
-	counters map[counterKey]prometheus.Counter
+	metrics map[counterKey]prometheus.Counter
 }
 
 func NewOperationsCounters(logger logrus.FieldLogger) *operationsCounter {
-	stats := &operationsCounter{
+	operationsCounter := &operationsCounter{
 		logger:   logger,
-		counters: make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		metrics: make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
-				stats.counters[stats.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
+				operationsCounter.metrics[stats.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
 					prometheus.CounterOpts{
 						Name: prometheus.BuildFQName(
 							prometheusNamespace,
@@ -84,42 +84,40 @@ func NewOperationsCounters(logger logrus.FieldLogger) *operationsCounter {
 	return stats
 }
 
-func (o *operationsCounter) MustRegister() {
-	for _, counter := range o.counters {
-		prometheus.MustRegister(counter)
+func (op *operationsCounter) MustRegister() {
+	for _, metric := range op.metrics {
+		prometheus.MustRegister(metric)
 	}
 }
 
-func (o *operationsCounter) handler(_ context.Context, event interface{}) error {
+func (op *operationsCounter) handler(_ context.Context, event interface{}) error {
 	defer func() {
-		if r := recover(); r != nil {
-			o.logger.Errorf("panic recovered while handling operation counter: %v", r)
+		if recovery := recover(); recovery != nil {
+			counter.logger.Errorf("panic recovered while handling operation counter: %v", r)
 		}
 	}()
 
 	var counterKey counterKey
-	switch e := event.(type) {
+	switch payload := event.(type) {
 	case process.ProvisioningFinished:
-		counterKey = o.buildKeyFor(e.Operation.Type, e.Operation.State, broker.PlanID(e.Operation.Plan))
+		counterKey = counter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
 	case process.DeprovisioningFinished:
-		counterKey = o.buildKeyFor(e.Operation.Type, e.Operation.State, broker.PlanID(e.Operation.Plan))
+		counterKey = counter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
 	case process.UpdateFinished:
-		counterKey = o.buildKeyFor(e.Operation.Type, e.Operation.State, broker.PlanID(e.Operation.Plan))
+		counterKey = counter.buildKeyFor(payload.Operation.Type, payload.Operation.State, broker.PlanID(payload.Operation.Plan))
 	default:
 		return fmt.Errorf("unexpected event type")
 	}
 
-	return o.increase(counterKey)
-}
-
-func (o *operationsCounter) increase(key counterKey) error {
-	if _, exists := o.counters[key]; !exists {
-		return errors.Errorf("counter with %s not exists", key)
+	if _, exists := counter.counters[counterKey]; !exists {
+		return errors.Errorf("counter with %s not exists", counterKey)
 	}
-	o.counters[key].Inc()
+
+	op.metrics[counterKey].Inc()
+
 	return nil
 }
 
-func (o *operationsCounter) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) counterKey {
+func (op *operationsCounter) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) counterKey {
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, state, planID))
 }
