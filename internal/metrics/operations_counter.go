@@ -3,11 +3,12 @@ package metrics
 import (
 	"context"
 	"fmt"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	`github.com/kyma-project/kyma-environment-broker/internal/process`
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	`github.com/pkg/errors`
 	"github.com/prometheus/client_golang/prometheus"
 	`github.com/sirupsen/logrus`
 )
@@ -22,6 +23,10 @@ import (
 // - kcp_keb_operations_{plan_name}_update_failed_total
 // - kcp_keb_operations_{plan_name}_update_in_progress_total
 // - kcp_keb_operations_{plan_name}_update_succeeded_total
+
+const (
+	metricNamePattern = "operations_%s_%s_total"
+)
 
 var (
 	supportedPlans = []broker.PlanID{
@@ -48,81 +53,71 @@ var (
 
 type counterKey string
 
-type operationStats struct {
-	logger     logrus.FieldLogger
-	operationsCounters map[counterKey]prometheus.Counter
+type operationsCounter struct {
+	logger   logrus.FieldLogger
+	counters map[counterKey]prometheus.Counter
 }
 
-func NewOperationsCounters(logger logrus.FieldLogger) *operationStats {
-	return &operationStats{
-		logger: logger,
-		operationsCounters: make(map[counterKey]prometheus.Counter),
+func NewOperationsCounters(logger logrus.FieldLogger) *operationsCounter {
+	stats := &operationsCounter{
+		logger:   logger,
+		counters: make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 	}
-}
-
-func (o *operationStats) Register() {
-	for key, counter := range o.createCounters() {
-		prometheus.MustRegister(counter)
-		o.operationsCounters[key] = counter
-	}
-}
-
-func (o *operationStats) increaseCounterByKey(key counterKey) error {
-	if _, ok := o.operationsCounters[key]; !ok {
-		return fmt.Errorf("counter for key %s not found", key)
-	}
-	o.operationsCounters[key].Inc()
-	return nil
-}
-
-func (o *operationStats) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) counterKey {
-	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, state, planID))
-}
-
-func (o *operationStats) buildCounterFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, prometheus.Counter) {
-	return o.buildKeyFor(operationType, state, planID), prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name: prometheus.BuildFQName(
-				prometheusNamespace, prometheusSubsystem,
-				fmt.Sprintf("operations_%s_%s_total", string(operationType), string(state)),
-			),
-			Help: fmt.Sprintf("The number of %s operations in %s state", operationType, state),
-		},
-	)
-}
-
-func (o *operationStats) createCounters() map[counterKey]prometheus.Counter {
-	result := make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates),)
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
-				key, metric := o.buildCounterFor(operationType, state, plan)
-				result[key] = metric
+				stats.counters[stats.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
+					prometheus.CounterOpts{
+						Name: prometheus.BuildFQName(
+							prometheusNamespace,
+							prometheusSubsystem,
+							fmt.Sprintf(metricNamePattern, string(operationType), string(state)),
+						),
+						Help: fmt.Sprintf("The counter of %s operations in %s state", operationType, state),
+					},
+				)
 			}
 		}
 	}
-	return result
+	return stats
 }
 
-func (o *operationStats) handler(_ context.Context, event interface{}) error {
+func (o *operationsCounter) MustRegister() {
+	for _, counter := range o.counters {
+		prometheus.MustRegister(counter)
+	}
+}
+
+func (o *operationsCounter) handler(_ context.Context, event interface{}) error {
 	defer func() {
 		if r := recover(); r != nil {
 			o.logger.Errorf("panic recovered while handling operation counter: %v", r)
 		}
 	}()
 	
-	switch data := event.(type) {
+	var counterKey counterKey
+	switch e := event.(type) {
 	case process.ProvisioningFinished:
+		counterKey = o.buildKeyFor(e.Operation.Type, e.Operation.State, broker.PlanID(e.Operation.Plan))
 	case process.DeprovisioningFinished:
+		counterKey = o.buildKeyFor(e.Operation.Type, e.Operation.State, broker.PlanID(e.Operation.Plan))
 	case process.UpdateFinished:
-		err := o.increaseCounterByKey(o.buildKeyFor(data.Operation.Type, data.Operation.State, broker.PlanID(data.Operation.Plan)))
-		if err != nil {
-			o.logger.Errorf("unable to increase counter for operation %s: %s", data.Operation.ID, err)
-			return err
-		}
-		return nil
+		counterKey = o.buildKeyFor(e.Operation.Type, e.Operation.State, broker.PlanID(e.Operation.Plan))
+	default:
+		return fmt.Errorf("unexpected event type")
 	}
-	return fmt.Errorf("unexpected event type")
+	
+	return o.increase(counterKey)
+}
+
+func (o *operationsCounter) increase(key counterKey) error{
+	if _, exists := o.counters[key]; !exists {
+		return errors.Errorf("counter with %s not exists", key)
+	}
+	o.counters[key].Inc()
+	return nil
+}
+
+func (o *operationsCounter) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) counterKey {
+	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, state, planID))
 }
