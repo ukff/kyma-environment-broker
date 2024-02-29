@@ -33,6 +33,9 @@ func Register(ctx context.Context, sub event.Subscriber, db operationsGetter, op
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
+	StartOpsMetricService(ctx, db, logger)
+
 	// test of metrics for upcoming new implementation
-	metricsv2.Register(sub)
+	operationsCounter := metricsv2.NewOperationsCounters(logger)
+	operationsCounter.MustRegister()
 }
