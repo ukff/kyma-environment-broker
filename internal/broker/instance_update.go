@@ -224,7 +224,6 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	operationID := uuid.New().String()
-	logger = logger.WithField("operationID", operationID)
 
 	logger.Debugf("creating update operation %v", params)
 	operation := internal.NewUpdateOperation(operationID, instance, params)

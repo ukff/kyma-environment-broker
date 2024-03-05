@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	`github.com/kyma-project/kyma-environment-broker/internal/storage`
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/sirupsen/logrus"
@@ -40,9 +41,11 @@ func TestOperationsCounter(t *testing.T) {
 	opPlan4 := broker.GCPPlanID
 	eventsCount4 := 0
 	key4 := ctr.buildKeyFor(opType4, opState4, broker.PlanID(opPlan4))
-
+	
+	db := storage.NewMemoryStorage().Operations()
+	
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsCounters(logrus.WithField("metrics", "test"))
+		ctr = NewOperationsCounters(context.TODO(), db, logrus.WithField("metrics", "test"))
 		//ctr.MustRegister()
 	})
 

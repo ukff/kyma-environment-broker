@@ -614,6 +614,14 @@ func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	return rows, err
 }
 
+func (r readSession) GetOperationStatsV2() ([]dbmodel.OperationStatEntryV2, error) {
+	var rows []dbmodel.OperationStatEntryV2
+	// assumsion that in_progress operations will never be deleted from db, only this in success or failed state
+	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s group by type, state, provisioning_parameters ->> 'plan_id' where type = %s"), OperationTableName, domain.InProgress).Load(&rows)
+	return rows, err
+}
+
+
 func (r readSession) GetOperationStatsForOrchestration(orchestrationID string) ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
 	_, err := r.session.SelectBySql(fmt.Sprintf("select type, state, instance_id, provisioning_parameters ->> 'plan_id' AS plan_id from %s where orchestration_id='%s'",
