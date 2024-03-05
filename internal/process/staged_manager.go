@@ -6,7 +6,8 @@ import (
 	"log"
 	"sync"
 	"time"
-
+	
+	`github.com/kyma-project/kyma-environment-broker/internal/broker`
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -116,7 +117,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 		return 3 * time.Second, nil
 	}
 
-	logOperation := m.log.WithFields(logrus.Fields{"operation": operationID, "instanceID": operation.InstanceID, "planID": operation.ProvisioningParameters.PlanID})
+	logOperation := m.log.WithFields(logrus.Fields{"operation": operationID, "instanceID": operation.InstanceID, "PlanID": operation.ProvisioningParameters.PlanID})
 	logOperation.Infof("Start process operation steps for GlobalAccount=%s, ", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
 		timeoutErr := kebError.TimeoutError("operation has reached the time limit")
@@ -153,7 +154,16 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 			}
 			operation.EventInfof("processing step: %v", step.Name())
 
+			oldOpState := processedOperation.State
 			processedOperation, when, err = m.runStep(step, processedOperation, logStep)
+			if oldOpState != processedOperation.State {
+				m.publisher.Publish(context.TODO(), OperationCounting{
+					OpId:    processedOperation.ID,
+					PlanID:  broker.PlanID(processedOperation.ProvisioningParameters.PlanID),
+					OpState: processedOperation.State,
+					OpType:  processedOperation.Type,
+				})
+			}
 			if err != nil {
 				logStep.Errorf("Process operation failed: %s", err)
 				operation.EventErrorf(err, "step %v processing returned error", step.Name())
@@ -182,6 +192,13 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 
 	processedOperation.State = domain.Succeeded
 	processedOperation.Description = "Processing finished"
+	
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    processedOperation.ID,
+		PlanID:  broker.PlanID(processedOperation.ProvisioningParameters.PlanID),
+		OpState: processedOperation.State,
+		OpType:  processedOperation.Type,
+	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: processedOperation,
 	})
@@ -234,6 +251,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 			}
 		}
 
+		// ToCheck
 		m.publisher.Publish(context.TODO(), OperationStepProcessed{
 			StepProcessed: StepProcessed{
 				StepName: step.Name(),
@@ -260,7 +278,14 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 func (m *StagedManager) callPubSubOutsideSteps(operation *internal.Operation, err error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
-
+	
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    operation.ID,
+		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
+		OpState: operation.State,
+		OpType:  operation.Type,
+	})
+	// ToCheck
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
 		StepProcessed: StepProcessed{
 			Duration: time.Since(operation.CreatedAt),
