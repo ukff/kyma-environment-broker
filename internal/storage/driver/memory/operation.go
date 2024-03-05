@@ -535,6 +535,10 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 	return result, nil
 }
 
+func (s *operations)  GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error){
+	return nil, nil
+}
+
 func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
