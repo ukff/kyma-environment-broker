@@ -77,6 +77,7 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 		ctx:          ctx,
 		logger:       logger,
 		gauges:       make(map[counterKey]prometheus.Gauge, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		counters:     make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 		operations:   operations,
 		loopInterval: loopInterval,
 	}
