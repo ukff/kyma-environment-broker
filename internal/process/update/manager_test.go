@@ -28,14 +28,19 @@ func TestHappyPath(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixUpdatingOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
-	mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-1", &testingStep{name: "third", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-2", &testingStep{name: "first-2", eventPublisher: eventCollector}, always)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
+	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-1", &testingStep{name: "third", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-2", &testingStep{name: "first-2", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
 
 	// when
-	mgr.Execute(operation.ID)
+	_, err = mgr.Execute(operation.ID)
+	assert.NoError(t, err)
 
 	// then
 	eventCollector.AssertProcessedSteps(t, []string{"first", "second", "third", "first-2"})
@@ -48,12 +53,17 @@ func TestWithRetry(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixUpdatingOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
-	mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-1", &testingStep{name: "third", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-2", &onceRetryingStep{name: "first-2", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-2", &testingStep{name: "second-2", eventPublisher: eventCollector}, always)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
+	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-1", &testingStep{name: "third", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-2", &onceRetryingStep{name: "first-2", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-2", &testingStep{name: "second-2", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
 
 	// when
 	retry, _ := mgr.Execute(operation.ID)
@@ -71,11 +81,15 @@ func TestSkipFinishedStage(t *testing.T) {
 	operation := FixUpdatingOperation("op-0001234")
 	operation.FinishStage("stage-1")
 
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
-	mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-1", &testingStep{name: "third", eventPublisher: eventCollector}, always)
-	mgr.AddStep("stage-2", &testingStep{name: "first-2", eventPublisher: eventCollector}, always)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
+	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-1", &testingStep{name: "third", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
+	err = mgr.AddStep("stage-2", &testingStep{name: "first-2", eventPublisher: eventCollector}, always)
+	assert.NoError(t, err)
 
 	// when
 	retry, _ := mgr.Execute(operation.ID)
@@ -88,9 +102,10 @@ func TestSkipFinishedStage(t *testing.T) {
 	assert.True(t, op.IsStageFinished("stage-2"))
 }
 
-func SetupStagedManager(op internal.UpdatingOperation) (*update.Manager, storage.Operations, *CollectingEventHandler) {
+func SetupStagedManager(t *testing.T, op internal.UpdatingOperation) (*update.Manager, storage.Operations, *CollectingEventHandler) {
 	memoryStorage := storage.NewMemoryStorage()
-	memoryStorage.Operations().InsertUpdatingOperation(op)
+	err := memoryStorage.Operations().InsertUpdatingOperation(op)
+	assert.NoError(t, err)
 
 	eventCollector := &CollectingEventHandler{}
 	l := logrus.New()
