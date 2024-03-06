@@ -117,11 +117,13 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 	}
 	
 	// pending?
-	if payload.OpState == domain.InProgress {
+	if domain.LastOperationState(payload.OpState) == domain.InProgress {
 		return fmt.Errorf("operation state is in progress, but operation counter support events only from failed or succeded operations")
 	}
 	
-	counterKey := opCounter.buildKeyFor(payload.OpType, payload.OpState, payload.PlanID)
+	counterKey := opCounter.buildKeyFor(internal.OperationType(payload.OpType),
+		domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID),
+	)
 	if counterKey == "" {
 		opCounter.Log(fmt.Sprintf("counter key is empty for operation %+v", payload), true)
 		return fmt.Errorf("counter key is empty")

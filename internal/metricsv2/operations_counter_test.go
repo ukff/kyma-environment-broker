@@ -59,9 +59,9 @@ func TestOperationsCounter(t *testing.T) {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
 							OpId:    "test1",
-							PlanID: broker.PlanID(opPlan1),
-							OpState: opState1,
-							OpType:  opType1,
+							PlanID: opPlan1,
+							OpState: string(opState1),
+							OpType:  string(opType1),
 						})
 					assert.NoError(t, err)
 				}()
@@ -78,9 +78,9 @@ func TestOperationsCounter(t *testing.T) {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
 							OpId:    "test2",
-							PlanID: broker.PlanID(opPlan2),
-							OpState: opState2,
-							OpType:  opType2,
+							PlanID: opPlan2,
+							OpState: string(opState2),
+							OpType:  string(opType2),
 						})
 					assert.NoError(t, err)
 				}()
@@ -97,9 +97,9 @@ func TestOperationsCounter(t *testing.T) {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
 						OpId:    "test3",
-						PlanID: broker.PlanID(opPlan3),
-						OpState: opState3,
-						OpType:  opType3,
+						PlanID:  opPlan3,
+						OpState: string(opState3),
+						OpType: string(opType3),
 					})
 					assert.NoError(t, err)
 				}()

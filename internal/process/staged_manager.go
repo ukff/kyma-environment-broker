@@ -7,14 +7,13 @@ import (
 	"sync"
 	"time"
 	
-	`github.com/kyma-project/kyma-environment-broker/internal/broker`
 	"github.com/pkg/errors"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
+	
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 )
@@ -159,9 +158,9 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 			if oldOpState != processedOperation.State {
 				m.publisher.Publish(context.TODO(), OperationCounting{
 					OpId:    processedOperation.ID,
-					PlanID:  broker.PlanID(processedOperation.ProvisioningParameters.PlanID),
-					OpState: processedOperation.State,
-					OpType:  processedOperation.Type,
+					PlanID:  processedOperation.ProvisioningParameters.PlanID,
+					OpState: string(processedOperation.State),
+					OpType: string(processedOperation.Type),
 				})
 			}
 			if err != nil {
@@ -195,9 +194,9 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    processedOperation.ID,
-		PlanID:  broker.PlanID(processedOperation.ProvisioningParameters.PlanID),
-		OpState: processedOperation.State,
-		OpType:  processedOperation.Type,
+		PlanID:  processedOperation.ProvisioningParameters.PlanID,
+		OpState: string(processedOperation.State),
+		OpType: string(processedOperation.Type),
 	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: processedOperation,
@@ -281,9 +280,9 @@ func (m *StagedManager) callPubSubOutsideSteps(operation *internal.Operation, er
 	
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: operation.State,
-		OpType:  operation.Type,
+		PlanID:  operation.ProvisioningParameters.PlanID,
+		OpState: string(operation.State),
+		OpType: string(operation.Type),
 	})
 	// ToCheck
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
