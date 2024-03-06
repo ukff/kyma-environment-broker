@@ -62,9 +62,10 @@ type operationsCounter struct {
 	logger       logrus.FieldLogger
 	logMu        sync.Mutex
 	operations   storage.Operations
-	metrics      map[counterKey]prometheus.Counter
+	metrics      map[counterKey]prometheus.Gauge
 	ctx          context.Context
 	loopInterval time.Duration
+	handled     map[counterKey]bool
 }
 
 func formatOpState(state domain.LastOperationState) string {
@@ -75,15 +76,16 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 	operationsCounter := &operationsCounter{
 		ctx:          ctx,
 		logger:       logger,
-		metrics:      make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		metrics:      make(map[counterKey]prometheus.Gauge, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		handled:     make(map[counterKey]bool, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 		operations:   operations,
 		loopInterval: loopInterval,
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
-				operationsCounter.metrics[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
-					prometheus.CounterOpts{
+				operationsCounter.metrics[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewGauge(
+					prometheus.GaugeOpts{
 						Name:        operationsCounter.buildName(operationType, state),
 						ConstLabels: prometheus.Labels{"plan_id": string(plan)},
 					},
@@ -101,6 +103,14 @@ func (opCounter *operationsCounter) MustRegister() {
 	for _, metric := range opCounter.metrics {
 		prometheus.MustRegister(metric)
 	}
+}
+
+func (opCounter *operationsCounter) ContinueFor(counterkey counterKey) bool{
+	if _, found := opCounter.handled[counterkey]; !found {
+		opCounter.handled[counterkey] = true
+		return true
+	}
+	return false
 }
 
 func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}) error {
@@ -140,7 +150,10 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 	}
 
 	opCounter.Log(fmt.Sprintf("incrementing counter %s", counterKey), false)
-	metric.Inc()
+	if opCounter.ContinueFor(counterKey) {
+		metric.Inc()
+	}
+	
 	opCounter.Log(fmt.Sprintf("counter %s incremented", counterKey), false)
 
 	return nil
@@ -156,7 +169,7 @@ func (opCounter *operationsCounter) GetInProgress() error {
 	if err != nil {
 		return fmt.Errorf("cannot fetch in progress operations: %s", err.Error())
 	}
-
+	
 	for _, stat := range stats {
 		counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 			broker.PlanID(stat.PlanID.String),
@@ -165,7 +178,7 @@ func (opCounter *operationsCounter) GetInProgress() error {
 			opCounter.Log(fmt.Sprintf("counter key is empty for operation %+v", stat), false)
 			continue
 		}
-		opCounter.metrics[counterKey].Add(float64(stat.Count))
+		opCounter.metrics[counterKey].Set(float64(stat.Count))
 	}
 
 	return nil
