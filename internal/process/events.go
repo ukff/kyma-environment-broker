@@ -55,10 +55,3 @@ type OperationStepProcessed struct {
 type OperationSucceeded struct {
 	Operation internal.Operation
 }
-
-type OperationCounting struct {
-	OpId    string
-	PlanID  string
-	OpState string
-	OpType  string
-}

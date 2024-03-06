@@ -41,13 +41,6 @@ type OperationStatEntry struct {
 	InstanceID string
 }
 
-type OperationStatEntryV2 struct {
-	Count       int
-	Type       string
-	State      string
-	PlanID     sql.NullString
-}
-
 type InstanceByGlobalAccountIDStatEntry struct {
 	GlobalAccountID string
 	Total           int

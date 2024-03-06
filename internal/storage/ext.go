@@ -45,7 +45,6 @@ type Operations interface {
 	GetOperationByID(operationID string) (*internal.Operation, error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error)
 	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)
-	GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error)
 	GetOperationsForIDs(operationIDList []string) ([]internal.Operation, error)
 	GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error)
 	ListOperations(filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)

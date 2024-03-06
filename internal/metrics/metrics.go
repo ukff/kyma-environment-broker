@@ -1,23 +1,18 @@
 package metrics
 
 import (
-	"context"
-	"time"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 )
 
-func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instanceStatsGetter InstancesStatsGetter, logger logrus.FieldLogger) {
+func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGetter, instanceStatsGetter InstancesStatsGetter) {
 	opResultCollector := NewOperationResultCollector()
 	opDurationCollector := NewOperationDurationCollector()
 	stepResultCollector := NewStepResultCollector()
 	prometheus.MustRegister(opResultCollector, opDurationCollector, stepResultCollector)
-	prometheus.MustRegister(NewOperationsCollector(operations))
+	prometheus.MustRegister(NewOperationsCollector(operationStatsGetter))
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
 
 	sub.Subscribe(process.ProvisioningStepProcessed{}, opResultCollector.OnProvisioningStepProcessed)
@@ -35,11 +30,6 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
-	StartOpsMetricService(ctx, operations, logger)
-
 	// test of metrics for upcoming new implementation
-	operationsCounter := metricsv2.NewOperationsCounters(ctx, operations, 5*time.Second, logger)
-	operationsCounter.MustRegister()
-
-	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
+	metricsv2.Register(sub)
 }
