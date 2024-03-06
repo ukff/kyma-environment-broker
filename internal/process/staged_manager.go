@@ -128,6 +128,12 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
 		operation.State = domain.Failed
 		_, err = m.operationStorage.UpdateOperation(*operation)
+		m.publisher.Publish(context.TODO(), OperationCounting{
+			OpId:    operation.ID,
+			PlanID:  operation.ProvisioningParameters.PlanID,
+			OpState: string(operation.State),
+			OpType: string(operation.Type),
+		})
 		if err != nil {
 			logOperation.Infof("Unable to save operation with finished the provisioning process")
 			timeoutErr = timeoutErr.SetMessage(fmt.Sprintf("%s and %s", timeoutErr.Error(), err.Error()))
@@ -186,6 +192,12 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 
 	processedOperation.State = domain.Succeeded
 	processedOperation.Description = "Processing finished"
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    processedOperation.ID,
+		PlanID:  processedOperation.ProvisioningParameters.PlanID,
+		OpState: string(processedOperation.State),
+		OpType: string(processedOperation.Type),
+	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: processedOperation,
 	})
