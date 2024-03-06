@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/common/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	
+
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -453,7 +453,7 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 		}
 		result = append(result, op)
 	}
-	
+
 	return result, nil
 }
 

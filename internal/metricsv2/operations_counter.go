@@ -3,14 +3,14 @@ package metricsv2
 import (
 	"context"
 	"fmt"
-	`strings`
-	`sync`
-	`time`
-	
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	`github.com/kyma-project/kyma-environment-broker/internal/storage`
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -59,11 +59,11 @@ var (
 type counterKey string
 
 type operationsCounter struct {
-	logger  logrus.FieldLogger
-	logMu sync.Mutex
-	operations storage.Operations
-	metrics map[counterKey]prometheus.Counter
-	ctx context.Context
+	logger       logrus.FieldLogger
+	logMu        sync.Mutex
+	operations   storage.Operations
+	metrics      map[counterKey]prometheus.Counter
+	ctx          context.Context
 	loopInterval time.Duration
 }
 
@@ -73,18 +73,18 @@ func formatOpState(state domain.LastOperationState) string {
 
 func NewOperationsCounters(ctx context.Context, operations storage.Operations, logger logrus.FieldLogger) *operationsCounter {
 	operationsCounter := &operationsCounter{
-		ctx: ctx,
-		logger:  logger,
-		metrics: make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
-		operations: operations,
-		loopInterval: 5 * time.Minute,
+		ctx:          ctx,
+		logger:       logger,
+		metrics:      make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		operations:   operations,
+		loopInterval: 1 * time.Minute,
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
 				operationsCounter.metrics[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
 					prometheus.CounterOpts{
-						Name: operationsCounter.buildName(operationType, state),
+						Name:        operationsCounter.buildName(operationType, state),
 						ConstLabels: prometheus.Labels{"plan_id": string(plan)},
 					},
 				)
@@ -92,7 +92,7 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 			}
 		}
 	}
-	
+
 	go operationsCounter.getLoop()
 	return operationsCounter
 }
@@ -115,12 +115,12 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 		opCounter.Log(fmt.Sprintf("expected process.OperationStepProcessed but got %+v", event), true)
 		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
 	}
-	
+
 	// pending?
 	if domain.LastOperationState(payload.OpState) == domain.InProgress {
 		return fmt.Errorf("operation state is in progress, but operation counter support events only from failed or succeded operations")
 	}
-	
+
 	counterKey := opCounter.buildKeyFor(internal.OperationType(payload.OpType),
 		domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID),
 	)
@@ -128,7 +128,7 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 		opCounter.Log(fmt.Sprintf("counter key is empty for operation %+v", payload), true)
 		return fmt.Errorf("counter key is empty")
 	}
-	
+
 	metric, found := opCounter.metrics[counterKey]
 	if !found {
 		opCounter.Log(fmt.Sprintf("counter not found for key %s", counterKey), true)
@@ -142,23 +142,23 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 	opCounter.Log(fmt.Sprintf("incrementing counter %s", counterKey), false)
 	metric.Inc()
 	opCounter.Log(fmt.Sprintf("counter %s incremented", counterKey), false)
-	
+
 	return nil
 }
 
-func (opCounter *operationsCounter) GetInProgress() error{
+func (opCounter *operationsCounter) GetInProgress() error {
 	stats, err := opCounter.operations.GetOperationStatsByPlanV2()
 	if err != nil {
 		return fmt.Errorf("cannot fetch in progress operations: %s", err.Error())
 	}
-	
-	for _ , stat := range stats {
+
+	for _, stat := range stats {
 		counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 			broker.PlanID(stat.PlanID.String),
 		)
 		opCounter.metrics[counterKey].Add(float64(stat.Count))
 	}
-	
+
 	return nil
 }
 
@@ -190,14 +190,14 @@ func (opCounter *operationsCounter) buildKeyFor(operationType internal.Operation
 		opCounter.Log(fmt.Sprintf("cannot build key for operationType: %s, state: %s, planID: %s", operationType, state, planID), true)
 		return ""
 	}
-	
+
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, formatOpState(state), planID))
 }
 
 func (opCounter *operationsCounter) Log(msg string, err bool) {
 	opCounter.logMu.Lock()
 	defer opCounter.logMu.Unlock()
-	
+
 	if err {
 		opCounter.logger.Errorf("@metrics error while handling operation counter %s", msg)
 	} else {
