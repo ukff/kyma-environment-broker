@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
@@ -37,7 +38,7 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	StartOpsMetricService(ctx, operations, logger)
 
 	// test of metrics for upcoming new implementation
-	operationsCounter := metricsv2.NewOperationsCounters(ctx, operations, logger)
+	operationsCounter := metricsv2.NewOperationsCounters(ctx, operations, 5*time.Second, logger)
 	operationsCounter.MustRegister()
 
 	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)

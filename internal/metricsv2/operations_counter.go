@@ -71,13 +71,13 @@ func formatOpState(state domain.LastOperationState) string {
 	return strings.Replace(string(state), " ", "_", -1)
 }
 
-func NewOperationsCounters(ctx context.Context, operations storage.Operations, logger logrus.FieldLogger) *operationsCounter {
+func NewOperationsCounters(ctx context.Context, operations storage.Operations, loopInterval time.Duration, logger logrus.FieldLogger) *operationsCounter {
 	operationsCounter := &operationsCounter{
 		ctx:          ctx,
 		logger:       logger,
 		metrics:      make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 		operations:   operations,
-		loopInterval: 1 * time.Minute,
+		loopInterval: loopInterval,
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {

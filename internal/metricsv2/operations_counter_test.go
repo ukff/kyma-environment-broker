@@ -4,14 +4,15 @@ import (
 	"context"
 	"sync"
 	"testing"
-	
+	"time"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	`github.com/kyma-project/kyma-environment-broker/internal/storage`
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/sirupsen/logrus"
+	log `github.com/sirupsen/logrus`
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +26,7 @@ func TestOperationsCounter(t *testing.T) {
 	key1 := ctr.buildKeyFor(opType1, opState1, broker.PlanID(opPlan1))
 
 	opType2 := internal.OperationTypeUpdate
-	opState2 := domain.InProgress
+	opState2 := domain.Failed
 	opPlan2 := broker.AWSPlanID
 	key2 := ctr.buildKeyFor(opType2, opState2, broker.PlanID(opPlan2))
 	eventsCount2 := 1
@@ -41,12 +42,29 @@ func TestOperationsCounter(t *testing.T) {
 	opPlan4 := broker.GCPPlanID
 	eventsCount4 := 0
 	key4 := ctr.buildKeyFor(opType4, opState4, broker.PlanID(opPlan4))
-	
-	db := storage.NewMemoryStorage().Operations()
-	
+
+	operations := storage.NewMemoryStorage().Operations()
+	opType5 := internal.OperationTypeProvision
+	opState5 := domain.InProgress
+	opPlan5 := broker.AzurePlanID
+	eventsCount5 := 1
+	key5 := ctr.buildKeyFor(opType5, opState5, broker.PlanID(opPlan5))
+
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsCounters(context.TODO(), db, logrus.WithField("metrics", "test"))
+		ctr = NewOperationsCounters(context.TODO(), operations, 1 * time.Millisecond, log.WithField("metrics", "test"))
 		//ctr.MustRegister()
+	})
+
+	t.Run("op", func(t *testing.T) {
+		op := internal.Operation{
+			State: opState5,
+			Type:  opType5,
+			ProvisioningParameters: internal.ProvisioningParameters{
+				PlanID: opPlan5,
+			},
+		}
+		err := operations.InsertOperation(op)
+		assert.NoError(t, err)
 	})
 
 	t.Run("should increase counter", func(t *testing.T) {
@@ -58,11 +76,11 @@ func TestOperationsCounter(t *testing.T) {
 				go func() {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
-							OpId:    "test1",
-							PlanID: opPlan1,
-							OpState: string(opState1),
-							OpType:  string(opType1),
-						})
+						OpId:    "test1",
+						PlanID:  opPlan1,
+						OpState: string(opState1),
+						OpType:  string(opType1),
+					})
 					assert.NoError(t, err)
 				}()
 			}
@@ -77,11 +95,11 @@ func TestOperationsCounter(t *testing.T) {
 				go func() {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
-							OpId:    "test2",
-							PlanID: opPlan2,
-							OpState: string(opState2),
-							OpType:  string(opType2),
-						})
+						OpId:    "test2",
+						PlanID:  opPlan2,
+						OpState: string(opState2),
+						OpType:  string(opType2),
+					})
 					assert.NoError(t, err)
 				}()
 			}
@@ -99,7 +117,7 @@ func TestOperationsCounter(t *testing.T) {
 						OpId:    "test3",
 						PlanID:  opPlan3,
 						OpState: string(opState3),
-						OpType: string(opType3),
+						OpType:  string(opType3),
 					})
 					assert.NoError(t, err)
 				}()
@@ -109,10 +127,12 @@ func TestOperationsCounter(t *testing.T) {
 	})
 
 	t.Run("should get correct number of metrics", func(t *testing.T) {
+		time.Sleep(1*time.Second)
 		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.metrics[key1]))
 		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.metrics[key2]))
 		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.metrics[key3]))
 		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.metrics[key4]))
+		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.metrics[key5]))
 	})
 
 	t.Cleanup(func() {
