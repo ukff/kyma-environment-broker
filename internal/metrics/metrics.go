@@ -40,5 +40,5 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	operationsCounter := metricsv2.NewOperationsCounters(ctx, operations, logger)
 	operationsCounter.MustRegister()
 
-	sub.Subscribe(process.OperationStepProcessed{}, operationsCounter.Handler)
+	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
 }

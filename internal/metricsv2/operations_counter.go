@@ -147,6 +147,11 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 }
 
 func (opCounter *operationsCounter) GetInProgress() error {
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			opCounter.Log(fmt.Sprintf("panic recovered while handling in progress operation counter: %v", recovery), true)
+		}
+	}()
 	stats, err := opCounter.operations.GetOperationStatsByPlanV2()
 	if err != nil {
 		return fmt.Errorf("cannot fetch in progress operations: %s", err.Error())
