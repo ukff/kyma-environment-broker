@@ -77,12 +77,12 @@ func (s *Instance) ListWithoutDecryption(filter dbmodel.InstanceFilter) ([]inter
 	var instances []internal.Instance
 	for _, dto := range dtos {
 		var params internal.ProvisioningParameters
-		err := json.Unmarshal([]byte(dto.ProvisioningParameters), &params)
+		err := json.Unmarshal([]byte(dto.InstanceDTO.ProvisioningParameters), &params)
 		if err != nil {
 			return nil, 0, 0, fmt.Errorf("while unmarshal parameters: %w", err)
 		}
 		instance := internal.Instance{
-			InstanceID:      dto.InstanceID,
+			InstanceID:      dto.InstanceDTO.InstanceID,
 			RuntimeID:       dto.RuntimeID,
 			GlobalAccountID: dto.GlobalAccountID,
 			SubAccountID:    dto.SubAccountID,
@@ -93,10 +93,10 @@ func (s *Instance) ListWithoutDecryption(filter dbmodel.InstanceFilter) ([]inter
 			DashboardURL:    dto.DashboardURL,
 			Parameters:      params,
 			ProviderRegion:  dto.ProviderRegion,
-			CreatedAt:       dto.CreatedAt,
-			UpdatedAt:       dto.UpdatedAt,
+			CreatedAt:       dto.InstanceDTO.CreatedAt,
+			UpdatedAt:       dto.InstanceDTO.UpdatedAt,
 			DeletedAt:       dto.DeletedAt,
-			Version:         dto.Version,
+			Version:         dto.InstanceDTO.Version,
 			Provider:        internal.CloudProvider(dto.Provider),
 		}
 		instances = append(instances, instance)
@@ -511,18 +511,21 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 	}
 	var instances []internal.Instance
 	for _, dto := range dtos {
-		instance, err := s.toInstance(dto)
+		instance, err := s.toInstance(dto.InstanceDTO)
 		if err != nil {
 			return []internal.Instance{}, 0, 0, err
 		}
-		lastOp, err := s.operations.GetLastOperation(instance.InstanceID)
+
+		lastOp := internal.Operation{}
+		err = json.Unmarshal([]byte(dto.OperationDTO.Data), &lastOp)
 		if err != nil {
-			if dberr.IsNotFound(err) {
-				instances = append(instances, instance)
-				continue
-			}
+			return nil, 0, 0, fmt.Errorf("while unmarshalling operation data: %w", err)
+		}
+		lastOp, err = s.operations.toOperation(&dto.OperationDTO, lastOp)
+		if err != nil {
 			return []internal.Instance{}, 0, 0, err
 		}
+
 		instance.InstanceDetails = lastOp.InstanceDetails
 		instance.Reconcilable = instance.RuntimeID != "" && lastOp.Type != internal.OperationTypeDeprovision && lastOp.State != domain.InProgress
 		instances = append(instances, instance)
