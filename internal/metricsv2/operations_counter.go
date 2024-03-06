@@ -62,10 +62,10 @@ type operationsCounter struct {
 	logger       logrus.FieldLogger
 	logMu        sync.Mutex
 	operations   storage.Operations
-	metrics      map[counterKey]prometheus.Gauge
+	gauges       map[counterKey]prometheus.Gauge
+	counters     map[counterKey]prometheus.Counter
 	ctx          context.Context
 	loopInterval time.Duration
-	handled     map[counterKey]bool
 }
 
 func formatOpState(state domain.LastOperationState) string {
@@ -76,21 +76,28 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 	operationsCounter := &operationsCounter{
 		ctx:          ctx,
 		logger:       logger,
-		metrics:      make(map[counterKey]prometheus.Gauge, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
-		handled:     make(map[counterKey]bool, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		gauges:       make(map[counterKey]prometheus.Gauge, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
 		operations:   operations,
 		loopInterval: loopInterval,
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
-				operationsCounter.metrics[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewGauge(
-					prometheus.GaugeOpts{
-						Name:        operationsCounter.buildName(operationType, state),
-						ConstLabels: prometheus.Labels{"plan_id": string(plan)},
-					},
-				)
-				operationsCounter.Log(fmt.Sprintf("new metric -> %s", operationsCounter.buildKeyFor(operationType, state, plan)), false)
+				if state == domain.InProgress {
+					operationsCounter.gauges[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewGauge(
+						prometheus.GaugeOpts{
+							Name:        operationsCounter.buildName(operationType, state),
+							ConstLabels: prometheus.Labels{"plan_id": string(plan)},
+						},
+					)
+				} else {
+					operationsCounter.counters[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
+						prometheus.CounterOpts{
+							Name:        operationsCounter.buildName(operationType, state),
+							ConstLabels: prometheus.Labels{"plan_id": string(plan)},
+						},
+					)
+				}
 			}
 		}
 	}
@@ -100,17 +107,12 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 }
 
 func (opCounter *operationsCounter) MustRegister() {
-	for _, metric := range opCounter.metrics {
+	for _, metric := range opCounter.counters {
 		prometheus.MustRegister(metric)
 	}
-}
-
-func (opCounter *operationsCounter) ContinueFor(counterkey counterKey) bool{
-	if _, found := opCounter.handled[counterkey]; !found {
-		opCounter.handled[counterkey] = true
-		return true
+	for _, metric := range opCounter.gauges {
+		prometheus.MustRegister(metric)
 	}
-	return false
 }
 
 func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}) error {
@@ -139,62 +141,55 @@ func (opCounter *operationsCounter) Handler(_ context.Context, event interface{}
 		return fmt.Errorf("counter key is empty")
 	}
 
-	metric, found := opCounter.metrics[counterKey]
+	metric, found := opCounter.counters[counterKey]
 	if !found {
 		opCounter.Log(fmt.Sprintf("counter not found for key %s", counterKey), true)
 		return fmt.Errorf("counter not found for key %s", counterKey)
 	}
+
 	if metric == nil {
 		opCounter.Log(fmt.Sprintf("counter is nil for key %s", counterKey), true)
 		return fmt.Errorf("counter is nil for key %s", counterKey)
 	}
 
-	opCounter.Log(fmt.Sprintf("incrementing counter %s", counterKey), false)
-	if opCounter.ContinueFor(counterKey) {
-		metric.Inc()
-	}
-	
+	opCounter.counters[counterKey].Inc()
 	opCounter.Log(fmt.Sprintf("counter %s incremented", counterKey), false)
 
 	return nil
 }
 
-func (opCounter *operationsCounter) GetInProgress() error {
+func (opCounter *operationsCounter) getLoop() {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			opCounter.Log(fmt.Sprintf("panic recovered while handling in progress operation counter: %v", recovery), true)
 		}
 	}()
-	stats, err := opCounter.operations.GetOperationStatsByPlanV2()
-	if err != nil {
-		return fmt.Errorf("cannot fetch in progress operations: %s", err.Error())
-	}
-	
-	for _, stat := range stats {
-		counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
-			broker.PlanID(stat.PlanID.String),
-		)
-		if counterKey == "" {
-			opCounter.Log(fmt.Sprintf("counter key is empty for operation %+v", stat), false)
-			continue
-		}
-		opCounter.metrics[counterKey].Set(float64(stat.Count))
-	}
 
-	return nil
-}
-
-func (opCounter *operationsCounter) getLoop() {
 	ticker := time.NewTicker(opCounter.loopInterval)
+	opCounter.Log(fmt.Sprintf("start in_progress operation metrics gathering by every %v", ticker), false)
 	for {
 		select {
 		case <-ticker.C:
-			err := opCounter.GetInProgress()
+			stats, err := opCounter.operations.GetOperationStatsByPlanV2()
 			if err != nil {
-				opCounter.Log(fmt.Sprintf("failed to update operations metrics: %s", err.Error()), true)
+				opCounter.Log(fmt.Sprintf("cannot fetch in progress operations: %s", err.Error()), true)
+				continue
 			}
-			opCounter.Log("operations metrics updated", false)
+
+			for _, stat := range stats {
+				counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
+					broker.PlanID(stat.PlanID.String),
+				)
+				opCounter.gauges[counterKey].Set(float64(stat.Count))
+			}
+
+			if err != nil {
+				opCounter.Log(fmt.Sprintf("failed to update n_progress operations metrics: %s", err.Error()), true)
+				continue
+			}
+			opCounter.Log("in_progress operations metrics updated", false)
 		case <-opCounter.ctx.Done():
+			opCounter.Log("in_progress operations metrics stop. ctx done", false)
 			return
 		}
 	}
@@ -222,8 +217,8 @@ func (opCounter *operationsCounter) Log(msg string, err bool) {
 	defer opCounter.logMu.Unlock()
 
 	if err {
-		opCounter.logger.Errorf("@metrics error while handling operation counter %s", msg)
+		opCounter.logger.Errorf("@metricsv2: error while handling operation counter -> %s", msg)
 	} else {
-		opCounter.logger.Infof("@metrics operation counter handled %s", msg)
+		opCounter.logger.Infof("@metricsv2: operation counter handled -> %s", msg)
 	}
 }
