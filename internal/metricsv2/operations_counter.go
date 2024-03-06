@@ -156,6 +156,10 @@ func (opCounter *operationsCounter) GetInProgress() error {
 		counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 			broker.PlanID(stat.PlanID.String),
 		)
+		if counterKey == "" {
+			opCounter.Log(fmt.Sprintf("counter key is empty for operation %+v", stat), false)
+			continue
+		}
 		opCounter.metrics[counterKey].Add(float64(stat.Count))
 	}
 
@@ -171,6 +175,7 @@ func (opCounter *operationsCounter) getLoop() {
 			if err != nil {
 				opCounter.Log(fmt.Sprintf("failed to update operations metrics: %s", err.Error()), true)
 			}
+			opCounter.Log("operations metrics updated", false)
 		case <-opCounter.ctx.Done():
 			return
 		}
