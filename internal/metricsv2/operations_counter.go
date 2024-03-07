@@ -193,12 +193,12 @@ func (opCounter *operationsCounter) getLoop() {
 				}
 
 				g.Set(float64(stat.Count))
-				updatedStats[counterKey] = struct{}{
+				updatedStats[counterKey] = struct{}{}
 			}
 
 			for counterKey, gauge := range opCounter.gauges {
 				if _, ok := updatedStats[counterKey]; ok {
-					continue 
+					continue
 				}
 				gauge.Set(0)
 			}
