@@ -12,7 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	log `github.com/sirupsen/logrus`
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,7 +51,7 @@ func TestOperationsCounter(t *testing.T) {
 	key5 := ctr.buildKeyFor(opType5, opState5, broker.PlanID(opPlan5))
 
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsCounters(context.TODO(), operations, 1 * time.Millisecond, log.WithField("metrics", "test"))
+		ctr = NewOperationsCounters(context.TODO(), operations, 1*time.Millisecond, log.WithField("metrics", "test"))
 		//ctr.MustRegister()
 	})
 
@@ -127,12 +127,12 @@ func TestOperationsCounter(t *testing.T) {
 	})
 
 	t.Run("should get correct number of metrics", func(t *testing.T) {
-		time.Sleep(1*time.Second)
-		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.metrics[key1]))
-		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.metrics[key2]))
-		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.metrics[key3]))
-		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.metrics[key4]))
-		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.metrics[key5]))
+		time.Sleep(1 * time.Second)
+		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.counters[key1]))
+		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.counters[key2]))
+		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.counters[key3]))
+		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.counters[key4]))
+		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.gauges[key5]))
 	})
 
 	t.Cleanup(func() {
