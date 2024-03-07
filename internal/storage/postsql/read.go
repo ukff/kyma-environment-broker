@@ -618,6 +618,10 @@ func (r readSession) GetOperationStatsV2() ([]dbmodel.OperationStatEntryV2, erro
 	var rows []dbmodel.OperationStatEntryV2
 	// assumsion that in_progress operations will never be deleted from db, only this in success or failed state
 	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s where state='in progress' group by type, state, plan_id", OperationTableName)).Load(&rows)
+	fmt.Println(fmt.Sprintf("GetOperationStatsV2 -> %d", len(rows)))
+	for _, row := range rows {
+		fmt.Println(fmt.Sprintf("GetOperationStatsV2 -> %d %s %s %s", row.Count, row.Type, row.State, row.PlanID))
+	}
 	return rows, err
 }
 
