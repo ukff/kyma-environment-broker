@@ -59,9 +59,9 @@ var (
 type metricKey string
 
 type operationStats struct {
-	logger       logrus.FieldLogger
-	operations   storage.Operations
-	gauges       map[metricKey]prometheus.Gauge
+	logger          logrus.FieldLogger
+	operations      storage.Operations
+	gauges          map[metricKey]prometheus.Gauge
 	counters        map[metricKey]prometheus.Counter
 	poolingInterval time.Duration
 }
@@ -77,7 +77,6 @@ func NewOperationsCounters(operations storage.Operations, poolingInterval time.D
 }
 
 func (s *operationStats) MustRegister(ctx context.Context) {
-	// while on testing phase, we don't want to panic app, also MustRegister should be called only once on startup
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)

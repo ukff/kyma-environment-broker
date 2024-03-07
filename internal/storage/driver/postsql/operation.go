@@ -448,34 +448,12 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 		stats = append(stats, internal.OperationStatsV2{
 			Count:  entry.Count,
 			Type:   internal.OperationType(entry.Type),
-			State: domain.LastOperationState(entry.State),
+			State:  domain.LastOperationState(entry.State),
 			PlanID: entry.PlanID.String,
 		})
 	}
 	return stats, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 func calFailedStatusForOrchestration(entries []dbmodel.OperationStatEntry) ([]string, int) {
 	var result []string
