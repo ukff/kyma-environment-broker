@@ -178,10 +178,10 @@ func (opCounter *operationsCounter) getLoop() {
 				continue
 			}
 
-			var updatedStats map[counterKey]struct{}
+			updatedStats := make(map[counterKey]struct{}, 0)
 
 			for _, stat := range stats {
-				opCounter.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID), false)
+				opCounter.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID.String), false)
 
 				counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 					broker.PlanID(stat.PlanID.String),
