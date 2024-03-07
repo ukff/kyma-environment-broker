@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	
+	`github.com/kyma-project/kyma-environment-broker/common/setup`
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -67,21 +68,29 @@ type operationStats struct {
 	loopInterval time.Duration
 }
 
-func NewOperationsCounters(ctx context.Context, operations storage.Operations, loopInterval time.Duration, logger logrus.FieldLogger) (*operationStats, error) {
-	os := &operationStats{
-		logger:       logger,
+func NewOperationsCounters(operations storage.Operations, loopInterval time.Duration, logger logrus.FieldLogger) *operationStats {
+	return &operationStats{
+		logger:       logger.WithField("source", "@metricsv2"),
 		gauges:       make(map[counterKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:     make(map[counterKey]prometheus.Counter, len(plans)*len(opTypes)*2),
 		operations:   operations,
 		loopInterval: loopInterval,
 	}
+}
+
+func (os *operationStats) MustRegister(ctx context.Context) {
+	// while on testing phase, we don't want to panic app, also MustRegister should be called only once on startup
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			os.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
+		}
+	}()
+	
 	for _, plan := range plans {
 		for _, opType := range opTypes {
 			for _, opState := range opStates {
 				key, err := os.buildKeyFor("init", opType, opState, plan)
-				if err != nil {
-					return nil, err
-				}
+				setup.FatalOnError(err)
 				fqName := os.buildName(opType, opState)
 				labels := prometheus.Labels{"plan_id": string(plan)}
 				switch opState {
@@ -103,31 +112,27 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 			}
 		}
 	}
-
-	go os.getLoop(ctx)
-
-	return os, nil
-}
-
-func (os *operationStats) MustRegister() {
+	
 	for _, metric := range os.counters {
 		prometheus.MustRegister(metric)
 	}
+	
 	for _, metric := range os.gauges {
 		prometheus.MustRegister(metric)
 	}
+	
+	go os.getLoop(ctx)
 }
 
 func (os *operationStats) Handler(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			os.Log(fmt.Sprintf("panic recovered while handling operation counter: %v", recovery), true)
+			os.logger.Error("panic recovered while handling operation counter: %v", recovery)
 		}
 	}()
 
 	payload, ok := event.(process.OperationCounting)
 	if !ok {
-		os.Log(fmt.Sprintf("expected process.OperationStepProcessed but got %+v", event), true)
 		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
 	}
 
@@ -137,67 +142,50 @@ func (os *operationStats) Handler(_ context.Context, event interface{}) error {
 
 	key, err := os.buildKeyFor(payload.OpId, internal.OperationType(payload.OpType), domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID))
 	if err != nil {
-		os.Log(err.Error(), true)
+		os.logger.Error(err)
 		return err
 	}
 
 	metric, found := os.counters[key]
 	if !found {
-		os.Log(fmt.Sprintf("counter not found for key %s", key), true)
 		return fmt.Errorf("counter not found for key %s", key)
 	}
 
 	if metric == nil {
-		os.Log(fmt.Sprintf("counter is nil for key %s", key), true)
 		return fmt.Errorf("counter is nil for key %s", key)
 	}
 
 	os.counters[key].Inc()
-	os.Log(fmt.Sprintf("counter %s incremented", key), false)
-
 	return nil
 }
 
 func (os *operationStats) getLoop(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			os.Log(fmt.Sprintf("panic recovered while handling in progress operation counter: %v", recovery), true)
+			os.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
 		}
 	}()
 
 	ticker := time.NewTicker(os.loopInterval)
-	os.Log(fmt.Sprintf("start in_progress operation metrics gathering by every %v", ticker), false)
 	for {
 		select {
 		case <-ticker.C:
 			stats, err := os.operations.GetOperationStatsByPlanV2()
 			if err != nil {
-				os.Log(fmt.Sprintf("cannot fetch in progress operations: %s", err.Error()), true)
+				os.logger.Errorf("cannot fetch in progress operations: %s", err.Error())
 				continue
 			}
-			if stats == nil {
-				fmt.Printf("stats is nil")
-			}
-			
-			if len(stats) == 0 {
-				fmt.Printf("stats not nil but 0")
-			}
 			updatedStats := make(map[counterKey]struct{})
-			
-			fmt.Printf("call stats with len: %d \n", len(stats))
-			
 			for _, stat := range stats {
-				os.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID.String), false)
-
 				key, err := os.buildKeyFor("loop", internal.OperationType(stat.Type), domain.LastOperationState(stat.State), broker.PlanID(stat.PlanID.String))
 				if err != nil {
-					os.Log(err.Error(), true)
+					os.logger.Error(err)
 					continue
 				}
 
 				metric, found := os.gauges[key]
 				if !found {
-					os.Log(fmt.Sprintf("gauge not found for key %s", key), true)
+					os.logger.Errorf("gauge not found for key %s", key)
 					continue
 				}
 
@@ -211,9 +199,8 @@ func (os *operationStats) getLoop(ctx context.Context) {
 				}
 				metric.Set(0)
 			}
-			os.Log("in_progress operations metrics updated", false)
+			
 		case <-ctx.Done():
-			os.Log("in_progress operations metrics stop. ctx done", false)
 			return
 		}
 	}
@@ -229,22 +216,10 @@ func (os *operationStats) buildName(operationType internal.OperationType, state 
 
 func (os *operationStats) buildKeyFor(caller string, operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, error) {
 	if operationType == "" || state == "" || planID == "" {
-		os.Log(fmt.Sprintf("caller: %s cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID), true)
-		return counterKey(""), fmt.Errorf("caller: %s cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID)
+		return "", fmt.Errorf("caller: %s cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID)
 	}
 
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, formatOpState(state), planID)), nil
-}
-
-func (os *operationStats) Log(msg string, err bool) {
-	os.logMu.Lock()
-	defer os.logMu.Unlock()
-
-	if err {
-		os.logger.Errorf("@metricsv2: error while handling operation counter -> %s", msg)
-	} else {
-		os.logger.Infof("@metricsv2: operation counter handled -> %s", msg)
-	}
 }
 
 func formatOpState(state domain.LastOperationState) string {
