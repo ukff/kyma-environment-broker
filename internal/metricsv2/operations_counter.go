@@ -178,8 +178,10 @@ func (opCounter *operationsCounter) getLoop() {
 				continue
 			}
 
+			var updatedStats map[counterKey]struct{}
+
 			for _, stat := range stats {
-				opCounter.Log(fmt.Sprintf("stat: %s %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID), false)
+				opCounter.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID), false)
 
 				counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 					broker.PlanID(stat.PlanID.String),
@@ -189,7 +191,16 @@ func (opCounter *operationsCounter) getLoop() {
 					opCounter.Log(fmt.Sprintf("gauge not found for key %s", counterKey), true)
 					continue
 				}
+
 				g.Set(float64(stat.Count))
+				updatedStats[counterKey] = struct{}{
+			}
+
+			for counterKey, gauge := range opCounter.gauges {
+				if _, ok := updatedStats[counterKey]; ok {
+					continue 
+				}
+				gauge.Set(0)
 			}
 
 			opCounter.Log("in_progress operations metrics updated", false)
