@@ -76,23 +76,24 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 	operationsCounter := &operationsCounter{
 		ctx:          ctx,
 		logger:       logger,
-		gauges:       make(map[counterKey]prometheus.Gauge, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
-		counters:     make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*len(supportedStates)),
+		gauges:       make(map[counterKey]prometheus.Gauge, len(supportedPlans)*len(supportedOperations)*1),
+		counters:     make(map[counterKey]prometheus.Counter, len(supportedPlans)*len(supportedOperations)*2),
 		operations:   operations,
 		loopInterval: loopInterval,
 	}
 	for _, plan := range supportedPlans {
 		for _, operationType := range supportedOperations {
 			for _, state := range supportedStates {
+				key := operationsCounter.buildKeyFor(operationType, state, plan)
 				if state == domain.InProgress {
-					operationsCounter.gauges[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewGauge(
+					operationsCounter.gauges[key] = prometheus.NewGauge(
 						prometheus.GaugeOpts{
 							Name:        operationsCounter.buildName(operationType, state),
 							ConstLabels: prometheus.Labels{"plan_id": string(plan)},
 						},
 					)
 				} else {
-					operationsCounter.counters[operationsCounter.buildKeyFor(operationType, state, plan)] = prometheus.NewCounter(
+					operationsCounter.counters[key] = prometheus.NewCounter(
 						prometheus.CounterOpts{
 							Name:        operationsCounter.buildName(operationType, state),
 							ConstLabels: prometheus.Labels{"plan_id": string(plan)},
@@ -181,13 +182,14 @@ func (opCounter *operationsCounter) getLoop() {
 				counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 					broker.PlanID(stat.PlanID.String),
 				)
-				opCounter.gauges[counterKey].Set(float64(stat.Count))
+				g, ok := opCounter.gauges[counterKey]
+				if !ok {
+					opCounter.Log(fmt.Sprintf("gauge not found for key %s", counterKey), true)
+					continue
+				}
+				g.Set(float64(stat.Count))
 			}
 
-			if err != nil {
-				opCounter.Log(fmt.Sprintf("failed to update n_progress operations metrics: %s", err.Error()), true)
-				continue
-			}
 			opCounter.Log("in_progress operations metrics updated", false)
 		case <-opCounter.ctx.Done():
 			opCounter.Log("in_progress operations metrics stop. ctx done", false)
