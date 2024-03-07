@@ -43,30 +43,56 @@ func TestOperationsCounter(t *testing.T) {
 	opType4 := internal.OperationTypeDeprovision
 	opState4 := domain.InProgress
 	opPlan4 := broker.PlanID(broker.GCPPlanID)
+	eventsCount4 := 0
 	key4, err := ctr.makeKey(opType4, opState4, opPlan4)
 	assert.NoError(t, err)
 
 	operations := storage.NewMemoryStorage().Operations()
+	
 	opType5 := internal.OperationTypeProvision
 	opState5 := domain.InProgress
 	opPlan5 := broker.AzurePlanID
+	eventsCount5 := 1
 	key5, err := ctr.makeKey( opType5, opState5, broker.PlanID(opPlan5))
 	assert.NoError(t, err)
-
+	
+	opType6 := internal.OperationTypeProvision
+	opState6 := domain.InProgress
+	opPlan6 := broker.AWSPlanID
+	eventsCount6 := 1
+	key6, err := ctr.makeKey( opType6, opState6, broker.PlanID(opPlan6))
+	assert.NoError(t, err)
+	
+	opType7 := internal.OperationTypeDeprovision
+	opState7 := domain.InProgress
+	opPlan7 := broker.AWSPlanID
+	eventsCount7 := 0
+	key7, err := ctr.makeKey(opType7, opState7, broker.PlanID(opPlan7))
+	assert.NoError(t, err)
+	
 	t.Run("create counter key", func(t *testing.T) {
 		ctr = NewOperationsCounters(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
 		ctr.MustRegister(context.Background())
 	})
 
 	t.Run("gauge in_progress operations test", func(t *testing.T) {
-		op := internal.Operation{
+		err := operations.InsertOperation(internal.Operation{
+			ID: "opState6",
 			State: opState5,
 			Type:  opType5,
 			ProvisioningParameters: internal.ProvisioningParameters{
 				PlanID: opPlan5,
 			},
-		}
-		err := operations.InsertOperation(op)
+		})
+		assert.NoError(t, err)
+		err = operations.InsertOperation(internal.Operation{
+			ID: "opState7",
+			State: opState6,
+			Type:  opType6,
+			ProvisioningParameters: internal.ProvisioningParameters{
+				PlanID: opPlan6,
+			},
+		})
 		assert.NoError(t, err)
 	})
 
@@ -134,8 +160,10 @@ func TestOperationsCounter(t *testing.T) {
 		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.counters[key1]))
 		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.counters[key2]))
 		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.counters[key3]))
-		assert.Equal(t, float64(0), testutil.ToFloat64(ctr.gauges[key4]))
-		assert.True(t, testutil.ToFloat64(ctr.gauges[key5]) > float64(0))
+		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.gauges[key4]))
+		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.gauges[key5]))
+		assert.Equal(t, float64(eventsCount6), testutil.ToFloat64(ctr.gauges[key6]))
+		assert.Equal(t, float64(eventsCount7), testutil.ToFloat64(ctr.gauges[key7]))
 	})
 
 	t.Cleanup(func() {
