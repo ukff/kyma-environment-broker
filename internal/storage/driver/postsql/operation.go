@@ -440,7 +440,7 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 	if err != nil {
 		return nil, err
 	}
-	result := make([]internal.OperationStatsV2, len(entries))
+	var result []internal.OperationStatsV2
 	for _, entry := range entries {
 		if !entry.PlanID.Valid || entry.PlanID.String == "" {
 			continue
