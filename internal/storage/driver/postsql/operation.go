@@ -454,6 +454,10 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 		result = append(result, op)
 	}
 
+	fmt.Printf("GetOperationStatusByPlanV2 -> %d", len(result))
+	for _, r := range result {
+		fmt.Printf("GetOperationStatusByPlanV2 -> resultOf: %d %s %s %s", r.Count, r.Type, r.PlanID.String, r.State)
+	}
 	return result, nil
 }
 

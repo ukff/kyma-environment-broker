@@ -176,7 +176,7 @@ func (os *operationStats) getLoop(ctx context.Context) {
 				continue
 			}
 
-			updatedStats := make(map[counterKey]struct{}, 0)
+			updatedStats := make(map[counterKey]struct{})
 
 			for _, stat := range stats {
 				os.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID.String), false)
