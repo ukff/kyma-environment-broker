@@ -175,9 +175,17 @@ func (os *operationStats) getLoop(ctx context.Context) {
 				os.Log(fmt.Sprintf("cannot fetch in progress operations: %s", err.Error()), true)
 				continue
 			}
-
+			if stats == nil {
+				fmt.Printf("stats is nil")
+			}
+			
+			if len(stats) == 0 {
+				fmt.Printf("stats not nil but 0")
+			}
 			updatedStats := make(map[counterKey]struct{})
-
+			
+			fmt.Printf("call stats with len: %d \n", len(stats))
+			
 			for _, stat := range stats {
 				os.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID.String), false)
 
