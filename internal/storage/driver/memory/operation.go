@@ -532,16 +532,16 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 }
 
 func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
-	exists := func(slice []internal.OperationStatsV2, item internal.OperationStatsV2) int {
-		for i, s := range slice {
-			if s.State == item.State && s.Type == item.Type && s.PlanID == item.PlanID {
-				return i
+	stats := make([]internal.OperationStatsV2, 0)
+	exists := func(item internal.OperationStatsV2) int {
+		for idx, state := range stats {
+			if state.State == item.State && state.Type == item.Type && state.PlanID == item.PlanID {
+				return idx
 			}
 		}
 		return -1
 	}
 
-	stats := make([]internal.OperationStatsV2, 0)
 	for _, op := range s.operations {
 		if op.State == domain.InProgress {
 			o := internal.OperationStatsV2{
@@ -550,8 +550,8 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 				State: op.State,
 			}
 
-			if i := exists(stats, o); i >= 0 {
-				stats[i].Count++
+			if idx := exists(o); idx >= 0 {
+				stats[idx].Count++
 			} else {
 				o.Count = 1
 				stats = append(stats, o)
