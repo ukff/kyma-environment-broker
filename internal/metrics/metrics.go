@@ -42,6 +42,7 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	if err != nil {
 		panic(err)
 	}
+	operationsCounter.MustRegister()
 
 	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
 }
