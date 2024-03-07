@@ -493,10 +493,10 @@ type OperationStats struct {
 }
 
 type OperationStatsV2 struct {
-	Count       int
-	Type       string
-	State      string
-	PlanID     sql.NullString
+	Count  int
+	Type   string
+	State  string
+	PlanID sql.NullString
 }
 
 // InstanceStats provide number of instances per Global Account ID

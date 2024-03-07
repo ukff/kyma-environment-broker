@@ -1,7 +1,7 @@
 package memory
 
 import (
-	`database/sql`
+	"database/sql"
 	"fmt"
 	"sort"
 	"sync"
@@ -532,7 +532,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 	return result, nil
 }
 
-func (s *operations)  GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
+func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
 	exists := func(slice []internal.OperationStatsV2, item internal.OperationStatsV2) int {
 		for i, s := range slice {
 			if s.State == item.State && s.Type == item.Type && s.PlanID.String == item.PlanID.String {
@@ -541,7 +541,7 @@ func (s *operations)  GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, 
 		}
 		return -1
 	}
-	
+
 	stats := make([]internal.OperationStatsV2, 0)
 	for _, op := range s.operations {
 		if op.State == domain.InProgress {
@@ -550,11 +550,11 @@ func (s *operations)  GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, 
 					String: op.ProvisioningParameters.PlanID,
 					Valid:  true,
 				},
-				Type:   string(op.Type),
+				Type:  string(op.Type),
 				State: string(op.State),
 			}
-			
-			if i := exists(stats, o); i >= 0{
+
+			if i := exists(stats, o); i >= 0 {
 				stats[i].Count++
 			} else {
 				o.Count = 1
@@ -562,7 +562,7 @@ func (s *operations)  GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, 
 			}
 		}
 	}
-	
+
 	return stats, nil
 }
 

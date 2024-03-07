@@ -42,10 +42,10 @@ type OperationStatEntry struct {
 }
 
 type OperationStatEntryV2 struct {
-	Count       int
-	Type       string
-	State      string
-	PlanID     sql.NullString
+	Count  int
+	Type   string
+	State  string
+	PlanID sql.NullString
 }
 
 type InstanceByGlobalAccountIDStatEntry struct {

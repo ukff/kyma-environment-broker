@@ -2,7 +2,7 @@ package postsql
 
 import (
 	"time"
-	
+
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/internal"
