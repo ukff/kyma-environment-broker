@@ -435,6 +435,26 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 	return result, nil
 }
 
+func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
+	entries, err := s.NewReadSession().GetOperationsStatsV2()
+	if err != nil {
+		return nil, err
+	}
+	var stats []internal.OperationStatsV2
+	for _, entry := range entries {
+		if !entry.PlanID.Valid || entry.PlanID.String == "" {
+			continue
+		}
+		stats = append(stats, internal.OperationStatsV2{
+			Count:  entry.Count,
+			Type:   internal.OperationType(entry.Type),
+			State:  domain.LastOperationState(entry.State),
+			PlanID: entry.PlanID.String,
+		})
+	}
+	return stats, nil
+}
+
 func calFailedStatusForOrchestration(entries []dbmodel.OperationStatEntry) ([]string, int) {
 	var result []string
 	resultPerInstanceID := make(map[string][]string)

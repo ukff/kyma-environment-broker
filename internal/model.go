@@ -492,6 +492,13 @@ type OperationStats struct {
 	Deprovisioning map[domain.LastOperationState]int
 }
 
+type OperationStatsV2 struct {
+	Count  int
+	Type   OperationType
+	State  domain.LastOperationState
+	PlanID string
+}
+
 // InstanceStats provide number of instances per Global Account ID
 type InstanceStats struct {
 	TotalNumberOfInstances int
