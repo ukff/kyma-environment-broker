@@ -1,4 +1,4 @@
-package metricsv2
+package metrics
 
 import (
 	"context"
@@ -28,8 +28,7 @@ import (
 // - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
 
 const (
-	prometheusNamespace = "keb"
-	prometheusSubsystem = "kcp_v2"
+	prometheusSubsystemv2 = "kcp_v2"
 	metricNamePattern   = "operations_%s_%s_total"
 )
 
@@ -205,7 +204,7 @@ func (s *operationStats) buildName(opType internal.OperationType, opState domain
 
 	return prometheus.BuildFQName(
 		prometheusNamespace,
-		prometheusSubsystem,
+		prometheusSubsystemv2,
 		fmt.Sprintf(metricNamePattern, fmtType, fmtState),
 	), nil
 }

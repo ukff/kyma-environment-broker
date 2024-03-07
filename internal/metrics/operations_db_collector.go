@@ -54,7 +54,7 @@ func StartOpsMetricService(ctx context.Context, db operationsGetter, logger logr
 			Subsystem: prometheusSubsystem,
 			Name:      "operation_result",
 			Help:      "Results of operations",
-		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason"}),
+		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error", "error_category", "error_reason"}),
 	}
 	go svc.run(ctx)
 }
@@ -67,6 +67,7 @@ func (s *opsMetricService) setOperation(op internal.Operation, val float64) {
 	labels["plan_id"] = op.Plan
 	labels["type"] = string(op.Type)
 	labels["state"] = string(op.State)
+	labels["error"] = op.LastError.Error()
 	labels["error_category"] = string(op.LastError.Component())
 	labels["error_reason"] = string(op.LastError.Reason())
 	s.operations.With(labels).Set(val)
@@ -81,6 +82,7 @@ func (s *opsMetricService) updateOperation(op internal.Operation) {
 	if op.State == domain.Failed || op.State == domain.Succeeded {
 		delete(s.cache, op.ID)
 	} else {
+		// in progress
 		s.cache[op.ID] = op
 	}
 }
