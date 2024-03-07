@@ -78,7 +78,7 @@ func NewOperationsCounters(ctx context.Context, operations storage.Operations, l
 	for _, plan := range plans {
 		for _, opType := range opTypes {
 			for _, opState := range opStates {
-				key, err := os.buildKeyFor(opType, opState, plan)
+				key, err := os.buildKeyFor("init", opType, opState, plan)
 				if err != nil {
 					return nil, err
 				}
@@ -135,7 +135,7 @@ func (os *operationStats) Handler(_ context.Context, event interface{}) error {
 		return fmt.Errorf("operation state is in progress, but operation counter support events only from failed or succeded operations")
 	}
 
-	key, err := os.buildKeyFor(internal.OperationType(payload.OpType), domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID))
+	key, err := os.buildKeyFor(payload.OpId, internal.OperationType(payload.OpType), domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID))
 	if err != nil {
 		os.Log(err.Error(), true)
 		return err
@@ -219,9 +219,9 @@ func (os *operationStats) buildName(operationType internal.OperationType, state 
 	)
 }
 
-func (os *operationStats) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, error) {
+func (os *operationStats) buildKeyFor(caller string, operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, error) {
 	if operationType == "" || state == "" || planID == "" {
-		os.Log(fmt.Sprintf("cannot build key for operationType: %s, state: %s, planID: %s", operationType, state, planID), true)
+		os.Log(fmt.Sprintf("%s -> cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID), true)
 		return counterKey(""), fmt.Errorf("cannot build key for operationType: %s, state: %s, planID: %s", operationType, state, planID)
 	}
 
