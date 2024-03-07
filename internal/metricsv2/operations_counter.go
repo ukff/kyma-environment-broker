@@ -181,7 +181,7 @@ func (os *operationStats) getLoop(ctx context.Context) {
 			for _, stat := range stats {
 				os.Log(fmt.Sprintf("stat: %d %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID.String), false)
 
-				key, err := os.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State), broker.PlanID(stat.PlanID.String))
+				key, err := os.buildKeyFor("loop", internal.OperationType(stat.Type), domain.LastOperationState(stat.State), broker.PlanID(stat.PlanID.String))
 				if err != nil {
 					os.Log(err.Error(), true)
 					continue
