@@ -48,28 +48,28 @@ func TestOperationsCounter(t *testing.T) {
 	assert.NoError(t, err)
 
 	operations := storage.NewMemoryStorage().Operations()
-	
+
 	opType5 := internal.OperationTypeProvision
 	opState5 := domain.InProgress
 	opPlan5 := broker.AzurePlanID
 	eventsCount5 := 1
-	key5, err := ctr.makeKey( opType5, opState5, broker.PlanID(opPlan5))
+	key5, err := ctr.makeKey(opType5, opState5, broker.PlanID(opPlan5))
 	assert.NoError(t, err)
-	
+
 	opType6 := internal.OperationTypeProvision
 	opState6 := domain.InProgress
 	opPlan6 := broker.AWSPlanID
 	eventsCount6 := 1
-	key6, err := ctr.makeKey( opType6, opState6, broker.PlanID(opPlan6))
+	key6, err := ctr.makeKey(opType6, opState6, broker.PlanID(opPlan6))
 	assert.NoError(t, err)
-	
+
 	opType7 := internal.OperationTypeDeprovision
 	opState7 := domain.InProgress
 	opPlan7 := broker.AWSPlanID
 	eventsCount7 := 0
 	key7, err := ctr.makeKey(opType7, opState7, broker.PlanID(opPlan7))
 	assert.NoError(t, err)
-	
+
 	t.Run("create counter key", func(t *testing.T) {
 		ctr = NewOperationsCounters(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
 		ctr.MustRegister(context.Background())
@@ -77,7 +77,7 @@ func TestOperationsCounter(t *testing.T) {
 
 	t.Run("gauge in_progress operations test", func(t *testing.T) {
 		err := operations.InsertOperation(internal.Operation{
-			ID: "opState6",
+			ID:    "opState6",
 			State: opState5,
 			Type:  opType5,
 			ProvisioningParameters: internal.ProvisioningParameters{
@@ -86,7 +86,7 @@ func TestOperationsCounter(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		err = operations.InsertOperation(internal.Operation{
-			ID: "opState7",
+			ID:    "opState7",
 			State: opState6,
 			Type:  opType6,
 			ProvisioningParameters: internal.ProvisioningParameters{

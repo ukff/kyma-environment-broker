@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	
-	`github.com/kyma-project/kyma-environment-broker/common/setup`
+
+	"github.com/kyma-project/kyma-environment-broker/common/setup"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -82,7 +82,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
 		}
 	}()
-	
+
 	for _, plan := range plans {
 		for _, opType := range opTypes {
 			for _, opState := range opStates {
@@ -112,7 +112,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 			}
 		}
 	}
-	
+
 	go s.statsFromDB(ctx)
 }
 
@@ -127,11 +127,11 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	if !ok {
 		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
 	}
-	
+
 	opState := payload.OpState
-	
+
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.OpState )
+		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.OpState)
 	}
 
 	key, err := s.makeKey(payload.OpType, opState, payload.PlanID)
@@ -145,7 +145,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 		return fmt.Errorf("metric not found for key %s", key)
 	}
 	s.counters[key].Inc()
-	
+
 	return nil
 }
 
@@ -188,7 +188,7 @@ func (s *operationStats) statsFromDB(ctx context.Context) {
 				}
 				metric.Set(0)
 			}
-			
+
 		case <-ctx.Done():
 			return
 		}
@@ -198,7 +198,7 @@ func (s *operationStats) statsFromDB(ctx context.Context) {
 func (s *operationStats) buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
-	
+
 	if fmtType == "" || fmtState == "" {
 		return "", fmt.Errorf("cannot build name for operation: type: %s, state: %s", opType, opState)
 	}
