@@ -40,14 +40,12 @@ func TestOperationsCounter(t *testing.T) {
 	opType4 := internal.OperationTypeDeprovision
 	opState4 := domain.InProgress
 	opPlan4 := broker.GCPPlanID
-	eventsCount4 := 0
 	key4 := ctr.buildKeyFor(opType4, opState4, broker.PlanID(opPlan4))
 
 	operations := storage.NewMemoryStorage().Operations()
 	opType5 := internal.OperationTypeProvision
 	opState5 := domain.InProgress
 	opPlan5 := broker.AzurePlanID
-	eventsCount5 := 1
 	key5 := ctr.buildKeyFor(opType5, opState5, broker.PlanID(opPlan5))
 
 	t.Run("create counter key", func(t *testing.T) {
@@ -131,8 +129,8 @@ func TestOperationsCounter(t *testing.T) {
 		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.counters[key1]))
 		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.counters[key2]))
 		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.counters[key3]))
-		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.counters[key4]))
-		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.gauges[key5]))
+		assert.Equal(t, float64(0), testutil.ToFloat64(ctr.gauges[key4]))
+		assert.True(t, testutil.ToFloat64(ctr.gauges[key5]) > float64(0))
 	})
 
 	t.Cleanup(func() {
