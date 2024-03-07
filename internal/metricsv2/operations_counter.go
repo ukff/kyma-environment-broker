@@ -221,8 +221,8 @@ func (os *operationStats) buildName(operationType internal.OperationType, state 
 
 func (os *operationStats) buildKeyFor(caller string, operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, error) {
 	if operationType == "" || state == "" || planID == "" {
-		os.Log(fmt.Sprintf("%s -> cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID), true)
-		return counterKey(""), fmt.Errorf("cannot build key for operationType: %s, state: %s, planID: %s", operationType, state, planID)
+		os.Log(fmt.Sprintf("caller: %s cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID), true)
+		return counterKey(""), fmt.Errorf("caller: %s cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID)
 	}
 
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, formatOpState(state), planID)), nil
