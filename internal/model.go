@@ -492,6 +492,13 @@ type OperationStats struct {
 	Deprovisioning map[domain.LastOperationState]int
 }
 
+type OperationStatsV2 struct {
+	Count  int
+	Type   string
+	State  string
+	PlanID sql.NullString
+}
+
 // InstanceStats provide number of instances per Global Account ID
 type InstanceStats struct {
 	TotalNumberOfInstances int
@@ -644,6 +651,21 @@ func (o *Operation) IsStageFinished(stage string) bool {
 		}
 	}
 	return false
+}
+
+func (o *Operation) SuccessMustBeSaved() bool {
+
+	// if the operation is temporary, it must be saved
+	if o.Temporary {
+		return true
+	}
+
+	// if the operation is not temporary and the last stage is success, it must not be saved
+	// because all operations for that instance are gone
+	if o.Type == OperationTypeDeprovision {
+		return false
+	}
+	return true
 }
 
 type ComponentConfigurationInputList []*gqlschema.ComponentConfigurationInput
