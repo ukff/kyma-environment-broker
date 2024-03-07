@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	`github.com/kyma-project/kyma-environment-broker/internal/broker`
+	`github.com/pivotal-cf/brokerapi/v8/domain`
 )
 
 type StepProcessed struct {
@@ -58,7 +60,7 @@ type OperationSucceeded struct {
 
 type OperationCounting struct {
 	OpId    string
-	PlanID  string
-	OpState string
-	OpType  string
+	PlanID  broker.PlanID
+	OpState domain.LastOperationState
+	OpType  internal.OperationType
 }

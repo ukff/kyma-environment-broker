@@ -1,18 +1,17 @@
 package memory
 
 import (
-	"database/sql"
 	"fmt"
 	"sort"
 	"sync"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-
+	
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
 
@@ -535,7 +534,7 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
 	exists := func(slice []internal.OperationStatsV2, item internal.OperationStatsV2) int {
 		for i, s := range slice {
-			if s.State == item.State && s.Type == item.Type && s.PlanID.String == item.PlanID.String {
+			if s.State == item.State && s.Type == item.Type && s.PlanID == item.PlanID {
 				return i
 			}
 		}
@@ -546,12 +545,9 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 	for _, op := range s.operations {
 		if op.State == domain.InProgress {
 			o := internal.OperationStatsV2{
-				PlanID: sql.NullString{
-					String: op.ProvisioningParameters.PlanID,
-					Valid:  true,
-				},
-				Type:  string(op.Type),
-				State: string(op.State),
+				PlanID: op.ProvisioningParameters.PlanID,
+				Type:  op.Type,
+				State: op.State,
 			}
 
 			if i := exists(stats, o); i >= 0 {

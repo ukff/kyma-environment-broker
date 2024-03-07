@@ -21,41 +21,41 @@ func TestOperationsCounter(t *testing.T) {
 
 	opType1 := internal.OperationTypeProvision
 	opState1 := domain.Succeeded
-	opPlan1 := broker.AzurePlanID
+	opPlan1 := broker.PlanID(broker.AzurePlanID)
 	eventsCount1 := 5
-	key1, err := ctr.buildKeyFor(opType1, opState1, broker.PlanID(opPlan1))
+	key1, err := ctr.makeKey(opType1, opState1, opPlan1)
 	assert.NoError(t, err)
 
 	opType2 := internal.OperationTypeUpdate
 	opState2 := domain.Failed
-	opPlan2 := broker.AWSPlanID
-	key2, err := ctr.buildKeyFor(opType2, opState2, broker.PlanID(opPlan2))
+	opPlan2 := broker.PlanID(broker.AWSPlanID)
+	key2, err := ctr.makeKey(opType2, opState2, opPlan2)
 	eventsCount2 := 1
 	assert.NoError(t, err)
 
 	opType3 := internal.OperationTypeDeprovision
 	opState3 := domain.Failed
-	opPlan3 := broker.GCPPlanID
+	opPlan3 := broker.PlanID(broker.GCPPlanID)
 	eventsCount3 := 3
-	key3, err := ctr.buildKeyFor(opType3, opState3, broker.PlanID(opPlan3))
+	key3, err := ctr.makeKey(opType3, opState3, opPlan3)
 	assert.NoError(t, err)
 
 	opType4 := internal.OperationTypeDeprovision
 	opState4 := domain.InProgress
-	opPlan4 := broker.GCPPlanID
-	key4, err := ctr.buildKeyFor(opType4, opState4, broker.PlanID(opPlan4))
+	opPlan4 := broker.PlanID(broker.GCPPlanID)
+	key4, err := ctr.makeKey(opType4, opState4, opPlan4)
 	assert.NoError(t, err)
 
 	operations := storage.NewMemoryStorage().Operations()
 	opType5 := internal.OperationTypeProvision
 	opState5 := domain.InProgress
 	opPlan5 := broker.AzurePlanID
-	key5, err := ctr.buildKeyFor( opType5, opState5, broker.PlanID(opPlan5))
+	key5, err := ctr.makeKey( opType5, opState5, broker.PlanID(opPlan5))
 	assert.NoError(t, err)
 
 	t.Run("create counter key", func(t *testing.T) {
 		ctr = NewOperationsCounters(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
-		//ctr.MustRegister()
+		ctr.MustRegister(context.Background())
 	})
 
 	t.Run("gauge in_progress operations test", func(t *testing.T) {
@@ -81,8 +81,8 @@ func TestOperationsCounter(t *testing.T) {
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
 						OpId:    "test1",
 						PlanID:  opPlan1,
-						OpState: string(opState1),
-						OpType:  string(opType1),
+						OpState: opState1,
+						OpType:  opType1,
 					})
 					assert.NoError(t, err)
 				}()
@@ -100,8 +100,8 @@ func TestOperationsCounter(t *testing.T) {
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
 						OpId:    "test2",
 						PlanID:  opPlan2,
-						OpState: string(opState2),
-						OpType:  string(opType2),
+						OpState: opState2,
+						OpType:  opType2,
 					})
 					assert.NoError(t, err)
 				}()
@@ -119,8 +119,8 @@ func TestOperationsCounter(t *testing.T) {
 					err := ctr.Handler(context.TODO(), process.OperationCounting{
 						OpId:    "test3",
 						PlanID:  opPlan3,
-						OpState: string(opState3),
-						OpType:  string(opType3),
+						OpState: opState3,
+						OpType:  opType3,
 					})
 					assert.NoError(t, err)
 				}()

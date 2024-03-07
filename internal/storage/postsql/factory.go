@@ -53,7 +53,7 @@ type ReadSession interface {
 	GetLatestRuntimeStateWithOIDCConfigByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error)
 	ListEvents(filter events.EventFilter) ([]events.EventDTO, error)
 	GetInstanceArchivedByID(id string) (dbmodel.InstanceArchivedDTO, error)
-	GetOperationStatsV2() ([]dbmodel.OperationStatEntryV2, error)
+	GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error)
 }
 
 //go:generate mockery --name=WriteSession

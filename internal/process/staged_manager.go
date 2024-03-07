@@ -6,7 +6,8 @@ import (
 	"log"
 	"sync"
 	"time"
-
+	
+	`github.com/kyma-project/kyma-environment-broker/internal/broker`
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/pkg/errors"
@@ -267,9 +268,9 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    operation.ID,
-		PlanID:  operation.ProvisioningParameters.PlanID,
-		OpState: string(operation.State),
-		OpType:  string(operation.Type),
+		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
+		OpState: domain.LastOperationState(string(operation.State)),
+		OpType: internal.OperationType(string(operation.Type)),
 	})
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
@@ -285,9 +286,9 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    operation.ID,
-		PlanID:  operation.ProvisioningParameters.PlanID,
-		OpState: string(operation.State),
-		OpType:  string(operation.Type),
+		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
+		OpState: domain.LastOperationState(string(operation.State)),
+		OpType: internal.OperationType(string(operation.Type)),
 	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
