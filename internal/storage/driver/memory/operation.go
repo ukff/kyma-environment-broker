@@ -5,13 +5,13 @@ import (
 	"sort"
 	"sync"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	
+
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
 
@@ -546,8 +546,8 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 		if op.State == domain.InProgress {
 			o := internal.OperationStatsV2{
 				PlanID: op.ProvisioningParameters.PlanID,
-				Type:  op.Type,
-				State: op.State,
+				Type:   op.Type,
+				State:  op.State,
 			}
 
 			if idx := exists(o); idx >= 0 {
