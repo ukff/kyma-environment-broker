@@ -179,6 +179,8 @@ func (opCounter *operationsCounter) getLoop() {
 			}
 
 			for _, stat := range stats {
+				opCounter.Log(fmt.Sprintf("stat: %s %s %s %s", stat.Count, stat.Type, stat.State, stat.PlanID), false)
+
 				counterKey := opCounter.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State),
 					broker.PlanID(stat.PlanID.String),
 				)
