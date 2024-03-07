@@ -23,13 +23,13 @@ func TestOperationsCounter(t *testing.T) {
 	opState1 := domain.Succeeded
 	opPlan1 := broker.AzurePlanID
 	eventsCount1 := 5
-	key1, err := ctr.buildKeyFor("test", opType1, opState1, broker.PlanID(opPlan1))
+	key1, err := ctr.buildKeyFor(opType1, opState1, broker.PlanID(opPlan1))
 	assert.NoError(t, err)
 
 	opType2 := internal.OperationTypeUpdate
 	opState2 := domain.Failed
 	opPlan2 := broker.AWSPlanID
-	key2, err := ctr.buildKeyFor("test", opType2, opState2, broker.PlanID(opPlan2))
+	key2, err := ctr.buildKeyFor(opType2, opState2, broker.PlanID(opPlan2))
 	eventsCount2 := 1
 	assert.NoError(t, err)
 
@@ -37,25 +37,24 @@ func TestOperationsCounter(t *testing.T) {
 	opState3 := domain.Failed
 	opPlan3 := broker.GCPPlanID
 	eventsCount3 := 3
-	key3, err := ctr.buildKeyFor("test", opType3, opState3, broker.PlanID(opPlan3))
+	key3, err := ctr.buildKeyFor(opType3, opState3, broker.PlanID(opPlan3))
 	assert.NoError(t, err)
 
 	opType4 := internal.OperationTypeDeprovision
 	opState4 := domain.InProgress
 	opPlan4 := broker.GCPPlanID
-	key4, err := ctr.buildKeyFor("test", opType4, opState4, broker.PlanID(opPlan4))
+	key4, err := ctr.buildKeyFor(opType4, opState4, broker.PlanID(opPlan4))
 	assert.NoError(t, err)
 
 	operations := storage.NewMemoryStorage().Operations()
 	opType5 := internal.OperationTypeProvision
 	opState5 := domain.InProgress
 	opPlan5 := broker.AzurePlanID
-	key5, err := ctr.buildKeyFor("test", opType5, opState5, broker.PlanID(opPlan5))
+	key5, err := ctr.buildKeyFor( opType5, opState5, broker.PlanID(opPlan5))
 	assert.NoError(t, err)
 
 	t.Run("create counter key", func(t *testing.T) {
-		ctr, err = NewOperationsCounters(context.TODO(), operations, 1*time.Millisecond, log.WithField("metrics", "test"))
-		assert.NoError(t, err)
+		ctr = NewOperationsCounters(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
 		//ctr.MustRegister()
 	})
 

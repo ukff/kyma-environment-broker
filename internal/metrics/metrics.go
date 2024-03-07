@@ -38,11 +38,8 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	StartOpsMetricService(ctx, operations, logger)
 
 	// test of metrics for upcoming new implementation
-	operationsCounter, err := metricsv2.NewOperationsCounters(ctx, operations, 5*time.Second, logger)
-	if err != nil {
-		panic(err)
-	}
-	operationsCounter.MustRegister()
+	operationsCounter := metricsv2.NewOperationsCounters(operations, 5*time.Second, logger)
+	operationsCounter.MustRegister(ctx)
 
 	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
 }

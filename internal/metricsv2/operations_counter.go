@@ -89,7 +89,7 @@ func (os *operationStats) MustRegister(ctx context.Context) {
 	for _, plan := range plans {
 		for _, opType := range opTypes {
 			for _, opState := range opStates {
-				key, err := os.buildKeyFor("init", opType, opState, plan)
+				key, err := os.buildKeyFor(opType, opState, plan)
 				setup.FatalOnError(err)
 				fqName := os.buildName(opType, opState)
 				labels := prometheus.Labels{"plan_id": string(plan)}
@@ -140,7 +140,7 @@ func (os *operationStats) Handler(_ context.Context, event interface{}) error {
 		return fmt.Errorf("operation state is in progress, but operation counter support events only from failed or succeded operations")
 	}
 
-	key, err := os.buildKeyFor(payload.OpId, internal.OperationType(payload.OpType), domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID))
+	key, err := os.buildKeyFor(internal.OperationType(payload.OpType), domain.LastOperationState(payload.OpState), broker.PlanID(payload.PlanID))
 	if err != nil {
 		os.logger.Error(err)
 		return err
@@ -177,7 +177,7 @@ func (os *operationStats) getLoop(ctx context.Context) {
 			}
 			updatedStats := make(map[counterKey]struct{})
 			for _, stat := range stats {
-				key, err := os.buildKeyFor("loop", internal.OperationType(stat.Type), domain.LastOperationState(stat.State), broker.PlanID(stat.PlanID.String))
+				key, err := os.buildKeyFor(internal.OperationType(stat.Type), domain.LastOperationState(stat.State), broker.PlanID(stat.PlanID.String))
 				if err != nil {
 					os.logger.Error(err)
 					continue
@@ -214,9 +214,9 @@ func (os *operationStats) buildName(operationType internal.OperationType, state 
 	)
 }
 
-func (os *operationStats) buildKeyFor(caller string, operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, error) {
+func (os *operationStats) buildKeyFor(operationType internal.OperationType, state domain.LastOperationState, planID broker.PlanID) (counterKey, error) {
 	if operationType == "" || state == "" || planID == "" {
-		return "", fmt.Errorf("caller: %s cannot build key for operationType: %s, state: %s, planID: %s", caller, operationType, state, planID)
+		return "", fmt.Errorf("cannot build key for operatrion: type: %s, state: %s with planID: %s", operationType, state, planID)
 	}
 
 	return counterKey(fmt.Sprintf("%s_%s_%s", operationType, formatOpState(state), planID)), nil
