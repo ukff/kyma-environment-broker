@@ -1,6 +1,7 @@
 package memory
 
 import (
+	`database/sql`
 	"fmt"
 	"sort"
 	"sync"
@@ -186,12 +187,8 @@ func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.O
 		}
 	}
 
-	if len(operations) != 0 {
-		s.sortOperationsByCreatedAtDesc(operations)
-		return operations, nil
-	}
-
-	return nil, dberr.NotFound("instance provisioning operations with instanceID %s not found", instanceID)
+	s.sortOperationsByCreatedAtDesc(operations)
+	return operations, nil
 }
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
@@ -533,6 +530,40 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 		}
 	}
 	return result, nil
+}
+
+func (s *operations)  GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
+	exists := func(slice []internal.OperationStatsV2, item internal.OperationStatsV2) int {
+		for i, s := range slice {
+			if s.State == item.State && s.Type == item.Type && s.PlanID.String == item.PlanID.String {
+				return i
+			}
+		}
+		return -1
+	}
+	
+	stats := make([]internal.OperationStatsV2, 0)
+	for _, op := range s.operations {
+		if op.State == domain.InProgress {
+			o := internal.OperationStatsV2{
+				PlanID: sql.NullString{
+					String: op.ProvisioningParameters.PlanID,
+					Valid:  true,
+				},
+				Type:   string(op.Type),
+				State: string(op.State),
+			}
+			
+			if i := exists(stats, o); i >= 0{
+				stats[i].Count++
+			} else {
+				o.Count = 1
+				stats = append(stats, o)
+			}
+		}
+	}
+	
+	return stats, nil
 }
 
 func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error) {

@@ -70,3 +70,8 @@ type InstanceWithOperationDTO struct {
 	Data               sql.NullString
 	Description        sql.NullString
 }
+
+type InstanceWithExtendedOperationDTO struct {
+	InstanceDTO
+	OperationDTO
+}

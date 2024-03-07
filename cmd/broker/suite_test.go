@@ -373,7 +373,8 @@ func (s *OrchestrationSuite) CreateProvisionedRuntime(options RuntimeOptions) st
 	require.NoError(s.t, err)
 
 	provisioningOperation.InputCreator = fixture.FixInputCreator(internal.Azure)
-	s.provisionerClient.Provision(provisioningOperation)
+	_, err = s.provisionerClient.Provision(provisioningOperation)
+	require.NoError(s.t, err)
 
 	return runtimeID
 }
@@ -405,7 +406,7 @@ func (s *OrchestrationSuite) CreateUpgradeClusterOrchestration(params orchestrat
 
 func (s *OrchestrationSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(time.Millisecond*100, 2*time.Second, func() (bool, error) {
-		status := s.provisionerClient.FindOperationByRuntimeIDAndType(runtimeID, operationType)
+		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
 			return true, nil
@@ -772,7 +773,8 @@ func (s *ProvisioningSuite) CreateUnsuspension(options RuntimeOptions) string {
 	suspensionOp := internal.NewSuspensionOperationWithID("susp-id", instance)
 	suspensionOp.CreatedAt = time.Now().AddDate(0, 0, -10)
 	suspensionOp.State = domain.Succeeded
-	s.storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+	err = s.storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+	require.NoError(s.t, err)
 
 	s.provisioningQueue.Add(operation.ID)
 	return operation.ID
@@ -799,7 +801,8 @@ func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(
 			return false, nil
 		}
 
-		unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		assert.NoError(s.t, err)
 		err = s.k8sKcpCli.Update(context.Background(), gardenerCluster)
 		return err == nil, nil
 	})
@@ -848,7 +851,7 @@ func (s *ProvisioningSuite) AssertProvisionerStartedProvisioning(operationID str
 
 	var status gqlschema.OperationStatus
 	err = wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
-		status = s.provisionerClient.FindOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
+		status = s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
 		if status.ID != nil {
 			return true, nil
 		}
@@ -884,7 +887,7 @@ func (s *ProvisioningSuite) finishOperationByReconciler(op *internal.Operation) 
 
 func (s *ProvisioningSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
-		status := s.provisionerClient.FindOperationByRuntimeIDAndType(runtimeID, operationType)
+		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
 			return true, nil
@@ -1054,6 +1057,7 @@ func fixConfig() *Config {
 				BindablePlans: []string{"aws", "azure"},
 			},
 		},
+
 		Avs: avs.Config{},
 		IAS: ias.Config{
 			IdentityProvider: ias.FakeIdentityProviderName,
@@ -1074,6 +1078,9 @@ func fixConfig() *Config {
 		Provisioning:   process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:         process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+
+		ArchiveEnabled:  true,
+		CleaningEnabled: true,
 	}
 }
 

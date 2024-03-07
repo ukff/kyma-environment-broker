@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -121,8 +123,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
 		timeoutErr := kebError.TimeoutError("operation has reached the time limit")
 		operation.LastError = timeoutErr
-		defer m.callPubSubOutsideSteps(operation, timeoutErr)
-
+		defer m.publishEventOnFail(operation, err)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
 		operation.State = domain.Failed
 		_, err = m.operationStorage.UpdateOperation(*operation)
@@ -173,7 +174,9 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 		}
 
 		processedOperation, err = m.saveFinishedStage(processedOperation, stage, logOperation)
-		if err != nil {
+
+		// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+		if err != nil && !dberr.IsNotFound(err) {
 			return time.Second, nil
 		}
 	}
@@ -182,12 +185,12 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 
 	processedOperation.State = domain.Succeeded
 	processedOperation.Description = "Processing finished"
-	m.publisher.Publish(context.TODO(), OperationSucceeded{
-		Operation: processedOperation,
-	})
+
+	m.publishEventOnSuccess(&processedOperation)
 
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
-	if err != nil {
+	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+	if err != nil && !dberr.IsNotFound(err) {
 		logOperation.Infof("Unable to save operation with finished the provisioning process")
 		return time.Second, err
 	}
@@ -198,7 +201,8 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 func (m *StagedManager) saveFinishedStage(operation internal.Operation, s *stage, log logrus.FieldLogger) (internal.Operation, error) {
 	operation.FinishStage(s.name)
 	op, err := m.operationStorage.UpdateOperation(operation)
-	if err != nil {
+	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+	if err != nil && !dberr.IsNotFound(err) {
 		log.Infof("Unable to save operation with finished stage %s: %s", s.name, err.Error())
 		return operation, err
 	}
@@ -257,9 +261,16 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	}
 }
 
-func (m *StagedManager) callPubSubOutsideSteps(operation *internal.Operation, err error) {
+func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
+
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    operation.ID,
+		PlanID:  operation.ProvisioningParameters.PlanID,
+		OpState: string(operation.State),
+		OpType:  string(operation.Type),
+	})
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
 		StepProcessed: StepProcessed{
@@ -268,5 +279,17 @@ func (m *StagedManager) callPubSubOutsideSteps(operation *internal.Operation, er
 		},
 		OldOperation: *operation,
 		Operation:    *operation,
+	})
+}
+
+func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    operation.ID,
+		PlanID:  operation.ProvisioningParameters.PlanID,
+		OpState: string(operation.State),
+		OpType:  string(operation.Type),
+	})
+	m.publisher.Publish(context.TODO(), OperationSucceeded{
+		Operation: *operation,
 	})
 }
