@@ -19,7 +19,6 @@ const (
 func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instanceStatsGetter InstancesStatsGetter, logger logrus.FieldLogger) {
 	opDurationCollector := NewOperationDurationCollector()
 	prometheus.MustRegister(opDurationCollector)
-	prometheus.MustRegister(NewOperationsCollector(operations))
 	prometheus.MustRegister(NewInstancesCollector(instanceStatsGetter))
 	
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
