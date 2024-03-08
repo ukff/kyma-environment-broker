@@ -12,4 +12,3 @@ linters:
     - goimports
     - govet
     - gofmt
-    - golines
