@@ -359,6 +359,13 @@ type InstanceArchived struct {
 	LastDeprovisioningFinishedAt  time.Time
 }
 
+func (a InstanceArchived) UserID() string {
+	if a.InternalUser {
+		return "somebody (at) sap.com"
+	}
+	return "- deleted -"
+}
+
 type MonitoringData struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

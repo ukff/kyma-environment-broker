@@ -1380,6 +1380,9 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 		lastErr = session.UpdateOperation(operation)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.ID)
+			if dberr.IsNotFound(lastErr) {
+				return false, lastErr
+			}
 			if lastErr != nil {
 				log.Errorf("while getting operation: %v", lastErr)
 				return false, nil
