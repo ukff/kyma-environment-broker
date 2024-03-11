@@ -1,7 +1,7 @@
 package update
 
 import (
-	`fmt`
+	"fmt"
 	"time"
 
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
@@ -83,7 +83,7 @@ func (s *BTPOperatorOverridesStep) setBTPOperatorOverrides(c *reconcilerApi.Comp
 			return err
 		}
 	}
-	
+
 	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
 	c.Configuration = internal.GetBTPOperatorReconcilerOverrides(creds, clusterID)
 	if clusterID != operation.InstanceDetails.ServiceManagerClusterID {
