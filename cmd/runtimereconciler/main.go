@@ -17,13 +17,13 @@ import (
 )
 
 type Config struct {
-	Database                             storage.Config
-	Events                               events.Config
-	Provisioner                          input.Config
-	DryRun                               bool   `envconfig:"default=true"`
-	JobEnabled                           bool   `envconfig:"default=false"`
-	JobInterval                          int    `envconfig:"default=24"`
-	JobReconciliationDelay               string `envconfig:"default=0s"`
+	Database               storage.Config
+	Events                 events.Config
+	Provisioner            input.Config
+	DryRun                 bool   `envconfig:"default=true"`
+	JobEnabled             bool   `envconfig:"default=false"`
+	JobInterval            int    `envconfig:"default=24"`
+	JobReconciliationDelay string `envconfig:"default=0s"`
 }
 
 func main() {
