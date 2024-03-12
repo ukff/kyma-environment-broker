@@ -13,7 +13,7 @@ import (
 
 const (
 	prometheusNamespacev2 = "kcp"
-	prometheusSubsystemv2 = "keb_v2"
+	PrometheusSubsystemv2 = "keb_v2"
 )
 
 // Exposer gather metrics and keep then in memory and expose them to prometheus for fetching them, it gather them by:

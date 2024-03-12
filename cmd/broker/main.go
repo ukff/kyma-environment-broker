@@ -361,7 +361,7 @@ func main() {
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	if cfg.MetricsV2Enabled {
-		metricsv2.Register(ctx, eventBroker, db.Operations(), logs)
+		metricsv2.Register(ctx, eventBroker, db.Operations(),db.Instances(), logs)
 	}
 
 	// setup runtime overrides appender
