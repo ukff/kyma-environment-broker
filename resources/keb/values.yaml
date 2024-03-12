@@ -411,3 +411,6 @@ archiving:
 cleaning:
   enabled: false
   dryRun: true
+
+metricsV2:
+  enabled: "false"

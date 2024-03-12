@@ -126,7 +126,7 @@ type Config struct {
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-
+	MetricsV2Enabled                                                    bool `envconfig:"default=false"`
 	Broker          broker.Config
 	CatalogFilePath string
 
@@ -360,7 +360,9 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
-	metricsv2.Register(ctx, eventBroker, db.Operations(), logs)
+	if cfg.MetricsV2Enabled {
+		metricsv2.Register(ctx, eventBroker, db.Operations(), logs)
+	}
 
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)

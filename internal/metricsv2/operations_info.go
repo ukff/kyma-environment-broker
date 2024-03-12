@@ -33,7 +33,7 @@ type operationsInfo struct {
 	lastUpdate time.Time
 	db         operationsGetter
 	cache      map[string]internal.Operation
-	name 	 string
+	poolingInterval time.Duration
 	mu 	   sync.Mutex
 }
 
@@ -50,7 +50,7 @@ var _ Exposer = (*operationsInfo)(nil)
 // kcp_keb_operation_result
 
 
-func NewOperationInfo(ctx context.Context, db operationsGetter, logger logrus.FieldLogger, name string) *operationsInfo {
+func NewOperationInfo(ctx context.Context, db operationsGetter, logger logrus.FieldLogger, poolingInterval time.Duration) *operationsInfo {
 	svc := &operationsInfo{
 		db:         db,
 		lastUpdate: time.Now().Add(-Retention),
@@ -61,8 +61,8 @@ func NewOperationInfo(ctx context.Context, db operationsGetter, logger logrus.Fi
 			Subsystem: prometheusSubsystemv2,
 			Name:      "operation_result",
 			Help:      "Results of operations",
-		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason"}),
-		name: name,
+		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
+		poolingInterval: poolingInterval,
 	}
 	go svc.Job(ctx)
 	return svc
@@ -78,6 +78,7 @@ func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
 	labels["state"] = string(op.State)
 	labels["error_category"] = string(op.LastError.Component())
 	labels["error_reason"] = string(op.LastError.Reason())
+	labels["error"] = op.LastError.Error()
 	s.operations.With(labels).Set(val)
 }
 
@@ -97,10 +98,10 @@ func (s *operationsInfo) updateOperation(op internal.Operation) {
 func (s *operationsInfo) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			// it's not desirable to panic metrics goroutine, instead it should return and log the error
 			err = fmt.Errorf("panic recovered: %v", r)
 		}
 	}()
+	
 	now := time.Now()
 	operations, err := s.db.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
@@ -115,8 +116,14 @@ func (s *operationsInfo) updateMetrics() (err error) {
 }
 
 func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
-	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.mu.Lock()
+	
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
+		}
+	}()
 	
 	switch ev := event.(type) {
 	case process.DeprovisioningSucceeded:
@@ -128,13 +135,19 @@ func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 }
 
 func (s *operationsInfo) Job(ctx context.Context) {
-	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.mu.Lock()
 	
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
+		}
+	}()
+
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update operations metrics", err)
 	}
-	ticker := time.NewTicker(PollingInterval)
+	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:

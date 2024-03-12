@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	`sync`
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/setup"
@@ -62,6 +63,7 @@ type operationStats struct {
 	gauges          map[metricKey]prometheus.Gauge
 	counters        map[metricKey]prometheus.Counter
 	poolingInterval time.Duration
+	mu 			sync.Mutex
 }
 
 var _ Exposer = (*operationStats)(nil)
@@ -118,6 +120,9 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 }
 
 func (s *operationStats) Handler(_ context.Context, event interface{}) error {
+	defer s.mu.Unlock()
+	s.mu.Lock()
+	
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
@@ -151,49 +156,58 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 }
 
 func (s *operationStats) Job(ctx context.Context) {
+	defer s.mu.Unlock()
+	s.mu.Lock()
+	
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
 		}
 	}()
-
+	
+	if err := s.updateMetrics(); err != nil {
+		s.logger.Error("failed to update operations metrics", err)
+	}
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:
-			stats, err := s.operations.GetOperationStatsByPlanV2()
-			if err != nil {
-				s.logger.Errorf("cannot fetch in progress operations from db : %s", err.Error())
-				continue
+			if err := s.updateMetrics(); err != nil {
+				s.logger.Error("failed to update operations metrics", err)
 			}
-			setStats := make(map[metricKey]struct{})
-			for _, stat := range stats {
-				key, err := s.makeKey(stat.Type, stat.State, broker.PlanID(stat.PlanID))
-				if err != nil {
-					s.logger.Error(err)
-					continue
-				}
-
-				metric, found := s.gauges[key]
-				if !found || metric == nil {
-					s.logger.Errorf("metric not found for key %s", key)
-					continue
-				}
-				metric.Set(float64(stat.Count))
-				setStats[key] = struct{}{}
-			}
-
-			for key, metric := range s.gauges {
-				if _, ok := setStats[key]; ok {
-					continue
-				}
-				metric.Set(0)
-			}
-
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (s *operationStats) updateMetrics() error{
+	stats, err := s.operations.GetOperationStatsByPlanV2()
+	if err != nil {
+		return fmt.Errorf("cannot fetch in progress operations from db : %s", err.Error())
+	}
+	setStats := make(map[metricKey]struct{})
+	for _, stat := range stats {
+		key, err := s.makeKey(stat.Type, stat.State, broker.PlanID(stat.PlanID))
+		if err != nil {
+			return err
+		}
+		
+		metric, found := s.gauges[key]
+		if !found || metric == nil {
+			return fmt.Errorf("metric not found for key %s", key)
+		}
+		metric.Set(float64(stat.Count))
+		setStats[key] = struct{}{}
+	}
+	
+	for key, metric := range s.gauges {
+		if _, ok := setStats[key]; ok {
+			continue
+		}
+		metric.Set(0)
+	}
+	return nil
 }
 
 func (s *operationStats) buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
