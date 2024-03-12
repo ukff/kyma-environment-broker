@@ -124,7 +124,6 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			fmt.Println(fmt.Sprintf("panic recovered while handling operation counting event: %v", recovery))
 			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
 		}
 	}()
