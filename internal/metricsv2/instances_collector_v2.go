@@ -35,17 +35,17 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector
 		statsGetter: statsGetter,
 
 		instancesDesc: prometheus.NewDesc(
-			prometheus.BuildFQName(PrometheusNamespacev2, PrometheusSubsystemv2, "instances_total"),
+			prometheus.BuildFQName(prometheusNamespacev2, PrometheusSubsystemv2, "instances_total"),
 			"The total number of instances",
 			[]string{},
 			nil),
 		instancesPerGAIDDesc: prometheus.NewDesc(
-			prometheus.BuildFQName(PrometheusNamespacev2, PrometheusSubsystemv2, "global_account_id_instances_total"),
+			prometheus.BuildFQName(prometheusNamespacev2, PrometheusSubsystemv2, "global_account_id_instances_total"),
 			"The total number of instances by Global Account ID",
 			[]string{"global_account_id"},
 			nil),
 		licenseTypeDesc: prometheus.NewDesc(
-			prometheus.BuildFQName(PrometheusNamespacev2, PrometheusSubsystemv2, "ers_context_license_type_total"),
+			prometheus.BuildFQName(prometheusNamespacev2, PrometheusSubsystemv2, "ers_context_license_type_total"),
 			"count of instances grouped by license types",
 			[]string{"license_type"},
 			nil),
