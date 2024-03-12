@@ -6,11 +6,10 @@ import (
 	"strings"
 	`sync`
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/common/setup"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	copy2 `github.com/kyma-project/kyma-environment-broker/internal/metricsv2/copy`
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -219,8 +218,8 @@ func (s *operationStats) buildName(opType internal.OperationType, opState domain
 	}
 
 	return prometheus.BuildFQName(
-		copy2.prometheusNamespacev2,
-		copy2.prometheusSubsystemv2,
+		prometheusNamespacev2,
+		prometheusSubsystemv2,
 		fmt.Sprintf(metricNamePattern, fmtType, fmtState),
 	), nil
 }
