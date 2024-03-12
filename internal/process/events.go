@@ -64,3 +64,7 @@ type OperationCounting struct {
 	OpState domain.LastOperationState
 	OpType  internal.OperationType
 }
+
+type DeprovisioningSucceeded struct {
+	Operation internal.DeprovisioningOperation
+}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/common/setup"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -29,7 +29,7 @@ import (
 
 const (
 	prometheusSubsystemv2 = "kcp_v2"
-	metricNamePattern   = "operations_%s_%s_total"
+	metricNamePattern     = "operations_%s_%s_total"
 )
 
 var (
@@ -64,6 +64,8 @@ type operationStats struct {
 	counters        map[metricKey]prometheus.Counter
 	poolingInterval time.Duration
 }
+
+var _ Exposer = (*operationStats)(nil)
 
 func NewOperationsCounters(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
 	return &operationStats{
@@ -112,7 +114,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 		}
 	}
 
-	go s.statsFromDB(ctx)
+	go s.Job(ctx)
 }
 
 func (s *operationStats) Handler(_ context.Context, event interface{}) error {
@@ -148,7 +150,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *operationStats) statsFromDB(ctx context.Context) {
+func (s *operationStats) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)

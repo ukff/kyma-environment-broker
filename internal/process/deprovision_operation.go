@@ -26,6 +26,7 @@ func NewDeprovisionOperationManager(storage storage.Operations) *DeprovisionOper
 
 // OperationSucceeded marks the operation as succeeded and only repeats it if there is a storage error
 func (om *DeprovisionOperationManager) OperationSucceeded(operation internal.DeprovisioningOperation, description string, log logrus.FieldLogger) (internal.DeprovisioningOperation, time.Duration, error) {
+	// check
 	updatedOperation, repeat, _ := om.update(operation, domain.Succeeded, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {
@@ -37,6 +38,7 @@ func (om *DeprovisionOperationManager) OperationSucceeded(operation internal.Dep
 
 // OperationFailed marks the operation as failed and only repeats it if there is a storage error
 func (om *DeprovisionOperationManager) OperationFailed(operation internal.DeprovisioningOperation, description string, err error, log logrus.FieldLogger) (internal.DeprovisioningOperation, time.Duration, error) {
+	// check
 	updatedOperation, repeat, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {

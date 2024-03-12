@@ -3,9 +3,11 @@ package metrics
 import (
 	"context"
 	"fmt"
+	`sync`
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	`github.com/kyma-project/kyma-environment-broker/internal/process`
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -25,15 +27,18 @@ type operationsGetter interface {
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 }
 
-type opsMetricService struct {
+type operationsCollector struct {
 	logger     logrus.FieldLogger
 	operations *prometheus.GaugeVec
 	lastUpdate time.Time
 	db         operationsGetter
 	cache      map[string]internal.Operation
+	mu         sync.Mutex
 }
 
-// StartOpsMetricService creates service for exposing prometheus metrics for operations.
+var _ Exposer = (*operationsCollector)(nil)
+
+// NewOperationsCollector creates service for exposing prometheus metrics for operations.
 //
 // This is intended as a replacement for OperationResultCollector to address shortcomings
 // of the initial implementation - lack of consistency and non-aggregatable metric desing.
@@ -43,12 +48,13 @@ type opsMetricService struct {
 
 // kcp_keb_operation_result
 
-func StartOpsMetricService(ctx context.Context, db operationsGetter, logger logrus.FieldLogger) {
-	svc := &opsMetricService{
+func NewOperationsCollector(ctx context.Context, db operationsGetter, logger logrus.FieldLogger) *operationsCollector {
+	svc := &operationsCollector{
 		db:         db,
 		lastUpdate: time.Now().Add(-Retention),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
+		mu:         sync.Mutex{},
 		operations: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -56,10 +62,11 @@ func StartOpsMetricService(ctx context.Context, db operationsGetter, logger logr
 			Help:      "Results of operations",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error", "error_category", "error_reason"}),
 	}
-	go svc.run(ctx)
+	go svc.Job(ctx)
+	return svc
 }
 
-func (s *opsMetricService) setOperation(op internal.Operation, val float64) {
+func (s *operationsCollector) setOperation(op internal.Operation, val float64) {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
@@ -73,7 +80,7 @@ func (s *opsMetricService) setOperation(op internal.Operation, val float64) {
 	s.operations.With(labels).Set(val)
 }
 
-func (s *opsMetricService) updateOperation(op internal.Operation) {
+func (s *operationsCollector) updateOperation(op internal.Operation) {
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
@@ -82,12 +89,11 @@ func (s *opsMetricService) updateOperation(op internal.Operation) {
 	if op.State == domain.Failed || op.State == domain.Succeeded {
 		delete(s.cache, op.ID)
 	} else {
-		// in progress
 		s.cache[op.ID] = op
 	}
 }
 
-func (s *opsMetricService) updateMetrics() (err error) {
+func (s *operationsCollector) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// it's not desirable to panic metrics goroutine, instead it should return and log the error
@@ -107,7 +113,23 @@ func (s *opsMetricService) updateMetrics() (err error) {
 	return nil
 }
 
-func (s *opsMetricService) run(ctx context.Context) {
+func (s *operationsCollector) Handler(_ context.Context, event interface{}) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
+	switch ev := event.(type) {
+	case process.DeprovisioningSucceeded:
+		s.updateOperation(ev.Operation.Operation)
+	default:
+		s.logger.Errorf("unexpected event type: %T", event)
+	}
+	return nil
+}
+
+func (s *operationsCollector) Job(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update operations metrics", err)
 	}

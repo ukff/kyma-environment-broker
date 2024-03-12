@@ -191,6 +191,7 @@ func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.U
 
 func (c *converter) adjustRuntimeState(dto *pkg.RuntimeDTO) {
 	lastOp := dto.LastOperation()
+	// check
 	switch lastOp.State {
 	case string(domain.Succeeded):
 		dto.Status.State = pkg.StateSucceeded

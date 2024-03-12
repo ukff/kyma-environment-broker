@@ -10,11 +10,15 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"sort"
+	`strconv`
+	`strings`
 	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-
+	`github.com/kyma-project/kyma-environment-broker/internal/metrics`
+	`github.com/prometheus/client_golang/prometheus/promhttp`
+	
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -272,16 +276,69 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	runtimeHandler := kebRuntime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient)
 	runtimeHandler.AttachRoutes(ts.router)
-
+	
+	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	ts.router.Handle("/metrics", promhttp.Handler())
+	
 	ts.httpServer = httptest.NewServer(ts.router)
 	return ts
 }
 
-func fakeK8sClientProvider(k8sCli client.Client) func(s string) (client.Client, error) {
-	return func(s string) (client.Client, error) {
-		return k8sCli, nil
+func (s *BrokerSuiteTest) AssertCorrectMetricValue(metricName, plan string, value int) {
+	response, err := s.httpServer.Client().Get(fmt.Sprintf("%s/metrics", s.httpServer.URL))
+	assert.NoError(s.t, err)
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	assert.NoError(s.t, err)
+	lines := strings.Split(string(body), "\n")
+	found := -1
+	for _, line := range lines {
+		if found != -1 {
+			break
+		}
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		
+		nameValue := strings.Split(line, " ")
+		name := nameValue[0]
+		value, _ = strconv.Atoi(nameValue[1])
+		str := strings.SplitAfter(name, metricName)
+		if len(str) == 1 {
+			if str[0] == line {
+				continue
+			}
+		} else {
+			fmt.Println(fmt.Sprintf("found label case: %s", str[0]))
+			fmt.Println(fmt.Sprintf("found label case: %s", str[1]))
+			
+			s1 := strings.Trim(str[1], "{")
+			s2 := strings.Trim(s1, "}")
+			sss := strings.Split(s2, ",")
+			fmt.Println(fmt.Sprintf("found xxx"))
+			
+			for _, v := range sss {
+				
+				ss := strings.Split(v, "=")
+				ssss := strings.Replace(ss[1], " ", "", 0)
+				ssss = strings.Trim(ssss, "\"")
+				
+				pOk := ss[0] == "plan_id"
+				ppOk := ssss == plan
+				fmt.Println(fmt.Sprintf("found: plan %s val %s", ss[0], plan))
+				
+				if pOk && ppOk {
+					fmt.Println(fmt.Sprintf("found: plan %s val %s", ss[0], plan))
+					found, _ = strconv.Atoi(nameValue[1])
+					fmt.Println(fmt.Sprintf("found: %d", found))
+					break
+				}
+			}
+		}
 	}
+	assert.Equal(s.t, value, found)
 }
+
 
 func defaultOIDCValues() internal.OIDCConfigDTO {
 	return internal.OIDCConfigDTO{

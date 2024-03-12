@@ -157,6 +157,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 
 			processedOperation, when, err = m.runStep(step, processedOperation, logStep)
 			if err != nil {
+				// step returns error, but we dont reque?
 				logStep.Errorf("Process operation failed: %s", err)
 				operation.EventErrorf(err, "step %v processing returned error", step.Name())
 				return 0, err
@@ -173,7 +174,8 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 				return when, nil
 			}
 		}
-
+		
+		// save ops
 		processedOperation, err = m.saveFinishedStage(processedOperation, stage, logOperation)
 
 		// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
@@ -190,7 +192,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	m.publishEventOnSuccess(&processedOperation)
 
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
-	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process (Archiving)
 	if err != nil && !dberr.IsNotFound(err) {
 		logOperation.Infof("Unable to save operation with finished the provisioning process")
 		return time.Second, err
@@ -269,8 +271,8 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    operation.ID,
 		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: domain.LastOperationState(string(operation.State)),
-		OpType:  internal.OperationType(string(operation.Type)),
+		OpState: operation.State,
+		OpType:  operation.Type,
 	})
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
@@ -284,13 +286,18 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 }
 
 func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
-	m.publisher.Publish(context.TODO(), OperationCounting{
-		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: domain.LastOperationState(string(operation.State)),
-		OpType:  internal.OperationType(string(operation.Type)),
-	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
 	})
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    operation.ID,
+		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
+		OpState: operation.State,
+		OpType:  operation.Type,
+	})
+	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision{
+		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
+			Operation: internal.DeprovisioningOperation{Operation: *operation},
+		})
+	}
 }

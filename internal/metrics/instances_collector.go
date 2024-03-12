@@ -83,12 +83,10 @@ func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labe
 		prometheus.GaugeValue,
 		float64(value),
 		labelValues...)
-	
+
 	if err != nil {
 		logrus.Errorf("unable to register metric %s", err.Error())
 		return
 	}
 	ch <- m
 }
-
-

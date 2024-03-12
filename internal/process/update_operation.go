@@ -22,6 +22,7 @@ func NewUpdateOperationManager(storage storage.Operations) *UpdateOperationManag
 
 // OperationSucceeded marks the operation as succeeded and only repeats it if there is a storage error
 func (om *UpdateOperationManager) OperationSucceeded(operation internal.UpdatingOperation, description string, log logrus.FieldLogger) (internal.UpdatingOperation, time.Duration, error) {
+	// check
 	updatedOperation, repeat, _ := om.update(operation, orchestration.Succeeded, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {
@@ -33,6 +34,7 @@ func (om *UpdateOperationManager) OperationSucceeded(operation internal.Updating
 
 // OperationFailed marks the operation as failed and only repeats it if there is a storage error
 func (om *UpdateOperationManager) OperationFailed(operation internal.UpdatingOperation, description string, err error, log logrus.FieldLogger) (internal.UpdatingOperation, time.Duration, error) {
+	// check
 	updatedOperation, repeat, _ := om.update(operation, orchestration.Failed, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {

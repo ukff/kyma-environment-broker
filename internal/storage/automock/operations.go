@@ -235,7 +235,6 @@ func (_m *Operations) GetOperationStatsByPlan() (map[string]internal.OperationSt
 		}
 	}
 
-
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
 	} else {

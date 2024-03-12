@@ -164,6 +164,7 @@ func TestOperationsCounter(t *testing.T) {
 		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.gauges[key5]))
 		assert.Equal(t, float64(eventsCount6), testutil.ToFloat64(ctr.gauges[key6]))
 		assert.Equal(t, float64(eventsCount7), testutil.ToFloat64(ctr.gauges[key7]))
+
 	})
 
 	t.Cleanup(func() {

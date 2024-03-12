@@ -22,11 +22,13 @@ func NewOperationManager(storage storage.Operations) *OperationManager {
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
 func (om *OperationManager) OperationSucceeded(operation internal.Operation, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	// check
 	return om.update(operation, domain.Succeeded, description, log)
 }
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	// check
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if t != 0 {

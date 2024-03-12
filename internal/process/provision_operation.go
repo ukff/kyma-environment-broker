@@ -24,6 +24,7 @@ func NewProvisionOperationManager(storage storage.Operations) *ProvisionOperatio
 
 // OperationSucceeded marks the operation as succeeded and only repeats it if there is a storage error
 func (om *ProvisionOperationManager) OperationSucceeded(operation internal.ProvisioningOperation, description string, log logrus.FieldLogger) (internal.ProvisioningOperation, time.Duration, error) {
+	// check
 	updatedOperation, repeat, _ := om.update(operation, domain.Succeeded, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {
@@ -35,6 +36,7 @@ func (om *ProvisionOperationManager) OperationSucceeded(operation internal.Provi
 
 // OperationFailed marks the operation as failed and only repeats it if there is a storage error
 func (om *ProvisionOperationManager) OperationFailed(operation internal.ProvisioningOperation, description string, err error, log logrus.FieldLogger) (internal.ProvisioningOperation, time.Duration, error) {
+	// check
 	updatedOperation, repeat, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {

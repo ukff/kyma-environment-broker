@@ -121,6 +121,8 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
+	
+	suite.AssertCorrectMetricValue("kcp_kcp_v2_operations_provisioning_succeeded_total","361c511f-f939-4621-b228-d0fb79a1fe15", 1)
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
 	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1"})
