@@ -28,8 +28,6 @@ import (
 // - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
 
 const (
-	prometheusNamespace = "keb"
-	prometheusSubsystem = "kcp_v2"
 	metricNamePattern   = "operations_%s_%s_total"
 )
 
@@ -66,7 +64,10 @@ type operationStats struct {
 	poolingInterval time.Duration
 }
 
-func NewOperationsCounters(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
+var _ Exposer = (*operationStats)(nil)
+
+
+func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
 	return &operationStats{
 		logger:          logger.WithField("source", "@metricsv2"),
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
@@ -113,7 +114,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 		}
 	}
 
-	go s.statsFromDB(ctx)
+	go s.Job(ctx)
 }
 
 func (s *operationStats) Handler(_ context.Context, event interface{}) error {
@@ -149,7 +150,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *operationStats) statsFromDB(ctx context.Context) {
+func (s *operationStats) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)

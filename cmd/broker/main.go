@@ -16,7 +16,8 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
-
+	`github.com/kyma-project/kyma-environment-broker/internal/metricsv2`
+	
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
@@ -359,6 +360,7 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	metricsv2.Register(ctx, eventBroker, db.Operations(), logs)
 
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)

@@ -269,8 +269,8 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    operation.ID,
 		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: domain.LastOperationState(string(operation.State)),
-		OpType:  internal.OperationType(string(operation.Type)),
+		OpState: operation.State,
+		OpType:  operation.Type,
 	})
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
@@ -287,10 +287,15 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationCounting{
 		OpId:    operation.ID,
 		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: domain.LastOperationState(string(operation.State)),
-		OpType:  internal.OperationType(string(operation.Type)),
+		OpState: operation.State,
+		OpType:  operation.Type,
 	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
 	})
+	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision{
+		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
+			Operation: internal.DeprovisioningOperation{Operation: *operation},
+		})
+	}
 }

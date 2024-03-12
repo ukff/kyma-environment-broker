@@ -71,7 +71,7 @@ func TestOperationsCounter(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsCounters(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
+		ctr = NewOperationsStats(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
 		ctr.MustRegister(context.Background())
 	})
 
