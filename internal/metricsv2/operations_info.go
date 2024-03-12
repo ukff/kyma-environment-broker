@@ -3,13 +3,12 @@ package metricsv2
 import (
 	"context"
 	"fmt"
-	`sync`
+	"sync"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	copy2 `github.com/kyma-project/kyma-environment-broker/internal/metricsv2/copy`
-	`github.com/kyma-project/kyma-environment-broker/internal/process`
-	`github.com/kyma-project/kyma-environment-broker/internal/storage`
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -17,11 +16,11 @@ import (
 )
 
 type operationsInfo struct {
-	logger     logrus.FieldLogger
-	metrics    *prometheus.GaugeVec
-	lastUpdate time.Time
-	operations storage.Operations
-	cache      map[string]internal.Operation
+	logger          logrus.FieldLogger
+	metrics         *prometheus.GaugeVec
+	lastUpdate      time.Time
+	operations      storage.Operations
+	cache           map[string]internal.Operation
 	poolingInterval time.Duration
 	sync            sync.Mutex
 }
@@ -79,7 +78,7 @@ func (s *operationsInfo) updateMetrics() (err error) {
 			err = fmt.Errorf("panic recovered: %v", r)
 		}
 	}()
-	
+
 	now := time.Now()
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
@@ -96,13 +95,13 @@ func (s *operationsInfo) updateMetrics() (err error) {
 func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
-	
+
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
 		}
 	}()
-	
+
 	switch ev := event.(type) {
 	case process.DeprovisioningSucceeded:
 		s.updateOperation(ev.Operation.Operation)
@@ -115,7 +114,7 @@ func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 func (s *operationsInfo) Job(ctx context.Context) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
-	
+
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
@@ -125,7 +124,7 @@ func (s *operationsInfo) Job(ctx context.Context) {
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update metrics metrics", err)
 	}
-	
+
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {

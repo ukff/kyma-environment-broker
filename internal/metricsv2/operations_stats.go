@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	`sync`
+	"sync"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/common/setup"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -29,7 +29,7 @@ import (
 // - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
 
 const (
-	metricNamePattern   = "operations_%s_%s_total"
+	metricNamePattern = "operations_%s_%s_total"
 )
 
 var (
@@ -121,7 +121,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
-	
+
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
@@ -157,13 +157,13 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 func (s *operationStats) Job(ctx context.Context) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
-	
+
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
 		}
 	}()
-	
+
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update metrics metrics", err)
 	}
@@ -180,7 +180,7 @@ func (s *operationStats) Job(ctx context.Context) {
 	}
 }
 
-func (s *operationStats) updateMetrics() error{
+func (s *operationStats) updateMetrics() error {
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
 		return fmt.Errorf("cannot fetch in progress metrics from operations : %s", err.Error())
@@ -191,7 +191,7 @@ func (s *operationStats) updateMetrics() error{
 		if err != nil {
 			return err
 		}
-		
+
 		metric, found := s.gauges[key]
 		if !found || metric == nil {
 			return fmt.Errorf("metric not found for key %s", key)
@@ -199,7 +199,7 @@ func (s *operationStats) updateMetrics() error{
 		metric.Set(float64(stat.Count))
 		setStats[key] = struct{}{}
 	}
-	
+
 	for key, metric := range s.gauges {
 		if _, ok := setStats[key]; ok {
 			continue

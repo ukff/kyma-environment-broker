@@ -1,8 +1,8 @@
 package metricsv2
 
 import (
-	`github.com/prometheus/client_golang/prometheus`
-	`github.com/sirupsen/logrus`
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 //
@@ -15,7 +15,7 @@ func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labe
 		prometheus.GaugeValue,
 		float64(value),
 		labelValues...)
-	
+
 	if err != nil {
 		logrus.Errorf("unable to register metric %s", err.Error())
 		return

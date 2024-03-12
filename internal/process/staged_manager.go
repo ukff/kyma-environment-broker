@@ -293,7 +293,7 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
 	})
-	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision{
+	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
 		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
 			Operation: internal.DeprovisioningOperation{Operation: *operation},
 		})
