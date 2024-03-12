@@ -27,7 +27,7 @@ type operationsGetter interface {
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 }
 
-type operationsCollector struct {
+type operationsInfo struct {
 	logger     logrus.FieldLogger
 	operations *prometheus.GaugeVec
 	lastUpdate time.Time
@@ -37,9 +37,9 @@ type operationsCollector struct {
 	mu 	   sync.Mutex
 }
 
-var _ Exposer = (*operationsCollector)(nil)
+var _ Exposer = (*operationsInfo)(nil)
 
-// NewOperationsCollectorV2 creates service for exposing prometheus metrics for operations.
+// NewOperationInfo creates service for exposing prometheus metrics for operations.
 //
 // This is intended as a replacement for OperationResultCollector to address shortcomings
 // of the initial implementation - lack of consistency and non-aggregatable metric desing.
@@ -50,16 +50,16 @@ var _ Exposer = (*operationsCollector)(nil)
 // kcp_keb_operation_result
 
 
-func NewOperationsCollectorV2(ctx context.Context, db operationsGetter, logger logrus.FieldLogger, name string) *operationsCollector {
-	svc := &operationsCollector{
+func NewOperationInfo(ctx context.Context, db operationsGetter, logger logrus.FieldLogger, name string) *operationsInfo {
+	svc := &operationsInfo{
 		db:         db,
 		lastUpdate: time.Now().Add(-Retention),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		operations: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      name,
+			Namespace: prometheusNamespacev2,
+			Subsystem: prometheusSubsystemv2,
+			Name:      "operation_result",
 			Help:      "Results of operations",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason"}),
 		name: name,
@@ -68,7 +68,7 @@ func NewOperationsCollectorV2(ctx context.Context, db operationsGetter, logger l
 	return svc
 }
 
-func (s *operationsCollector) setOperation(op internal.Operation, val float64) {
+func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
@@ -81,7 +81,7 @@ func (s *operationsCollector) setOperation(op internal.Operation, val float64) {
 	s.operations.With(labels).Set(val)
 }
 
-func (s *operationsCollector) updateOperation(op internal.Operation) {
+func (s *operationsInfo) updateOperation(op internal.Operation) {
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
@@ -94,7 +94,7 @@ func (s *operationsCollector) updateOperation(op internal.Operation) {
 	}
 }
 
-func (s *operationsCollector) updateMetrics() (err error) {
+func (s *operationsInfo) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// it's not desirable to panic metrics goroutine, instead it should return and log the error
@@ -114,7 +114,7 @@ func (s *operationsCollector) updateMetrics() (err error) {
 	return nil
 }
 
-func (s *operationsCollector) Handler(ctx context.Context, event interface{}) error {
+func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	
@@ -127,7 +127,7 @@ func (s *operationsCollector) Handler(ctx context.Context, event interface{}) er
 	return nil
 }
 
-func (s *operationsCollector) Job(ctx context.Context) {
+func (s *operationsInfo) Job(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	

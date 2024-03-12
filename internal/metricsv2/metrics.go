@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	prometheusNamespace = "kcp"
-	prometheusSubsystem = "keb"
+	prometheusNamespacev2 = "kcp"
+	prometheusSubsystemv2 = "keb_v2"
 )
 
 // Exposer gather metrics and keep then in memory and expose them to prometheus for fetching them, it gather them by:
@@ -26,7 +26,7 @@ type Exposer interface {
 
 func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, logger logrus.FieldLogger) {
 	
-	operationsCollector := NewOperationsCollectorV2(ctx, operations, logger, "operation_result_v2")
+	operationsCollector := NewOperationInfo(ctx, operations, logger, "operation_result_v2")
 	
 	// test of metrics for upcoming new implementation
 	operationsCounter := NewOperationsStats(operations, 5*time.Second, logger)
@@ -35,4 +35,3 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
 	sub.Subscribe(process.DeprovisioningSucceeded{}, operationsCollector.Handler)
 }
-

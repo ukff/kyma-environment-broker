@@ -205,8 +205,8 @@ func (s *operationStats) buildName(opType internal.OperationType, opState domain
 	}
 
 	return prometheus.BuildFQName(
-		prometheusNamespace,
-		prometheusSubsystem,
+		prometheusNamespacev2,
+		prometheusSubsystemv2,
 		fmt.Sprintf(metricNamePattern, fmtType, fmtState),
 	), nil
 }
