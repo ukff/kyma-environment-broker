@@ -395,7 +395,7 @@ spec:
             - name: APP_BROKER_INCLUDE_NEW_MACHINE_TYPES_IN_SCHEMA
               value: "{{ .Values.includeNewMachineTypesInSchema }}"
             - name: APP_BROKER_METRICSV2_ENABLED
-              value: "{{ .Values.broker.metricsV2.enabled }}"
+              value: "{{ .Values.metricsv2.enabled }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

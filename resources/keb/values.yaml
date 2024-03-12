@@ -409,5 +409,5 @@ cleaning:
   enabled: false
   dryRun: true
 
-metricsV2:
+metricsv2:
   enabled: "false"

@@ -126,7 +126,7 @@ type Config struct {
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-	MetricsV2Enabled                                                    bool `envconfig:"default=false"`
+	Metricsv2Enabled                                                    bool `envconfig:"default=false"`
 	Broker                                                              broker.Config
 	CatalogFilePath                                                     string
 
@@ -360,7 +360,7 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
-	if cfg.MetricsV2Enabled {
+	if cfg.Metricsv2Enabled {
 		metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	}
 
