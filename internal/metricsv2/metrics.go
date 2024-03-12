@@ -7,12 +7,13 @@ import (
 	`github.com/kyma-project/kyma-environment-broker/internal/event`
 	`github.com/kyma-project/kyma-environment-broker/internal/process`
 	`github.com/kyma-project/kyma-environment-broker/internal/storage`
+	`github.com/prometheus/client_golang/prometheus`
 	`github.com/sirupsen/logrus`
 )
 
 const (
-	prometheusNamespacev2 = "kcp"
-	prometheusSubsystemv2 = "keb_v2"
+	PrometheusNamespacev2 = "kcp"
+	PrometheusSubsystemv2 = "keb_v2"
 )
 
 // Exposer gather metrics and keep then in memory and expose them to prometheus for fetching them, it gather them by:
@@ -24,12 +25,21 @@ type Exposer interface {
 	Job(ctx context.Context)
 }
 
-func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, logger logrus.FieldLogger) {
+func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, logger logrus.FieldLogger) {
 	
-	operationsCollector := NewOperationInfo(ctx, operations, logger, "operation_result_v2")
+	opDurationCollector := NewOperationDurationCollector()
+	prometheus.MustRegister(opDurationCollector)
+	prometheus.MustRegister(NewInstancesCollector(instances))
+	
+	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
+	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
+	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
+	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
+	
+	operationsCollector := NewOperationInfo(ctx, operations, logger, time.Second*30, time.Hour * 24 * 7)
 	
 	// test of metrics for upcoming new implementation
-	operationsCounter := NewOperationsStats(operations, 5*time.Second, logger)
+	operationsCounter := NewOperationsStats(operations,  time.Second*30, logger)
 	operationsCounter.MustRegister(ctx)
 	
 	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)

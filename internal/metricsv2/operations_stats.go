@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/setup"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	copy2 `github.com/kyma-project/kyma-environment-broker/internal/metricsv2/copy`
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -63,11 +64,10 @@ type operationStats struct {
 	gauges          map[metricKey]prometheus.Gauge
 	counters        map[metricKey]prometheus.Counter
 	poolingInterval time.Duration
-	mu 			sync.Mutex
+	sync            sync.Mutex
 }
 
 var _ Exposer = (*operationStats)(nil)
-
 
 func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
 	return &operationStats{
@@ -82,7 +82,7 @@ func NewOperationsStats(operations storage.Operations, poolingInterval time.Dura
 func (s *operationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
+			s.logger.Errorf("panic recovered while creating and registering metrics metrics: %v", recovery)
 		}
 	}()
 
@@ -120,8 +120,8 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 }
 
 func (s *operationStats) Handler(_ context.Context, event interface{}) error {
-	defer s.mu.Unlock()
-	s.mu.Lock()
+	defer s.sync.Unlock()
+	s.sync.Lock()
 	
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -137,7 +137,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	opState := payload.OpState
 
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.OpState)
+		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded metrics", payload.OpState)
 	}
 
 	key, err := s.makeKey(payload.OpType, opState, payload.PlanID)
@@ -156,8 +156,8 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 }
 
 func (s *operationStats) Job(ctx context.Context) {
-	defer s.mu.Unlock()
-	s.mu.Lock()
+	defer s.sync.Unlock()
+	s.sync.Lock()
 	
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -166,14 +166,14 @@ func (s *operationStats) Job(ctx context.Context) {
 	}()
 	
 	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update operations metrics", err)
+		s.logger.Error("failed to update metrics metrics", err)
 	}
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operations metrics", err)
+				s.logger.Error("failed to update metrics metrics", err)
 			}
 		case <-ctx.Done():
 			return
@@ -184,7 +184,7 @@ func (s *operationStats) Job(ctx context.Context) {
 func (s *operationStats) updateMetrics() error{
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
-		return fmt.Errorf("cannot fetch in progress operations from db : %s", err.Error())
+		return fmt.Errorf("cannot fetch in progress metrics from operations : %s", err.Error())
 	}
 	setStats := make(map[metricKey]struct{})
 	for _, stat := range stats {
@@ -219,8 +219,8 @@ func (s *operationStats) buildName(opType internal.OperationType, opState domain
 	}
 
 	return prometheus.BuildFQName(
-		prometheusNamespacev2,
-		prometheusSubsystemv2,
+		copy2.prometheusNamespacev2,
+		copy2.prometheusSubsystemv2,
 		fmt.Sprintf(metricNamePattern, fmtType, fmtState),
 	), nil
 }

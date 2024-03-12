@@ -7,65 +7,43 @@ import (
 	"time"
 	
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	copy2 `github.com/kyma-project/kyma-environment-broker/internal/metricsv2/copy`
 	`github.com/kyma-project/kyma-environment-broker/internal/process`
+	`github.com/kyma-project/kyma-environment-broker/internal/storage`
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
 )
 
-// Retention is the default time and date for obtaining operations by the database query
-// For performance reasons, it is not possible to query entire operations database table,
-// so instead KEB queries the database for last 14 days worth of data and then for deltas
-// during the ellapsed time
-const (
-	Retention       = 14 * 24 * time.Hour
-	PollingInterval = 30 * time.Second
-)
-
-type operationsGetter interface {
-	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
-}
-
 type operationsInfo struct {
 	logger     logrus.FieldLogger
-	operations *prometheus.GaugeVec
+	metrics    *prometheus.GaugeVec
 	lastUpdate time.Time
-	db         operationsGetter
+	operations storage.Operations
 	cache      map[string]internal.Operation
 	poolingInterval time.Duration
-	mu 	   sync.Mutex
+	sync            sync.Mutex
 }
 
 var _ Exposer = (*operationsInfo)(nil)
 
-// NewOperationInfo creates service for exposing prometheus metrics for operations.
-//
-// This is intended as a replacement for OperationResultCollector to address shortcomings
-// of the initial implementation - lack of consistency and non-aggregatable metric desing.
-// The underlying data is fetched asynchronously from the KEB SQL database to provide
-// consistency and the operation result state is exposed as a label instead of a value to
-// enable common gauge aggregation.
-
-// kcp_keb_operation_result
-
-
-func NewOperationInfo(ctx context.Context, db operationsGetter, logger logrus.FieldLogger, poolingInterval time.Duration) *operationsInfo {
-	svc := &operationsInfo{
-		db:         db,
-		lastUpdate: time.Now().Add(-Retention),
+func NewOperationInfo(ctx context.Context, db storage.Operations, logger logrus.FieldLogger, poolingInterval time.Duration, retention time.Duration) *operationsInfo {
+	opInfo := &operationsInfo{
+		operations: db,
+		lastUpdate: time.Now().Add(-retention),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
-		operations: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: copy2.prometheusNamespacev2,
+			Subsystem: copy2.prometheusSubsystemv2,
 			Name:      "operation_result",
-			Help:      "Results of operations",
+			Help:      "Results of metrics",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
 		poolingInterval: poolingInterval,
 	}
-	go svc.Job(ctx)
-	return svc
+	go opInfo.Job(ctx)
+	return opInfo
 }
 
 func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
@@ -79,7 +57,7 @@ func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
 	labels["error_category"] = string(op.LastError.Component())
 	labels["error_reason"] = string(op.LastError.Reason())
 	labels["error"] = op.LastError.Error()
-	s.operations.With(labels).Set(val)
+	s.metrics.With(labels).Set(val)
 }
 
 func (s *operationsInfo) updateOperation(op internal.Operation) {
@@ -103,11 +81,11 @@ func (s *operationsInfo) updateMetrics() (err error) {
 	}()
 	
 	now := time.Now()
-	operations, err := s.db.ListOperationsInTimeRange(s.lastUpdate, now)
+	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
-		return fmt.Errorf("failed to list operations: %v", err)
+		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	s.logger.Infof("updating operations metrics for: %v operations", len(operations))
+	s.logger.Infof("updating metrics metrics for: %v metrics", len(operations))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
@@ -116,8 +94,8 @@ func (s *operationsInfo) updateMetrics() (err error) {
 }
 
 func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
-	defer s.mu.Unlock()
-	s.mu.Lock()
+	defer s.sync.Unlock()
+	s.sync.Lock()
 	
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -135,8 +113,8 @@ func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 }
 
 func (s *operationsInfo) Job(ctx context.Context) {
-	defer s.mu.Unlock()
-	s.mu.Lock()
+	defer s.sync.Unlock()
+	s.sync.Lock()
 	
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -145,14 +123,15 @@ func (s *operationsInfo) Job(ctx context.Context) {
 	}()
 
 	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update operations metrics", err)
+		s.logger.Error("failed to update metrics metrics", err)
 	}
+	
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operations metrics", err)
+				s.logger.Error("failed to update metrics metrics", err)
 			}
 		case <-ctx.Done():
 			return
