@@ -124,6 +124,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
+			fmt.Println(fmt.Sprintf("panic recovered while handling operation counting event: %v", recovery))
 			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
 		}
 	}()
@@ -155,9 +156,6 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 }
 
 func (s *operationStats) Job(ctx context.Context) {
-	defer s.sync.Unlock()
-	s.sync.Lock()
-
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
@@ -181,6 +179,9 @@ func (s *operationStats) Job(ctx context.Context) {
 }
 
 func (s *operationStats) updateMetrics() error {
+	defer s.sync.Unlock()
+	s.sync.Lock()
+
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
 		return fmt.Errorf("cannot fetch in progress metrics from operations : %s", err.Error())

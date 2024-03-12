@@ -60,6 +60,9 @@ func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
 }
 
 func (s *operationsInfo) updateOperation(op internal.Operation) {
+	defer s.sync.Unlock()
+	s.sync.Lock()
+
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
@@ -112,8 +115,6 @@ func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 }
 
 func (s *operationsInfo) Job(ctx context.Context) {
-	defer s.sync.Unlock()
-	s.sync.Lock()
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
