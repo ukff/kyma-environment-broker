@@ -1,193 +1,123 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
 )
 
-// OperationsStatsGetter provides metrics, which shows how many operations were done for the following plans:
-
-// - kcp_keb_operations_{plan_name}_provisioning_failed_total
-// - kcp_keb_operations_{plan_name}_provisioning_in_progress_total
-// - kcp_keb_operations_{plan_name}_provisioning_succeeded_total
-// - kcp_keb_operations_{plan_name}_deprovisioning_failed_total
-// - kcp_keb_operations_{plan_name}_deprovisioning_in_progress_total
-// - kcp_keb_operations_{plan_name}_deprovisioning_succeeded_total
-
-var (
-	supportedPlansIDs = []string{
-		broker.AzurePlanID,
-		broker.AzureLitePlanID,
-		broker.AWSPlanID,
-		broker.GCPPlanID,
-		broker.SapConvergedCloudPlanID,
-		broker.TrialPlanID,
-		broker.FreemiumPlanID,
-		broker.PreviewPlanName,
-	}
+// Retention is the default time and date for obtaining operations by the database query
+// For performance reasons, it is not possible to query entire operations database table,
+// so instead KEB queries the database for last 14 days worth of data and then for deltas
+// during the ellapsed time
+const (
+	Retention       = 14 * 24 * time.Hour
+	PollingInterval = 30 * time.Second
 )
 
-type OperationsStatsGetter interface {
-	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)
+type operationsGetter interface {
+	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 }
 
-type OperationStat struct {
-	failedProvisioning   *prometheus.Desc
-	failedDeprovisioning *prometheus.Desc
-
-	succeededProvisioning   *prometheus.Desc
-	succeededDeprovisioning *prometheus.Desc
-
-	inProgressProvisioning   *prometheus.Desc
-	inProgressDeprovisioning *prometheus.Desc
+type opsMetricService struct {
+	logger     logrus.FieldLogger
+	operations *prometheus.GaugeVec
+	lastUpdate time.Time
+	db         operationsGetter
+	cache      map[string]internal.Operation
 }
 
-func (c *OperationStat) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.inProgressProvisioning
-	ch <- c.succeededProvisioning
-	ch <- c.failedProvisioning
+// StartOpsMetricService creates service for exposing prometheus metrics for operations.
+//
+// This is intended as a replacement for OperationResultCollector to address shortcomings
+// of the initial implementation - lack of consistency and non-aggregatable metric desing.
+// The underlying data is fetched asynchronously from the KEB SQL database to provide
+// consistency and the operation result state is exposed as a label instead of a value to
+// enable common gauge aggregation.
 
-	ch <- c.inProgressDeprovisioning
-	ch <- c.succeededDeprovisioning
-	ch <- c.failedDeprovisioning
+// kcp_keb_operation_result
+
+func StartOpsMetricService(ctx context.Context, db operationsGetter, logger logrus.FieldLogger) {
+	svc := &opsMetricService{
+		db:         db,
+		lastUpdate: time.Now().Add(-Retention),
+		logger:     logger,
+		cache:      make(map[string]internal.Operation),
+		operations: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "operation_result",
+			Help:      "Results of operations",
+		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason"}),
+	}
+	go svc.run(ctx)
 }
 
-type OperationStatsV2 struct {
-	statsGetter OperationsStatsGetter
-
-	operationStats map[string]OperationStat
+func (s *opsMetricService) setOperation(op internal.Operation, val float64) {
+	labels := make(map[string]string)
+	labels["operation_id"] = op.ID
+	labels["instance_id"] = op.InstanceID
+	labels["global_account_id"] = op.GlobalAccountID
+	labels["plan_id"] = op.Plan
+	labels["type"] = string(op.Type)
+	labels["state"] = string(op.State)
+	labels["error_category"] = string(op.LastError.Component())
+	labels["error_reason"] = string(op.LastError.Reason())
+	s.operations.With(labels).Set(val)
 }
 
-func NewOperationsCollector(statsGetter OperationsStatsGetter) *OperationStatsV2 {
-	opStats := make(map[string]OperationStat, len(supportedPlansIDs))
+func (s *opsMetricService) updateOperation(op internal.Operation) {
+	oldOp, found := s.cache[op.ID]
+	if found {
+		s.setOperation(oldOp, 0)
+	}
+	s.setOperation(op, 1)
+	if op.State == domain.Failed || op.State == domain.Succeeded {
+		delete(s.cache, op.ID)
+	} else {
+		s.cache[op.ID] = op
+	}
+}
 
-	for _, p := range supportedPlansIDs {
-		opStats[p] = OperationStat{
-			inProgressProvisioning: prometheus.NewDesc(
-				fqName(internal.OperationTypeProvision, domain.InProgress),
-				"The number of provisioning operations in progress",
-				[]string{"plan_id"},
-				nil),
-			succeededProvisioning: prometheus.NewDesc(
-				fqName(internal.OperationTypeProvision, domain.Succeeded),
-				"The number of succeeded provisioning operations",
-				[]string{"plan_id"},
-				nil),
-			failedProvisioning: prometheus.NewDesc(
-				fqName(internal.OperationTypeProvision, domain.Failed),
-				"The number of failed provisioning operations",
-				[]string{"plan_id"},
-				nil),
-			inProgressDeprovisioning: prometheus.NewDesc(
-				fqName(internal.OperationTypeDeprovision, domain.InProgress),
-				"The number of deprovisioning operations in progress",
-				[]string{"plan_id"},
-				nil),
-			succeededDeprovisioning: prometheus.NewDesc(
-				fqName(internal.OperationTypeDeprovision, domain.Succeeded),
-				"The number of succeeded deprovisioning operations",
-				[]string{"plan_id"},
-				nil),
-			failedDeprovisioning: prometheus.NewDesc(
-				fqName(internal.OperationTypeDeprovision, domain.Failed),
-				"The number of failed deprovisioning operations",
-				[]string{"plan_id"},
-				nil),
+func (s *opsMetricService) updateMetrics() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// it's not desirable to panic metrics goroutine, instead it should return and log the error
+			err = fmt.Errorf("panic recovered: %v", r)
+		}
+	}()
+	now := time.Now()
+	operations, err := s.db.ListOperationsInTimeRange(s.lastUpdate, now)
+	if err != nil {
+		return fmt.Errorf("failed to list operations: %v", err)
+	}
+	s.logger.Infof("updating operations metrics for: %v operations", len(operations))
+	for _, op := range operations {
+		s.updateOperation(op)
+	}
+	s.lastUpdate = now
+	return nil
+}
+
+func (s *opsMetricService) run(ctx context.Context) {
+	if err := s.updateMetrics(); err != nil {
+		s.logger.Error("failed to update operations metrics", err)
+	}
+	ticker := time.NewTicker(PollingInterval)
+	for {
+		select {
+		case <-ticker.C:
+			if err := s.updateMetrics(); err != nil {
+				s.logger.Error("failed to update operations metrics", err)
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
-
-	return &OperationStatsV2{
-		statsGetter:    statsGetter,
-		operationStats: opStats,
-	}
-}
-
-func fqName(operationType internal.OperationType, state domain.LastOperationState) string {
-	var opType string
-	switch operationType {
-	case internal.OperationTypeProvision:
-		opType = "provisioning"
-	case internal.OperationTypeDeprovision:
-		opType = "deprovisioning"
-	}
-
-	var st string
-	switch state {
-	case domain.Failed:
-		st = "failed"
-	case domain.Succeeded:
-		st = "succeeded"
-	case domain.InProgress:
-		st = "in_progress"
-	}
-	name := fmt.Sprintf("operations_%s_%s_total", opType, st)
-	return prometheus.BuildFQName(prometheusNamespace, prometheusSubsystem, name)
-}
-
-func (c *OperationStatsV2) Describe(ch chan<- *prometheus.Desc) {
-	for _, op := range c.operationStats {
-		op.Describe(ch)
-	}
-}
-
-// Collect implements the prometheus.Collector interface.
-func (c *OperationStatsV2) Collect(ch chan<- prometheus.Metric) {
-	stats, err := c.statsGetter.GetOperationStatsByPlan()
-	if err != nil {
-		logrus.Errorf("unable to get operation stats from db: %s", err.Error())
-		return
-	}
-
-	for planID, ops := range c.operationStats {
-		collect(ch,
-			ops.inProgressProvisioning,
-			stats[planID].Provisioning[domain.InProgress],
-			planID,
-		)
-		collect(ch,
-			ops.succeededProvisioning,
-			stats[planID].Provisioning[domain.Succeeded],
-			planID,
-		)
-		collect(ch,
-			ops.failedProvisioning,
-			stats[planID].Provisioning[domain.Failed],
-			planID,
-		)
-		collect(ch,
-			ops.inProgressDeprovisioning,
-			stats[planID].Deprovisioning[domain.InProgress],
-			planID,
-		)
-		collect(ch,
-			ops.succeededDeprovisioning,
-			stats[planID].Deprovisioning[domain.Succeeded],
-			planID,
-		)
-		collect(ch,
-			ops.failedDeprovisioning,
-			stats[planID].Deprovisioning[domain.Failed],
-			planID,
-		)
-	}
-
-}
-
-func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
-	m, err := prometheus.NewConstMetric(
-		desc,
-		prometheus.GaugeValue,
-		float64(value),
-		labelValues...)
-
-	if err != nil {
-		logrus.Errorf("unable to register metric %s", err.Error())
-		return
-	}
-	ch <- m
 }
