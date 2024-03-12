@@ -16,7 +16,7 @@ import (
 	
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
-	copy2 `github.com/kyma-project/kyma-environment-broker/internal/metricsv2`
+	`github.com/kyma-project/kyma-environment-broker/internal/metricsv2`
 	
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
@@ -361,7 +361,7 @@ func main() {
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	if cfg.MetricsV2Enabled {
-		copy2.Register(ctx, eventBroker, db.Operations(), logs)
+		metricsv2.Register(ctx, eventBroker, db.Operations(), logs)
 	}
 
 	// setup runtime overrides appender
