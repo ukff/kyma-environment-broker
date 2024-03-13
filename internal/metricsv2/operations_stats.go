@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/setup"
@@ -28,9 +29,7 @@ import (
 // - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
 
 const (
-	prometheusNamespace = "keb"
-	prometheusSubsystem = "kcp_v2"
-	metricNamePattern   = "operations_%s_%s_total"
+	metricNamePattern = "operations_%s_%s_total"
 )
 
 var (
@@ -64,9 +63,12 @@ type operationStats struct {
 	gauges          map[metricKey]prometheus.Gauge
 	counters        map[metricKey]prometheus.Counter
 	poolingInterval time.Duration
+	sync            sync.Mutex
 }
 
-func NewOperationsCounters(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
+var _ Exposer = (*operationStats)(nil)
+
+func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
 	return &operationStats{
 		logger:          logger.WithField("source", "@metricsv2"),
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
@@ -79,7 +81,7 @@ func NewOperationsCounters(operations storage.Operations, poolingInterval time.D
 func (s *operationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
+			s.logger.Errorf("panic recovered while creating and registering metrics metrics: %v", recovery)
 		}
 	}()
 
@@ -113,10 +115,13 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 		}
 	}
 
-	go s.statsFromDB(ctx)
+	go s.Job(ctx)
 }
 
 func (s *operationStats) Handler(_ context.Context, event interface{}) error {
+	defer s.sync.Unlock()
+	s.sync.Lock()
+
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
@@ -149,50 +154,59 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *operationStats) statsFromDB(ctx context.Context) {
+func (s *operationStats) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
 		}
 	}()
 
+	if err := s.updateMetrics(); err != nil {
+		s.logger.Error("failed to update metrics metrics", err)
+	}
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:
-			stats, err := s.operations.GetOperationStatsByPlanV2()
-			if err != nil {
-				s.logger.Errorf("cannot fetch in progress operations from db : %s", err.Error())
-				continue
+			if err := s.updateMetrics(); err != nil {
+				s.logger.Error("failed to update operation stats metrics", err)
 			}
-			setStats := make(map[metricKey]struct{})
-			for _, stat := range stats {
-				key, err := s.makeKey(stat.Type, stat.State, broker.PlanID(stat.PlanID))
-				if err != nil {
-					s.logger.Error(err)
-					continue
-				}
-
-				metric, found := s.gauges[key]
-				if !found || metric == nil {
-					s.logger.Errorf("metric not found for key %s", key)
-					continue
-				}
-				metric.Set(float64(stat.Count))
-				setStats[key] = struct{}{}
-			}
-
-			for key, metric := range s.gauges {
-				if _, ok := setStats[key]; ok {
-					continue
-				}
-				metric.Set(0)
-			}
-
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (s *operationStats) updateMetrics() error {
+	defer s.sync.Unlock()
+	s.sync.Lock()
+
+	stats, err := s.operations.GetOperationStatsByPlanV2()
+	if err != nil {
+		return fmt.Errorf("cannot fetch in progress metrics from operations : %s", err.Error())
+	}
+	setStats := make(map[metricKey]struct{})
+	for _, stat := range stats {
+		key, err := s.makeKey(stat.Type, stat.State, broker.PlanID(stat.PlanID))
+		if err != nil {
+			return err
+		}
+
+		metric, found := s.gauges[key]
+		if !found || metric == nil {
+			return fmt.Errorf("metric not found for key %s", key)
+		}
+		metric.Set(float64(stat.Count))
+		setStats[key] = struct{}{}
+	}
+
+	for key, metric := range s.gauges {
+		if _, ok := setStats[key]; ok {
+			continue
+		}
+		metric.Set(0)
+	}
+	return nil
 }
 
 func (s *operationStats) buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
@@ -204,8 +218,8 @@ func (s *operationStats) buildName(opType internal.OperationType, opState domain
 	}
 
 	return prometheus.BuildFQName(
-		prometheusNamespace,
-		prometheusSubsystem,
+		prometheusNamespacev2,
+		prometheusSubsystemv2,
 		fmt.Sprintf(metricNamePattern, fmtType, fmtState),
 	), nil
 }
@@ -220,10 +234,14 @@ func (s *operationStats) makeKey(opType internal.OperationType, opState domain.L
 }
 
 func formatOpType(opType internal.OperationType) string {
-	if opType == "" {
+	switch opType {
+	case internal.OperationTypeProvision, internal.OperationTypeDeprovision:
+		return string(opType + "ing")
+	case internal.OperationTypeUpdate:
+		return "updating"
+	default:
 		return ""
 	}
-	return string(opType + "ing")
 }
 
 func formatOpState(opState domain.LastOperationState) string {

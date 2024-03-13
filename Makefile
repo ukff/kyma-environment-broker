@@ -46,4 +46,4 @@ check-go-mod-tidy: ## check if go mod tidy needed
 .PHONY: fix
 fix: go-lint-install ## try to fix automatically issues
 	go mod tidy -v
-	golangci-lint run --fix
+	golangci-lint run --fix --timeout=2m

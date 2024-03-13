@@ -408,3 +408,6 @@ archiving:
 cleaning:
   enabled: false
   dryRun: true
+
+metricsv2:
+  enabled: false

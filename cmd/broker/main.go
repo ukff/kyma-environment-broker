@@ -16,6 +16,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
@@ -125,9 +126,9 @@ type Config struct {
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-
-	Broker          broker.Config
-	CatalogFilePath string
+	Metricsv2Enabled                                                    bool `envconfig:"default=false"`
+	Broker                                                              broker.Config
+	CatalogFilePath                                                     string
 
 	Avs avs.Config
 	IAS ias.Config
@@ -359,6 +360,10 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	if cfg.Metricsv2Enabled {
+		logs.Infof("Metricsv2 enabled")
+		metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	}
 
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)

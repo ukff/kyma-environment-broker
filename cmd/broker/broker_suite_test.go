@@ -274,6 +274,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	runtimeHandler.AttachRoutes(ts.router)
 
 	ts.httpServer = httptest.NewServer(ts.router)
+
 	return ts
 }
 
