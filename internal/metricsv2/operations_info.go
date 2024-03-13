@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type operationsInfo struct {
+type operationsResult struct {
 	logger          logrus.FieldLogger
 	metrics         *prometheus.GaugeVec
 	lastUpdate      time.Time
@@ -25,10 +25,10 @@ type operationsInfo struct {
 	sync            sync.Mutex
 }
 
-var _ Exposer = (*operationsInfo)(nil)
+var _ Exposer = (*operationsResult)(nil)
 
-func NewOperationInfo(ctx context.Context, db storage.Operations, logger logrus.FieldLogger, poolingInterval time.Duration, retention time.Duration) *operationsInfo {
-	opInfo := &operationsInfo{
+func NewOperationResult(ctx context.Context, db storage.Operations, logger logrus.FieldLogger, poolingInterval time.Duration, retention time.Duration) *operationsResult {
+	opInfo := &operationsResult{
 		operations: db,
 		lastUpdate: time.Now().Add(-retention),
 		logger:     logger,
@@ -45,7 +45,7 @@ func NewOperationInfo(ctx context.Context, db storage.Operations, logger logrus.
 	return opInfo
 }
 
-func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
+func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
@@ -59,7 +59,7 @@ func (s *operationsInfo) setOperation(op internal.Operation, val float64) {
 	s.metrics.With(labels).Set(val)
 }
 
-func (s *operationsInfo) updateOperation(op internal.Operation) {
+func (s *operationsResult) updateOperation(op internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -75,7 +75,7 @@ func (s *operationsInfo) updateOperation(op internal.Operation) {
 	}
 }
 
-func (s *operationsInfo) updateMetrics() (err error) {
+func (s *operationsResult) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic recovered: %v", r)
@@ -95,7 +95,7 @@ func (s *operationsInfo) updateMetrics() (err error) {
 	return nil
 }
 
-func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
+func (s *operationsResult) Handler(ctx context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -114,7 +114,7 @@ func (s *operationsInfo) Handler(ctx context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *operationsInfo) Job(ctx context.Context) {
+func (s *operationsResult) Job(ctx context.Context) {
 
 	defer func() {
 		if recovery := recover(); recovery != nil {

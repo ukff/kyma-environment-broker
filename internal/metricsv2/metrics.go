@@ -36,12 +36,12 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
-	operationsCollector := NewOperationInfo(ctx, operations, logger, time.Second*30, time.Hour*24*7)
+	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*7)
 
 	// test of metrics for upcoming new implementation
 	operationsCounter := NewOperationsStats(operations, time.Second*30, logger)
 	operationsCounter.MustRegister(ctx)
 
 	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
-	sub.Subscribe(process.DeprovisioningSucceeded{}, operationsCollector.Handler)
+	sub.Subscribe(process.DeprovisioningSucceeded{}, operationResult.Handler)
 }
