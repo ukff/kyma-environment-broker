@@ -410,4 +410,4 @@ cleaning:
   dryRun: true
 
 metricsv2:
-  enabled: "false"
+  enabled: false
