@@ -82,7 +82,7 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 //
-// COPY OF THE internal/metrics/operations_collector.go for test porpuses, will be refactored
+// COPY OF THE internal/metrics/operations_collector.go for test purposes, will be refactored
 //
 
 func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
