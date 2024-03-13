@@ -361,6 +361,7 @@ func main() {
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	if cfg.Metricsv2Enabled {
+		logs.Infof("Metricsv2 enabled")
 		metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	}
 
