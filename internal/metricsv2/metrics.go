@@ -16,7 +16,7 @@ const (
 	prometheusSubsystemv2 = "keb_v2"
 )
 
-// Exposer gather metrics and keep then in memory and expose them to prometheus for fetching them, it gather them by:
+// Exposer gathers metrics and keeps these in memory and exposes to prometheus for fetching, it gathers them by:
 // listening in real time for events by "Handler"
 // fetching data from database by "Job"
 
