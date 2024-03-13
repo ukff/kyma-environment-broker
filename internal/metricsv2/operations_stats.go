@@ -81,7 +81,7 @@ func NewOperationsStats(operations storage.Operations, poolingInterval time.Dura
 func (s *operationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while creating and registering metrics metrics: %v", recovery)
+			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
 		}
 	}()
 
