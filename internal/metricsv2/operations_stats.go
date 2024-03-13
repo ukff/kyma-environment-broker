@@ -234,10 +234,14 @@ func (s *operationStats) makeKey(opType internal.OperationType, opState domain.L
 }
 
 func formatOpType(opType internal.OperationType) string {
-	if opType == "" {
+	switch opType {
+	case internal.OperationTypeProvision, internal.OperationTypeDeprovision:
+		return string(opType + "ing")
+	case internal.OperationTypeUpdate:
+		return "updating"
+	default:
 		return ""
 	}
-	return string(opType + "ing")
 }
 
 func formatOpState(opState domain.LastOperationState) string {
