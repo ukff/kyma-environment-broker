@@ -131,7 +131,7 @@ func (s *operationsInfo) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update metrics metrics", err)
+				s.logger.Error("failed to update operation info metrics", err)
 			}
 		case <-ctx.Done():
 			return
