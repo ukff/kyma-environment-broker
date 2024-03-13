@@ -75,7 +75,7 @@ func TestOperationsCounter(t *testing.T) {
 		ctr.MustRegister(context.Background())
 	})
 
-	t.Run("gauge in_progress metrics test", func(t *testing.T) {
+	t.Run("gauge in_progress operations test", func(t *testing.T) {
 		err := operations.InsertOperation(internal.Operation{
 			ID:    "opState6",
 			State: opState5,

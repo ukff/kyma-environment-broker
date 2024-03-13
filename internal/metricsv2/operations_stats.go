@@ -136,7 +136,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	opState := payload.OpState
 
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded metrics", payload.OpState)
+		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.OpState)
 	}
 
 	key, err := s.makeKey(payload.OpType, opState, payload.PlanID)
@@ -169,7 +169,7 @@ func (s *operationStats) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update metrics metrics", err)
+				s.logger.Error("failed to update operation stats metrics", err)
 			}
 		case <-ctx.Done():
 			return
