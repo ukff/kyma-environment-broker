@@ -59,6 +59,10 @@ func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	s.metrics.With(labels).Set(val)
 }
 
+// operation_result metrics works on 0/1 system.
+// each metric have labels which identify the operation data by Operation ID
+// if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
+// metrics set to 0 means that this event is outdated, and will be replaced by new one which happen
 func (s *operationsResult) updateOperation(op internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
