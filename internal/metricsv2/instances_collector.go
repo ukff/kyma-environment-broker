@@ -7,7 +7,7 @@ import (
 )
 
 //
-// COPY OF THE internal/metrics/instances_collector.go for test porpuses, will be refactored
+// COPY OF THE internal/metrics/instances_collector.go for test purposes, will be refactored
 //
 
 // InstancesStatsGetter provides number of all instances failed, succeeded or orphaned
