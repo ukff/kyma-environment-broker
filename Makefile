@@ -15,7 +15,7 @@ checks: check-go-mod-tidy ## run different Go related checks
 
 .PHONY: go-lint
 go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
-	golangci-lint run
+	golangci-lint run --timeout=2m
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
