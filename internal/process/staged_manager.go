@@ -164,6 +164,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 			if processedOperation.State == domain.Failed || processedOperation.State == domain.Succeeded {
 				logStep.Infof("Operation %q got status %s. Process finished.", operation.ID, processedOperation.State)
 				operation.EventInfof("operation processing %v", processedOperation.State)
+				m.countOperation(processedOperation)
 				return 0, nil
 			}
 
@@ -265,13 +266,8 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
-
-	m.publisher.Publish(context.TODO(), OperationCounting{
-		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: operation.State,
-		OpType:  operation.Type,
-	})
+	
+	m.countOperation(*operation)
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
 		StepProcessed: StepProcessed{
@@ -290,12 +286,21 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 		OpState: operation.State,
 		OpType:  operation.Type,
 	})
-	m.publisher.Publish(context.TODO(), OperationSucceeded{
-		Operation: *operation,
-	})
+	
+	m.countOperation(*operation)
+	
 	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
 		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
 			Operation: internal.DeprovisioningOperation{Operation: *operation},
 		})
 	}
+}
+
+func (m *StagedManager) countOperation(operation internal.Operation) {
+	m.publisher.Publish(context.TODO(), OperationCounting{
+		OpId:    operation.ID,
+		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
+		OpState: operation.State,
+		OpType:  operation.Type,
+	})
 }
