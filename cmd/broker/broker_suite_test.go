@@ -263,7 +263,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
-		eventBroker: eventBroker,
+		eventBroker:         eventBroker,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 
