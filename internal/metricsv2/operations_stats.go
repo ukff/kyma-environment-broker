@@ -78,6 +78,15 @@ func NewOperationsStats(operations storage.Operations, poolingInterval time.Dura
 	}
 }
 
+func (s *OperationStats) Unregister() {
+	for _, gauge := range s.gauges {
+		prometheus.Unregister(gauge)
+	}
+	for _, counter := range s.counters {
+		prometheus.Unregister(counter)
+	}
+}
+
 func (s *OperationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {

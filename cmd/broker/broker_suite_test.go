@@ -126,6 +126,7 @@ type componentProviderDecorated struct {
 }
 
 func (s *BrokerSuiteTest) TearDown() {
+	s.operationStats.Unregister()
 	if r := recover(); r != nil {
 		err := cleanupContainer()
 		assert.NoError(s.t, err)
@@ -255,7 +256,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
-		eventBroker:         eventBroker,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 
@@ -294,6 +294,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	ts.httpServer = httptest.NewServer(ts.router)
 
+	
 	_, operationStats := metricsv2.Register(context.Background(), eventBroker, db.Operations(), db.Instances(), logs)
 	ts.operationStats = operationStats
 	ts.router.Handle("/metrics", promhttp.Handler())
