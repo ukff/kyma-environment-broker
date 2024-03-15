@@ -301,10 +301,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	ts.httpServer = httptest.NewServer(ts.router)
 
-	_, operationStats := metricsv2.Register(context.Background(), eventBroker, db.Operations(), db.Instances(), logs)
-	ts.operationStats = operationStats
-	ts.router.Handle("/metrics", promhttp.Handler())
-
 	return ts
 }
 
