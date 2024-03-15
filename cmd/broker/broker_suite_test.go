@@ -12,12 +12,12 @@ import (
 	"sort"
 	"testing"
 	"time"
-	
+
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	`github.com/prometheus/client_golang/prometheus/testutil`
-	
+	"github.com/prometheus/client_golang/prometheus/testutil"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -116,7 +116,7 @@ type BrokerSuiteTest struct {
 
 	poller broker.Poller
 
-	eventBroker *event.PubSub
+	eventBroker    *event.PubSub
 	operationStats *metricsv2.OperationStats
 }
 
@@ -154,7 +154,6 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, version ...string) *BrokerSuiteT
 }
 
 func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	time.Sleep(1 * time.Second)
 	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
 	assert.NoError(s.t, err)
 	assert.NotNil(s.t, metric)

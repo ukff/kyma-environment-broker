@@ -266,7 +266,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
-	
+
 	m.countOperation(*operation)
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
@@ -283,9 +283,9 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
 	})
-	
+
 	m.countOperation(*operation)
-	
+
 	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
 		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
 			Operation: internal.DeprovisioningOperation{Operation: *operation},
