@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
+	
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,10 +20,9 @@ func TestMetrics(t *testing.T) {
 	defer suite.TearDown()
 
 	provisionReq := func(iid, plan string) string {
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-			`{
+		body := fmt.Sprintf(`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"plan_id": "%s",
 					"context": {
 						"globalaccount_id": "g-account-id",
 						"subaccount_id": "sub-id",
@@ -34,7 +32,8 @@ func TestMetrics(t *testing.T) {
 						"name": "testing-cluster",
 						"region": "eu-central-1"
 					}
-		}`)
+		}`, plan)
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid), body)
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		return suite.DecodeOperationID(resp)
 	}
@@ -67,23 +66,23 @@ func TestMetrics(t *testing.T) {
 		depFail := uuid.New().String()
 		provSuc := uuid.New().String()
 
-		opID := provisionReq(depSuc, broker.GCPPlanID)
+		opID := provisionReq(depSuc, plan)
 		suite.processProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 
-		opID = provisionReq(provFail, broker.GCPPlanID)
+		opID = provisionReq(provFail, plan)
 		suite.failProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Failed)
 
-		opID = provisionReq(updateSuccess, broker.GCPPlanID)
+		opID = provisionReq(updateSuccess, plan)
 		suite.processProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 
-		opID = provisionReq(depFail, broker.GCPPlanID)
+		opID = provisionReq(depFail,plan)
 		suite.processProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 
-		opID = provisionReq(provSuc, broker.GCPPlanID)
+		opID = provisionReq(provSuc, plan)
 		suite.processProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 
