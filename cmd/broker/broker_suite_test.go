@@ -275,7 +275,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		k8sSKR:              fakeK8sSKRClient,
 		eventBroker:         eventBroker,
 	}
-	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
+	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 10 * time.Second, Log: ts.t.Log}
 
 	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs)
 

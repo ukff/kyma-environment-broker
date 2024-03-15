@@ -280,11 +280,8 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 }
 
 func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
-	m.publisher.Publish(context.TODO(), OperationCounting{
-		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: operation.State,
-		OpType:  operation.Type,
+	m.publisher.Publish(context.TODO(), OperationSucceeded{
+		Operation: *operation,
 	})
 	
 	m.countOperation(*operation)
