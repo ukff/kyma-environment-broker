@@ -1,7 +1,7 @@
 
-metric name| type | labels | description
-------------------------------------------------|------|--------|------------
-kcp_keb_v2_ers_context_license_type_total | gauge | license_type |
+metric name| type | labels | 
+------------------------------------------------|------|--------
+kcp_keb_v2_ers_context_license_type_total | gauge | license_type | 
 kcp_keb_v2_global_account_id_instances_total | gauge | global_account_id |
 kcp_keb_v2_instances_total | gauge | - |
 kcp_keb_v2_deprovisioning_duration_minutes | histogram | plan_id |
