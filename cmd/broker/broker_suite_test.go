@@ -143,23 +143,6 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
-func NewBrokerSuitTestWithMetrics(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	cfg.EDP.Disabled = true
-	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	_, operationStats := metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
-	broker.operationStats = operationStats
-	broker.router.Handle("/metrics", promhttp.Handler())
-	return broker
-}
-
-func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
-	assert.NoError(s.t, err)
-	assert.NotNil(s.t, metric)
-	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
-}
-
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
@@ -310,6 +293,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	runtimeHandler.AttachRoutes(ts.router)
 
 	ts.httpServer = httptest.NewServer(ts.router)
+
+	_, operationStats := metricsv2.Register(context.Background(), eventBroker, db.Operations(), db.Instances(), logs)
+	ts.operationStats = operationStats
+	ts.router.Handle("/metrics", promhttp.Handler())
 
 	return ts
 }
@@ -1669,6 +1656,13 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 	err = json.Unmarshal(data, &operationResponse)
 	assert.NoError(s.t, err)
 	return operationResponse
+}
+
+func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
+	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
+	assert.NoError(s.t, err)
+	assert.NotNil(s.t, metric)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {
