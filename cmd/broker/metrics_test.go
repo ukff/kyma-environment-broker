@@ -49,7 +49,7 @@ func TestMetrics(t *testing.T) {
 		opID := suite.DecodeOperationID(resp)
 		suite.processProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
-		suite.AssertCorrectMetricValueT2(internal.OperationTypeProvision, domain.Succeeded, plan, 1)
+		suite.AssertMetric(internal.OperationTypeProvision, domain.Succeeded, plan, 1)
 
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid), `
 		{
@@ -63,7 +63,7 @@ func TestMetrics(t *testing.T) {
 		suite.FinishUpdatingOperationByProvisioner(opID)
 		suite.FinishUpdatingOperationByReconciler(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
-		suite.AssertCorrectMetricValueT2(internal.OperationTypeUpdate, domain.Succeeded, plan, 1)
+		suite.AssertMetric(internal.OperationTypeUpdate, domain.Succeeded, plan, 1)
 		
 		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid), ``)
@@ -79,11 +79,11 @@ func TestMetrics(t *testing.T) {
 			return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 		})
 		suite.WaitForOperationsNotExists(iid) // deprovisioning completed, no operations in the DB
-		suite.AssertCorrectMetricValueT2(internal.OperationTypeDeprovision, domain.Succeeded, plan, 1)
+		suite.AssertMetric(internal.OperationTypeDeprovision, domain.Succeeded, plan, 1)
 		
-		suite.AssertCorrectMetricValueT2(internal.OperationTypeProvision, domain.Failed, plan, 0)
-		suite.AssertCorrectMetricValueT2(internal.OperationTypeDeprovision, domain.Failed, plan, 0)
-		suite.AssertCorrectMetricValueT2(internal.OperationTypeUpdate, domain.Failed, plan, 0)
+		suite.AssertMetric(internal.OperationTypeProvision, domain.Failed, plan, 0)
+		suite.AssertMetric(internal.OperationTypeDeprovision, domain.Failed, plan, 0)
+		suite.AssertMetric(internal.OperationTypeUpdate, domain.Failed, plan, 0)
 	})
 }
 

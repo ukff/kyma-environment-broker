@@ -10,8 +10,6 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"sort"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 	
@@ -150,60 +148,11 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, version ...string) *BrokerSuiteT
 	return broker
 }
 
-func (s *BrokerSuiteTest) AssertCorrectMetricValueT2(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
+func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
 	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
 	assert.NoError(s.t, err)
+	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric))
-}
-
-func (s *BrokerSuiteTest) AssertCorrectMetricValueT(searchMetric, plan string, expected int) {
-	format := func(value string) {
-		f, err := strconv.ParseFloat(value, 64)
-		assert.NoError(s.t, err)
-		assert.Equal(s.t, float64(expected), f)
-	}
-	response, err := s.httpServer.Client().Get(fmt.Sprintf("%s/metrics", s.httpServer.URL))
-	assert.NoError(s.t, err)
-	body, err := io.ReadAll(response.Body)
-	assert.NoError(s.t, err)
-	metrics := strings.Split(string(body), "\n")
-	for _, metric := range metrics {
-		if metric == "" || strings.HasPrefix(metric, "#") {
-			continue
-		}
-		metricParts := strings.Split(metric, " ")
-		name := metricParts[0]
-		value := metricParts[1]
-		nameParts := strings.SplitAfter(name, searchMetric)
-		if len(nameParts) == 0 {
-			continue
-		}
-		if len(nameParts) == 1 {
-			if nameParts[0] == name {
-				continue
-			}
-			format(value)
-		}
-
-		if len(nameParts) == 2 && nameParts[1] == "" {
-			format(value)
-		}
-
-		labels := nameParts[1]
-		labels = strings.Trim(labels, "{")
-		labels = strings.Trim(labels, "}")
-		separatedLabels := strings.Split(labels, ",")
-		for _, label := range separatedLabels {
-			labelSides := strings.Split(label, "=")
-			lKey := labelSides[0]
-			lValue := labelSides[1]
-			lValue = strings.Replace(lValue, "\"", "", -1)
-			if lKey == "plan_id" && lValue == plan {
-				format(value)
-			}
-		}
-	}
-	assert.Fail(s.t, "metric not found")
 }
 
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
