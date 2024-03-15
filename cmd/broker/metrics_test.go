@@ -86,3 +86,4 @@ func TestMetrics(t *testing.T) {
 		suite.AssertCorrectMetricValueT2(internal.OperationTypeUpdate, domain.Failed, plan, 0)
 	})
 }
+

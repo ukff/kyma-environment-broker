@@ -134,7 +134,7 @@ func (p *ParallelOrchestrationStrategy) scheduleOperationsLoop(execID string, st
 
 		op := item.(*orchestration.RuntimeOperation)
 
-		// check the window before process for the case if op Get is not in time
+		// check the window before process for the case if op Metric is not in time
 		duration, err := p.updateMaintenanceWindow(execID, op, strategy)
 		if err != nil {
 			//error when read from storage or update to storage

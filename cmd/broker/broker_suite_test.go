@@ -151,7 +151,7 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, version ...string) *BrokerSuiteT
 }
 
 func (s *BrokerSuiteTest) AssertCorrectMetricValueT2(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	metric, err := s.operationStats.Get(operationType, state, broker.PlanID(plan))
+	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
 	assert.NoError(s.t, err)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric))
 }

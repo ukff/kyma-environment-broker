@@ -224,13 +224,7 @@ func buildName(opType internal.OperationType, opState domain.LastOperationState)
 	), nil
 }
 
-func BuildName(opType internal.OperationType, opState domain.LastOperationState) string {
-	name, err := buildName(opType, opState)
-	setup.FatalOnError(err)
-	return name
-}
-
-func (s *OperationStats) Get(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (prometheus.Counter, error) {
+func (s *OperationStats) Metric(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (prometheus.Counter, error) {
 	key, err := s.makeKey(opType, opState, plan)
 	if err != nil {
 		s.logger.Error(err)

@@ -38,7 +38,6 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 
 	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*7)
 
-	// e2e of metrics for upcoming new implementation
 	opStats := NewOperationsStats(operations, time.Second*30, logger)
 	opStats.MustRegister(ctx)
 

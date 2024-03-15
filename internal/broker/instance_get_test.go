@@ -34,9 +34,9 @@ func TestGetEndpoint_GetNonExistingInstance(t *testing.T) {
 	_, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 
 	// then
-	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get returned error of unexpected type")
+	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Metric returned error of unexpected type")
 	apierr := err.(*apiresponses.FailureResponse)
-	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Get status code not matching")
+	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Metric status code not matching")
 }
 
 func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
@@ -79,9 +79,9 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 
 	// then
 	_, err = getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
-	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get returned error of unexpected type")
+	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Metric returned error of unexpected type")
 	apierr := err.(*apiresponses.FailureResponse)
-	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Get status code not matching")
+	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Metric status code not matching")
 	assert.Equal(t, "provisioning of instanceID d3d5dca4-5dc8-44ee-a825-755c2a3fb839 in progress", apierr.Error())
 
 	// when
@@ -92,7 +92,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 
 	// then
 	response, err := getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
-	assert.Equal(t, nil, err, "Get returned error when expected to pass")
+	assert.Equal(t, nil, err, "Metric returned error when expected to pass")
 	assert.Len(t, response.Metadata.Labels, 2)
 }
 
@@ -127,9 +127,9 @@ func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
 	_, err = svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 
 	// then
-	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get request returned error of unexpected type")
+	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Metric request returned error of unexpected type")
 	apierr := err.(*apiresponses.FailureResponse)
-	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Get request status code not matching")
+	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Metric request status code not matching")
 }
 
 func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
