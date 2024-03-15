@@ -126,7 +126,6 @@ type componentProviderDecorated struct {
 }
 
 func (s *BrokerSuiteTest) TearDown() {
-	s.operationStats.Unregister()
 	if r := recover(); r != nil {
 		err := cleanupContainer()
 		assert.NoError(s.t, err)
@@ -142,6 +141,14 @@ func (s *BrokerSuiteTest) TearDown() {
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+}
+
+func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
+	_, operationStats := metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
+	broker.operationStats = operationStats
+	broker.router.Handle("/metrics", promhttp.Handler())
+	return broker
 }
 
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
@@ -294,7 +301,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	ts.httpServer = httptest.NewServer(ts.router)
 
-	
 	_, operationStats := metricsv2.Register(context.Background(), eventBroker, db.Operations(), db.Instances(), logs)
 	ts.operationStats = operationStats
 	ts.router.Handle("/metrics", promhttp.Handler())

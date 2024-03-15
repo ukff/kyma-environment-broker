@@ -17,7 +17,7 @@ import (
 func TestMetrics(t *testing.T) {
 	cfg := fixConfig()
 	cfg.EDP.Disabled = true
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuitTestWithMetrics(t, cfg)
 	defer suite.TearDown()
 
 	provisionReq := func(iid, plan string) string {
