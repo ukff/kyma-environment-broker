@@ -90,7 +90,7 @@ func (s *OperationStats) MustRegister(ctx context.Context) {
 			for _, opState := range opStates {
 				key, err := s.makeKey(opType, opState, plan)
 				setup.FatalOnError(err)
-				name, err := buildName(opType, opState)
+				name, err := s.buildName(opType, opState)
 				setup.FatalOnError(err)
 				labels := prometheus.Labels{"plan_id": string(plan)}
 				switch opState {
@@ -209,7 +209,7 @@ func (s *OperationStats) updateMetrics() error {
 	return nil
 }
 
-func buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
+func (s *OperationStats) buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
 
