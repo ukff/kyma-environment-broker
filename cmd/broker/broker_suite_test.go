@@ -10,10 +10,14 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"sort"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
@@ -112,6 +116,8 @@ type BrokerSuiteTest struct {
 	k8sSKR client.Client
 
 	poller broker.Poller
+
+	eventBroker *event.PubSub
 }
 
 type componentProviderDecorated struct {
@@ -130,6 +136,63 @@ func (s *BrokerSuiteTest) TearDown() {
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+}
+
+func NewBrokerSuitTestWithMetrics(t *testing.T, version ...string) *BrokerSuiteTest {
+	broker := NewBrokerSuiteTestWithConfig(t, fixConfig(), version...)
+	metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
+	broker.router.Handle("/metrics", promhttp.Handler())
+	return broker
+}
+
+func (s *BrokerSuiteTest) AssertCorrectMetricValueT(searchMetric, plan string, expected int) {
+	format := func(value string) {
+		f, err := strconv.ParseFloat(value, 64)
+		assert.NoError(s.t, err)
+		assert.Equal(s.t, float64(expected), f)
+	}
+	response, err := s.httpServer.Client().Get(fmt.Sprintf("%s/metrics", s.httpServer.URL))
+	assert.NoError(s.t, err)
+	body, err := io.ReadAll(response.Body)
+	assert.NoError(s.t, err)
+	metrics := strings.Split(string(body), "\n")
+	for _, metric := range metrics {
+		if metric == "" || strings.HasPrefix(metric, "#") {
+			continue
+		}
+		metricParts := strings.Split(metric, " ")
+		name := metricParts[0]
+		value := metricParts[1]
+		nameParts := strings.SplitAfter(name, searchMetric)
+		if len(nameParts) == 0 {
+			continue
+		}
+		if len(nameParts) == 1 {
+			if nameParts[0] == name {
+				continue
+			}
+			format(value)
+		}
+
+		if len(nameParts) == 2 && nameParts[1] == "" {
+			format(value)
+		}
+
+		labels := nameParts[1]
+		labels = strings.Trim(labels, "{")
+		labels = strings.Trim(labels, "}")
+		separatedLabels := strings.Split(labels, ",")
+		for _, label := range separatedLabels {
+			labelSides := strings.Split(label, "=")
+			lKey := labelSides[0]
+			lValue := labelSides[1]
+			lValue = strings.Replace(lValue, "\"", "", -1)
+			if lKey == "plan_id" && lValue == plan {
+				format(value)
+			}
+		}
+	}
+	assert.Fail(s.t, "metric not found")
 }
 
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
@@ -237,6 +300,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
+		eventBroker:         eventBroker,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 

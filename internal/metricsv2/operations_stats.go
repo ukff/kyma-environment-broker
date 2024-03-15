@@ -29,7 +29,7 @@ import (
 // - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
 
 const (
-	metricNamePattern = "operations_%s_%s_total"
+	OpStatsMetricName = "operations_%s_%s_total"
 )
 
 var (
@@ -90,7 +90,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 			for _, opState := range opStates {
 				key, err := s.makeKey(opType, opState, plan)
 				setup.FatalOnError(err)
-				name, err := s.buildName(opType, opState)
+				name, err := buildName(opType, opState)
 				setup.FatalOnError(err)
 				labels := prometheus.Labels{"plan_id": string(plan)}
 				switch opState {
@@ -209,7 +209,7 @@ func (s *operationStats) updateMetrics() error {
 	return nil
 }
 
-func (s *operationStats) buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
+func buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
 
@@ -220,8 +220,14 @@ func (s *operationStats) buildName(opType internal.OperationType, opState domain
 	return prometheus.BuildFQName(
 		prometheusNamespacev2,
 		prometheusSubsystemv2,
-		fmt.Sprintf(metricNamePattern, fmtType, fmtState),
+		fmt.Sprintf(OpStatsMetricName, fmtType, fmtState),
 	), nil
+}
+
+func BuildName(opType internal.OperationType, opState domain.LastOperationState) string {
+	name, err := buildName(opType, opState)
+	setup.FatalOnError(err)
+	return name
 }
 
 func (s *operationStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (metricKey, error) {
