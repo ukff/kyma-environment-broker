@@ -57,7 +57,7 @@ var (
 
 type metricKey string
 
-type operationStats struct {
+type OperationStats struct {
 	logger          logrus.FieldLogger
 	operations      storage.Operations
 	gauges          map[metricKey]prometheus.Gauge
@@ -66,10 +66,10 @@ type operationStats struct {
 	sync            sync.Mutex
 }
 
-var _ Exposer = (*operationStats)(nil)
+var _ Exposer = (*OperationStats)(nil)
 
-func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *operationStats {
-	return &operationStats{
+func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *OperationStats {
+	return &OperationStats{
 		logger:          logger.WithField("source", "@metricsv2"),
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
@@ -78,7 +78,7 @@ func NewOperationsStats(operations storage.Operations, poolingInterval time.Dura
 	}
 }
 
-func (s *operationStats) MustRegister(ctx context.Context) {
+func (s *OperationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
@@ -118,7 +118,7 @@ func (s *operationStats) MustRegister(ctx context.Context) {
 	go s.Job(ctx)
 }
 
-func (s *operationStats) Handler(_ context.Context, event interface{}) error {
+func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -154,7 +154,7 @@ func (s *operationStats) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *operationStats) Job(ctx context.Context) {
+func (s *OperationStats) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
@@ -177,7 +177,7 @@ func (s *operationStats) Job(ctx context.Context) {
 	}
 }
 
-func (s *operationStats) updateMetrics() error {
+func (s *OperationStats) updateMetrics() error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -230,7 +230,18 @@ func BuildName(opType internal.OperationType, opState domain.LastOperationState)
 	return name
 }
 
-func (s *operationStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (metricKey, error) {
+func (s *OperationStats) Get(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (prometheus.Counter, error) {
+	key, err := s.makeKey(opType, opState, plan)
+	if err != nil {
+		s.logger.Error(err)
+		return prometheus.NewGauge(prometheus.GaugeOpts{}), err
+	}
+	s.sync.Lock()
+	defer s.sync.Unlock()
+	return s.counters[key], nil
+}
+
+func (s *OperationStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (metricKey, error) {
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
 	if fmtType == "" || fmtState == "" || plan == "" {

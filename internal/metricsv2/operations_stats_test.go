@@ -17,7 +17,7 @@ import (
 )
 
 func TestOperationsCounter(t *testing.T) {
-	var ctr *operationStats
+	var ctr *OperationStats
 
 	opType1 := internal.OperationTypeProvision
 	opState1 := domain.Succeeded

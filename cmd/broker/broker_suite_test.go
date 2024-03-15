@@ -14,11 +14,12 @@ import (
 	"strings"
 	"testing"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
+	`github.com/prometheus/client_golang/prometheus/testutil`
+	
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -118,6 +119,7 @@ type BrokerSuiteTest struct {
 	poller broker.Poller
 
 	eventBroker *event.PubSub
+	operationStats *metricsv2.OperationStats
 }
 
 type componentProviderDecorated struct {
@@ -139,10 +141,19 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 }
 
 func NewBrokerSuitTestWithMetrics(t *testing.T, version ...string) *BrokerSuiteTest {
-	broker := NewBrokerSuiteTestWithConfig(t, fixConfig(), version...)
-	metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
+	cfg := fixConfig()
+	cfg.EDP.Disabled = true
+	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
+	_, operationStats := metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
+	broker.operationStats = operationStats
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
+}
+
+func (s *BrokerSuiteTest) AssertCorrectMetricValueT2(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
+	metric, err := s.operationStats.Get(operationType, state, broker.PlanID(plan))
+	assert.NoError(s.t, err)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric))
 }
 
 func (s *BrokerSuiteTest) AssertCorrectMetricValueT(searchMetric, plan string, expected int) {
