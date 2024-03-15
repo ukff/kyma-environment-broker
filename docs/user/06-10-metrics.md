@@ -1,3 +1,5 @@
+![KEB metrics](../assets/metrics.svg)
+KEB metrics are exposed via the /metrics endpoint, which is called by prometheus in job manner every given duration of time and gather the metrics which are later pushed to Victoria metrics and Plutno dashboard and alerts.
 
 metric name| type | labels | 
 ------------------------------------------------|------|--------
