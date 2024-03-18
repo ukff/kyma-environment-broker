@@ -17,7 +17,7 @@ import (
 )
 
 func TestOperationsCounter(t *testing.T) {
-	var ctr *operationStats
+	var ctr *OperationStats
 
 	opType1 := internal.OperationTypeProvision
 	opState1 := domain.Succeeded
@@ -104,7 +104,7 @@ func TestOperationsCounter(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationCounting{
+					err := ctr.Handler(context.TODO(), process.OperationFinished{
 						OpId:    "test1",
 						PlanID:  opPlan1,
 						OpState: opState1,
@@ -123,7 +123,7 @@ func TestOperationsCounter(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationCounting{
+					err := ctr.Handler(context.TODO(), process.OperationFinished{
 						OpId:    "test2",
 						PlanID:  opPlan2,
 						OpState: opState2,
@@ -142,7 +142,7 @@ func TestOperationsCounter(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationCounting{
+					err := ctr.Handler(context.TODO(), process.OperationFinished{
 						OpId:    "test3",
 						PlanID:  opPlan3,
 						OpState: opState3,
