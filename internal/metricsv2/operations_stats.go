@@ -101,7 +101,7 @@ func (s *OperationStats) MustRegister(ctx context.Context) {
 							ConstLabels: labels,
 						},
 					)
-					prometheus.MustRegister(s.gauges[key])
+					prometheus.Register(s.gauges[key])
 				case domain.Failed, domain.Succeeded:
 					s.counters[key] = prometheus.NewCounter(
 						prometheus.CounterOpts{
