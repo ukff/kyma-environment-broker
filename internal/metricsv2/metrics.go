@@ -25,7 +25,7 @@ type Exposer interface {
 	Job(ctx context.Context)
 }
 
-func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, logger logrus.FieldLogger) {
+func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, logger logrus.FieldLogger) (*operationsResult, *OperationStats) {
 
 	opDurationCollector := NewOperationDurationCollector()
 	prometheus.MustRegister(opDurationCollector)
@@ -38,10 +38,10 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 
 	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*7)
 
-	// test of metrics for upcoming new implementation
-	operationsCounter := NewOperationsStats(operations, time.Second*30, logger)
-	operationsCounter.MustRegister(ctx)
+	opStats := NewOperationsStats(operations, time.Second*30, logger)
+	opStats.MustRegister(ctx)
 
-	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
+	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
 	sub.Subscribe(process.DeprovisioningSucceeded{}, operationResult.Handler)
+	return operationResult, opStats
 }

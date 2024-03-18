@@ -14,6 +14,9 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
@@ -112,6 +115,9 @@ type BrokerSuiteTest struct {
 	k8sSKR client.Client
 
 	poller broker.Poller
+
+	eventBroker    *event.PubSub
+	operationStats *metricsv2.OperationStats
 }
 
 type componentProviderDecorated struct {
@@ -120,6 +126,11 @@ type componentProviderDecorated struct {
 }
 
 func (s *BrokerSuiteTest) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
 	s.httpServer.Close()
 	if s.storageCleanup != nil {
 		err := s.storageCleanup()
@@ -132,12 +143,27 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
+func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
+	_, operationStats := metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
+	broker.operationStats = operationStats
+	broker.router.Handle("/metrics", promhttp.Handler())
+	return broker
+}
+
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests(t)
 	err := apiextensionsv1.AddToScheme(sch)
@@ -237,6 +263,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
+		eventBroker:         eventBroker,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 
@@ -1633,6 +1660,13 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 	err = json.Unmarshal(data, &operationResponse)
 	assert.NoError(s.t, err)
 	return operationResponse
+}
+
+func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
+	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
+	assert.NoError(s.t, err)
+	assert.NotNil(s.t, metric)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {
