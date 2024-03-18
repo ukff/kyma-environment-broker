@@ -128,7 +128,7 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 		}
 	}()
 
-	payload, ok := event.(process.OperationCounting)
+	payload, ok := event.(process.OperationFinished)
 	if !ok {
 		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
 	}

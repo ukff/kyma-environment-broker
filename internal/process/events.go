@@ -58,7 +58,7 @@ type OperationSucceeded struct {
 	Operation internal.Operation
 }
 
-type OperationCounting struct {
+type OperationFinished struct {
 	OpId    string
 	PlanID  broker.PlanID
 	OpState domain.LastOperationState

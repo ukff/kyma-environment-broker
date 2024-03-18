@@ -164,7 +164,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 			if processedOperation.State == domain.Failed || processedOperation.State == domain.Succeeded {
 				logStep.Infof("Operation %q got status %s. Process finished.", operation.ID, processedOperation.State)
 				operation.EventInfof("operation processing %v", processedOperation.State)
-				m.countOperation(processedOperation)
+				m.publishOperationFinishedEvent(processedOperation)
 				return 0, nil
 			}
 
@@ -267,7 +267,7 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
 
-	m.countOperation(*operation)
+	m.publishOperationFinishedEvent(*operation)
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
 		StepProcessed: StepProcessed{
@@ -284,7 +284,7 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 		Operation: *operation,
 	})
 
-	m.countOperation(*operation)
+	m.publishOperationFinishedEvent(*operation)
 
 	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
 		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
@@ -293,8 +293,8 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 	}
 }
 
-func (m *StagedManager) countOperation(operation internal.Operation) {
-	m.publisher.Publish(context.TODO(), OperationCounting{
+func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operation) {
+	m.publisher.Publish(context.TODO(), OperationFinished{
 		OpId:    operation.ID,
 		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
 		OpState: operation.State,

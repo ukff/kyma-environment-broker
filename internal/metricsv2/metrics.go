@@ -41,7 +41,7 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	opStats := NewOperationsStats(operations, time.Second*30, logger)
 	opStats.MustRegister(ctx)
 
-	sub.Subscribe(process.OperationCounting{}, opStats.Handler)
+	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
 	sub.Subscribe(process.DeprovisioningSucceeded{}, operationResult.Handler)
 	return operationResult, opStats
 }
