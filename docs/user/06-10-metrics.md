@@ -1,8 +1,9 @@
 KEB metrics are exposed via the /metrics endpoint, which is called by prometheus in job manner every given duration of
 time and gather the metrics which are later pushed to Victoria metrics and Plutno dashboard and alerts.
 
-Metrics are counted in KEB memory, by two main ways, one of it is to pull data from database and update inmemory metric,
-or by events send across systems from business processes to pubsub, which handle event.
+Metrics are counted in KEB memory, by two main ways, one of it is to pull data from database and update in-memory metric,
+or by pubsub architecture where events are send across systems from business processes to corresponding handlers which update metrics in memory.
+Then the content of KEB memory prometheus metrics is pulled by prometheus server and persist in monitoring database for futher processing by monitoring and alert systems.
 
 ![KEB metrics](../assets/metrics.svg)
 
@@ -23,4 +24,3 @@ or by events send across systems from business processes to pubsub, which handle
 | kcp_keb_v2_operations_update_failed_total              | counter   | plan_id                                                                                                 | events + database |
 | kcp_keb_v2_operations_update_in_progress_total         | gauge     | plan_id                                                                                                 | events + database |
 | kcp_keb_v2_operations_update_succeeded_total           | counter   | plan_id                                                                                                 | events + database |
-
