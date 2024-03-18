@@ -84,7 +84,8 @@ func (s *OperationStats) MustRegister(ctx context.Context) {
 			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
 		}
 	}()
-
+	registry := prometheus.NewRegistry()
+	reqistry.
 	for _, plan := range plans {
 		for _, opType := range opTypes {
 			for _, opState := range opStates {
