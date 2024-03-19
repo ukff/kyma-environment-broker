@@ -11,7 +11,7 @@ Then the content of KEB memory prometheus metrics is pulled by prometheus server
 
 ![KEB metrics](../assets/metrics.svg)
 
-| metric name                                            | type      | labels                                                                                                  | source            |
+| Metric Name                                            | Type      | Labels                                                                                                  | Source            |
 |--------------------------------------------------------|-----------|---------------------------------------------------------------------------------------------------------|-------------------|
 | kcp_keb_v2_ers_context_license_type_total              | gauge     | license_type                                                                                            | database          |
 | kcp_keb_v2_global_account_id_instances_total           | gauge     | global_account_id                                                                                       | database          |
