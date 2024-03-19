@@ -7,7 +7,7 @@ The metrics are counted in KEB memory in two main ways:
 1. Pull data from database and update in-memory metric.
 2. Publish events which are send across systems from business processes to corresponding subscribers which update metrics in memory.
 
-In the latter case, the metrics stored in KEB's memory Prometheus are pulled by the Prometheus server and persist in monitoring the database for further processing by monitoring and alert systems
+Then, the Prometheus server pulls the metrics stored in KEB's memory and persist them in monitoring database for further processing by monitoring and alert systems.
 
 ![KEB metrics](../assets/metrics.svg)
 
