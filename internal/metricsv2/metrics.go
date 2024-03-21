@@ -21,27 +21,40 @@ const (
 // fetching data from database by "Job"
 
 type Exposer interface {
-	Handler(ctx context.Context, event interface{}) error
+	MustRegister(ctx context.Context)
 	Job(ctx context.Context)
+	Handler(ctx context.Context, event interface{}) error
 }
 
-func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, logger logrus.FieldLogger) (*operationsResult, *OperationStats) {
+type Holder struct {
+	OperationDurationCollector *OperationDurationCollector
+	InstancesCollector         *InstancesCollector
+	OperationsResult           *operationsResult
+	OperationStats             *OperationStats
+}
+
+func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, logger logrus.FieldLogger) *Holder {
 
 	opDurationCollector := NewOperationDurationCollector()
+	instanceCollector := NewInstancesCollector(instances)
+	opResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*7)
+	opStats := NewOperationsStats(operations, time.Second*30, logger)
+
 	prometheus.MustRegister(opDurationCollector)
-	prometheus.MustRegister(NewInstancesCollector(instances))
+	prometheus.MustRegister(instanceCollector)
+	opStats.MustRegister(ctx)
 
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
-
-	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*7)
-
-	opStats := NewOperationsStats(operations, time.Second*30, logger)
-	opStats.MustRegister(ctx)
-
 	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
-	sub.Subscribe(process.DeprovisioningSucceeded{}, operationResult.Handler)
-	return operationResult, opStats
+	sub.Subscribe(process.DeprovisioningSucceeded{}, opResult.Handler)
+
+	return &Holder{
+		OperationDurationCollector: opDurationCollector,
+		InstancesCollector:         instanceCollector,
+		OperationsResult:           opResult,
+		OperationStats:             opStats,
+	}
 }

@@ -17,16 +17,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// exposed metrics:
 // - kcp_keb_v2_operations_{plan_name}_provisioning_failed_total
 // - kcp_keb_v2_operations_{plan_name}_provisioning_in_progress_total
 // - kcp_keb_v2_operations_{plan_name}_provisioning_succeeded_total
 // - kcp_keb_v2_operations_{plan_name}_deprovisioning_failed_total
 // - kcp_keb_v2_operations_{plan_name}_deprovisioning_in_progress_total
 // - kcp_keb_v2_operations_{plan_name}_deprovisioning_succeeded_total
-// - kcp_keb_v2_operations_{plan_name}_update_failed_total
-// - kcp_keb_v2_operations_{plan_name}_update_in_progress_total
-// - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
+// - kcp_keb_v2_operations_{plan_name}_updating_failed_total
+// - kcp_keb_v2_operations_{plan_name}_updating_in_progress_total
+// - kcp_keb_v2_operations_{plan_name}_updating_succeeded_total
 
 const (
 	OpStatsMetricName = "operations_%s_%s_total"
@@ -41,7 +40,7 @@ var (
 		broker.SapConvergedCloudPlanID,
 		broker.TrialPlanID,
 		broker.FreemiumPlanID,
-		broker.PreviewPlanName,
+		broker.PreviewPlanID,
 	}
 	opTypes = []internal.OperationType{
 		internal.OperationTypeProvision,
@@ -70,7 +69,7 @@ var _ Exposer = (*OperationStats)(nil)
 
 func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *OperationStats {
 	return &OperationStats{
-		logger:          logger.WithField("source", "@metricsv2"),
+		logger:          logger.WithField("source", "metricsv2"),
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
 		operations:      operations,
@@ -81,7 +80,7 @@ func NewOperationsStats(operations storage.Operations, poolingInterval time.Dura
 func (s *OperationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
+			s.logger.Errorf("panic recovered while creating and registering operations stats metrics: %v", recovery)
 		}
 	}()
 
@@ -116,6 +115,29 @@ func (s *OperationStats) MustRegister(ctx context.Context) {
 	}
 
 	go s.Job(ctx)
+}
+
+func (s *OperationStats) Job(ctx context.Context) {
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			s.logger.Errorf("panic: while handling in progress operations counter: %v", recovery)
+		}
+	}()
+
+	if err := s.updateMetrics(); err != nil {
+		s.logger.Error("failed to update operations stats metrics", err)
+	}
+	ticker := time.NewTicker(s.poolingInterval)
+	for {
+		select {
+		case <-ticker.C:
+			if err := s.updateMetrics(); err != nil {
+				s.logger.Error("failed to update operations stats metrics", err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
@@ -154,36 +176,13 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *OperationStats) Job(ctx context.Context) {
-	defer func() {
-		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
-		}
-	}()
-
-	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update metrics metrics", err)
-	}
-	ticker := time.NewTicker(s.poolingInterval)
-	for {
-		select {
-		case <-ticker.C:
-			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operation stats metrics", err)
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (s *OperationStats) updateMetrics() error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
-		return fmt.Errorf("cannot fetch in progress metrics from operations : %s", err.Error())
+		return fmt.Errorf("cannot get in progress operations from db: %s", err.Error())
 	}
 	setStats := make(map[metricKey]struct{})
 	for _, stat := range stats {

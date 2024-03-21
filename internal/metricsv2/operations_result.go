@@ -15,6 +15,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	OpResultMetricName = "operation_result"
+)
+
 type operationsResult struct {
 	logger          logrus.FieldLogger
 	metrics         *prometheus.GaugeVec
@@ -28,35 +32,86 @@ type operationsResult struct {
 var _ Exposer = (*operationsResult)(nil)
 
 func NewOperationResult(ctx context.Context, db storage.Operations, logger logrus.FieldLogger, poolingInterval time.Duration, retention time.Duration) *operationsResult {
-	opInfo := &operationsResult{
-		operations: db,
-		lastUpdate: time.Now().Add(-retention),
-		logger:     logger,
-		cache:      make(map[string]internal.Operation),
-		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
-			Name:      "operation_result",
-			Help:      "Results of metrics",
-		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
+	return &operationsResult{
+		operations:      db,
+		lastUpdate:      time.Now().Add(-retention),
+		logger:          logger.WithField("source", "metricsv2"),
+		cache:           make(map[string]internal.Operation),
 		poolingInterval: poolingInterval,
 	}
-	go opInfo.Job(ctx)
-	return opInfo
 }
 
-func (s *operationsResult) setOperation(op internal.Operation, val float64) {
-	labels := make(map[string]string)
-	labels["operation_id"] = op.ID
-	labels["instance_id"] = op.InstanceID
-	labels["global_account_id"] = op.GlobalAccountID
-	labels["plan_id"] = op.Plan
-	labels["type"] = string(op.Type)
-	labels["state"] = string(op.State)
-	labels["error_category"] = string(op.LastError.Component())
-	labels["error_reason"] = string(op.LastError.Reason())
-	labels["error"] = op.LastError.Error()
-	s.metrics.With(labels).Set(val)
+func (s *operationsResult) MustRegister(ctx context.Context) {
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			s.logger.Errorf("panic: while creating and registering operations results metrics: %v", recovery)
+		}
+	}()
+
+	s.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: prometheusNamespacev2,
+		Subsystem: prometheusSubsystemv2,
+		Name:      OpResultMetricName,
+		Help:      "Results of metrics",
+	}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"})
+
+	go s.Job(ctx)
+}
+
+func (s *operationsResult) Job(ctx context.Context) {
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			s.logger.Errorf("panic: while syncing data from database: %v", recovery)
+		}
+	}()
+
+	if err := s.syncData(); err != nil {
+		s.logger.Errorf("failed to update operations result metrics: %s", err)
+	}
+
+	ticker := time.NewTicker(s.poolingInterval)
+	for {
+		select {
+		case <-ticker.C:
+			if err := s.syncData(); err != nil {
+				s.logger.Errorf("failed to update operations result metrics: %s", err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (s *operationsResult) Handler(ctx context.Context, event interface{}) error {
+	defer func() {
+		if recovery := recover(); recovery != nil {
+			s.logger.Errorf("panic: while handling operation result event: %v", recovery)
+		}
+	}()
+
+	switch payload := event.(type) {
+	case process.DeprovisioningSucceeded:
+		s.updateOperation(payload.Operation.Operation)
+	default:
+		s.logger.Errorf("unexpected event type: %T while handling operation result event", event)
+	}
+	return nil
+}
+
+func (s *operationsResult) syncData() (err error) {
+	now := time.Now()
+	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
+	if err != nil {
+		return fmt.Errorf("failed to get operations from database: %w", err)
+	}
+
+	for _, op := range operations {
+		s.updateOperation(op)
+	}
+
+	s.lastUpdate = now
+
+	return nil
 }
 
 // operation_result metrics works on 0/1 system.
@@ -71,6 +126,7 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 	if found {
 		s.setOperation(oldOp, 0)
 	}
+
 	s.setOperation(op, 1)
 	if op.State == domain.Failed || op.State == domain.Succeeded {
 		delete(s.cache, op.ID)
@@ -79,66 +135,16 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 	}
 }
 
-func (s *operationsResult) updateMetrics() (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("panic recovered: %v", r)
-		}
-	}()
-
-	now := time.Now()
-	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
-	if err != nil {
-		return fmt.Errorf("failed to list metrics: %v", err)
-	}
-	s.logger.Infof("updating metrics for number of ops: %d", len(operations))
-	for _, op := range operations {
-		s.updateOperation(op)
-	}
-	s.lastUpdate = now
-	return nil
-}
-
-func (s *operationsResult) Handler(ctx context.Context, event interface{}) error {
-	defer s.sync.Unlock()
-	s.sync.Lock()
-
-	defer func() {
-		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
-		}
-	}()
-
-	switch ev := event.(type) {
-	case process.DeprovisioningSucceeded:
-		s.updateOperation(ev.Operation.Operation)
-	default:
-		s.logger.Errorf("unexpected event type: %T", event)
-	}
-	return nil
-}
-
-func (s *operationsResult) Job(ctx context.Context) {
-
-	defer func() {
-		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
-		}
-	}()
-
-	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update metrics metrics", err)
-	}
-
-	ticker := time.NewTicker(s.poolingInterval)
-	for {
-		select {
-		case <-ticker.C:
-			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operation info metrics", err)
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
+func (s *operationsResult) setOperation(op internal.Operation, val float64) {
+	labels := make(map[string]string)
+	labels["operation_id"] = op.ID
+	labels["instance_id"] = op.InstanceID
+	labels["global_account_id"] = op.GlobalAccountID
+	labels["plan_id"] = op.Plan
+	labels["type"] = string(op.Type)
+	labels["state"] = string(op.State)
+	labels["error_category"] = string(op.LastError.Component())
+	labels["error_reason"] = string(op.LastError.Reason())
+	labels["error"] = op.LastError.Error()
+	s.metrics.With(labels).Set(val)
 }

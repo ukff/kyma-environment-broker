@@ -11,13 +11,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//
-// COPY OF THE internal/metrics/operation_duration.go for test porpuses, will be refactored
-//
-
 // OperationDurationCollector provides histograms which describes the time of provisioning/deprovisioning operations:
 // - kcp_keb_provisioning_duration_minutes
 // - kcp_keb_deprovisioning_duration_minutes
+
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec

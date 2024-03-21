@@ -6,10 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//
-// COPY OF THE internal/metrics/instances_collector.go for test purposes, will be refactored
-//
-
 // InstancesStatsGetter provides number of all instances failed, succeeded or orphaned
 //
 //	(instance exists but the cluster was removed manually from the gardener):
@@ -17,6 +13,7 @@ import (
 // - kcp_keb_instances_total - total number of all instances
 // - kcp_keb_global_account_id_instances_total - total number of all instances per global account
 // - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
+
 type InstancesStatsGetter interface {
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
@@ -58,8 +55,21 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.licenseTypeDesc
 }
 
-// Collect implements the prometheus.Collector interface.
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+	collect := func(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
+		m, err := prometheus.NewConstMetric(
+			desc,
+			prometheus.GaugeValue,
+			float64(value),
+			labelValues...)
+
+		if err != nil {
+			logrus.Errorf("unable to register metric %s", err.Error())
+			return
+		}
+		ch <- m
+	}
+
 	stats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
 		logrus.Error(err)
@@ -79,22 +89,4 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 	for t, num := range stats2.LicenseType {
 		collect(ch, c.licenseTypeDesc, num, t)
 	}
-}
-
-//
-// COPY OF THE internal/metrics/operations_collector.go for test purposes, will be refactored
-//
-
-func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
-	m, err := prometheus.NewConstMetric(
-		desc,
-		prometheus.GaugeValue,
-		float64(value),
-		labelValues...)
-
-	if err != nil {
-		logrus.Errorf("unable to register metric %s", err.Error())
-		return
-	}
-	ch <- m
 }
