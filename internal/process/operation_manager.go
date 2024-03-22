@@ -107,6 +107,7 @@ func (om *OperationManager) UpdateOperation(operation internal.Operation, update
 				log.Errorf("while getting operation: %v", err)
 				return operation, 1 * time.Minute, err
 			}
+			op.Merge(&operation)
 			update(op)
 			op, err = om.storage.UpdateOperation(*op)
 			if err != nil {
