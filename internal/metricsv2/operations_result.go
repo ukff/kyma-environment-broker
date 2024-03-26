@@ -41,6 +41,8 @@ func NewOperationResult(ctx context.Context, db storage.Operations, logger logru
 	}
 }
 
+// MustRegister registers the metrics with the prometheus registry and starts the pooling of the data from the database
+
 func (s *operationsResult) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -136,6 +138,11 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 }
 
 func (s *operationsResult) setOperation(op internal.Operation, val float64) {
+	labels := s.getMetricsWithLabels(op)
+	s.metrics.With(labels).Set(val)
+}
+
+func (s *operationsResult) getMetricsWithLabels(op internal.Operation) map[string]string {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
@@ -146,5 +153,5 @@ func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	labels["error_category"] = string(op.LastError.Component())
 	labels["error_reason"] = string(op.LastError.Reason())
 	labels["error"] = op.LastError.Error()
-	s.metrics.With(labels).Set(val)
+	return labels
 }
