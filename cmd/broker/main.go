@@ -22,7 +22,6 @@ import (
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -108,7 +107,6 @@ type Config struct {
 
 	Provisioner input.Config
 	Reconciler  reconciler.Config
-	Director    director.Config
 	Database    storage.Config
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config

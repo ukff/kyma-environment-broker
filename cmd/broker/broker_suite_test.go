@@ -23,7 +23,6 @@ import (
 	"github.com/gorilla/mux"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -99,7 +98,6 @@ type BrokerSuiteTest struct {
 	db                storage.BrokerStorage
 	storageCleanup    func() error
 	provisionerClient *provisioner.FakeClient
-	directorClient    *director.FakeClient
 	reconcilerClient  *reconciler.FakeClient
 	gardenerClient    dynamic.Interface
 
@@ -214,7 +212,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
-	directorClient := director.NewFakeClient()
 	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
 
 	iasFakeClient := ias.NewFakeClient()
@@ -254,7 +251,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
-		directorClient:      directorClient,
 		reconcilerClient:    reconcilerClient,
 		gardenerClient:      gardenerClient,
 		router:              mux.NewRouter(),

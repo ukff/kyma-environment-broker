@@ -22,7 +22,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerautomock "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
@@ -599,7 +598,6 @@ type ProvisioningSuite struct {
 	provisioningManager *process.StagedManager
 	provisioningQueue   *process.Queue
 	storage             storage.BrokerStorage
-	directorClient      *director.FakeClient
 
 	t                *testing.T
 	avsServer        *avs.MockAvsServer
@@ -692,8 +690,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	accountProvider := fixAccountProvider()
 
-	directorClient := director.NewFakeClient()
-
 	reconcilerClient := reconciler.NewFakeClient()
 
 	eventBroker := event.NewPubSub(logs)
@@ -711,7 +707,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		provisioningManager: provisionManager,
 		provisioningQueue:   provisioningQueue,
 		storage:             db,
-		directorClient:      directorClient,
 		avsServer:           server,
 		reconcilerClient:    reconcilerClient,
 		k8sKcpCli:           cli,
@@ -1071,7 +1066,6 @@ func fixConfig() *Config {
 		Reconciler: reconciler.Config{
 			ProvisioningTimeout: 5 * time.Second,
 		},
-		Director: director.Config{},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
 		},
