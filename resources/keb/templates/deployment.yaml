@@ -85,6 +85,8 @@ spec:
               value: "{{ .Values.enableKubeconfigURLLabel }}"
             - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
               value: "{{ .Values.includeAdditionalParamsInSchema }}"
+            - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
+              value: "{{ .Values.showFreeExpirationInfo }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
               value: "{{ .Values.showTrialExpirationInfo }}"
             - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
@@ -332,6 +334,8 @@ spec:
               value: "{{ .Values.euAccessRejectionMessage }}"
             - name: APP_FREEMIUM_PROVIDERS
               value: "{{ .Values.gardener.freemiumProviders }}"
+            - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
+              value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
