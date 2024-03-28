@@ -242,7 +242,9 @@ func main() {
 	logger.Info("Starting Kyma Environment Broker")
 
 	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
+	logs.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
