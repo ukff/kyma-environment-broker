@@ -31,7 +31,7 @@ func NewOperationResult(ctx context.Context, db storage.Operations, logger logru
 	opInfo := &operationsResult{
 		operations: db,
 		lastUpdate: time.Now().Add(-retention),
-		logger:     logger,
+		logger:     logger.WithField("source", "@metricsv2"),
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespacev2,
@@ -50,7 +50,7 @@ func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
 	labels["global_account_id"] = op.GlobalAccountID
-	labels["plan_id"] = op.Plan
+	labels["plan_id"] = op.ProvisioningParameters.PlanID
 	labels["type"] = string(op.Type)
 	labels["state"] = string(op.State)
 	labels["error_category"] = string(op.LastError.Component())
@@ -119,7 +119,6 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 }
 
 func (s *operationsResult) Job(ctx context.Context) {
-
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
