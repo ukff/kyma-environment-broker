@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	`github.com/pkg/errors`
 	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -33,6 +34,7 @@ func (s *StartStep) Name() string {
 }
 
 func (s *StartStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	return operation, 0, errors.New("test error")
 	if operation.State != orchestration.Pending {
 		return operation, 0, nil
 	}
