@@ -112,9 +112,7 @@ func (s *operations) GetProvisioningOperationByInstanceID(instanceID string) (*i
 // UpdateOperation updates Operation, fails if not exists or optimistic locking failure occurs.
 func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation, error) {
 	op.UpdatedAt = time.Now()
-	fmt.Println(fmt.Sprintf("debug: v1 %s, %s, %s", op.LastError.Error(), op.LastError.Component, op.LastError.Reason))
  	dto, err := s.operationToDTO(&op)
-	fmt.Println(fmt.Sprintf("debug: v2 %s", dto.Data))
 	if err != nil {
 		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
 	}
@@ -1114,6 +1112,7 @@ func (s *operations) toDeprovisioningOperationList(ops []dbmodel.OperationDTO) (
 }
 
 func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDTO, error) {
+	fmt.Println(fmt.Sprintf("debug: v1 %s, %s, %s", op.LastError.Error(), op.LastError.Component, op.LastError.Reason))
 	serialized, err := json.Marshal(op)
 	if err != nil {
 		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing operation data %v: %w", op, err)
@@ -1125,6 +1124,7 @@ func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDT
 	}
 
 	ret.Data = string(serialized)
+	fmt.Println(fmt.Sprintf("debug: v2 %s", ret.Data))
 	return ret, nil
 }
 
