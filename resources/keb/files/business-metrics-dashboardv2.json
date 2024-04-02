@@ -98,7 +98,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43\"})",
           "instant": false,
           "interval": "",
           "legendFormat": "kyma-framefrog",
@@ -106,7 +106,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -115,7 +115,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -124,7 +124,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"49bbad39-abfd-4e75-82ad-1764a9c8addf\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"49bbad39-abfd-4e75-82ad-1764a9c8addf\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -133,7 +133,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -142,7 +142,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -151,7 +151,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environmenvt-broker\", global_account_id=~\"1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -160,7 +160,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -169,7 +169,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -178,7 +178,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -187,7 +187,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -196,7 +196,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -205,7 +205,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"4c526f8b-cca9-4837-8b43-87824e3a4d10\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"4c526f8b-cca9-4837-8b43-87824e3a4d10\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "poster",
@@ -213,7 +213,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ce9ba63b-c7c3-4066-bc11-9c1ce1800526\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ce9ba63b-c7c3-4066-bc11-9c1ce1800526\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -222,7 +222,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7805ffd3-d842-4bc0-a116-213ff5e6c3d9\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7805ffd3-d842-4bc0-a116-213ff5e6c3d9\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -231,7 +231,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7283a47f-29db-420d-ba28-cf4e4162cf48\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7283a47f-29db-420d-ba28-cf4e4162cf48\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -240,7 +240,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -249,7 +249,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -258,7 +258,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"c3732052-3836-4906-b9cc-5e25cfa137e9\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"c3732052-3836-4906-b9cc-5e25cfa137e9\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -267,7 +267,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"0ee91222-0406-46f4-bfb8-4df880eba49b\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"0ee91222-0406-46f4-bfb8-4df880eba49b\"})",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -276,7 +276,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"f9322087-6ddd-485b-9615-e8073d5df800\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"f9322087-6ddd-485b-9615-e8073d5df800\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "pb-canary",
@@ -337,7 +337,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43\"})",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -347,7 +347,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -356,7 +356,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -365,7 +365,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"49bbad39-abfd-4e75-82ad-1764a9c8addf\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"49bbad39-abfd-4e75-82ad-1764a9c8addf\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -374,7 +374,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -383,7 +383,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -392,7 +392,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -401,7 +401,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -410,7 +410,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -419,7 +419,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -428,7 +428,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -437,7 +437,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -446,7 +446,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"4c526f8b-cca9-4837-8b43-87824e3a4d10\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"4c526f8b-cca9-4837-8b43-87824e3a4d10\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -455,7 +455,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ce9ba63b-c7c3-4066-bc11-9c1ce1800526\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ce9ba63b-c7c3-4066-bc11-9c1ce1800526\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -464,7 +464,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7805ffd3-d842-4bc0-a116-213ff5e6c3d9\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7805ffd3-d842-4bc0-a116-213ff5e6c3d9\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -473,7 +473,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7283a47f-29db-420d-ba28-cf4e4162cf48\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7283a47f-29db-420d-ba28-cf4e4162cf48\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -482,7 +482,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -491,7 +491,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -500,7 +500,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"c3732052-3836-4906-b9cc-5e25cfa137e9\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"c3732052-3836-4906-b9cc-5e25cfa137e9\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -509,7 +509,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"0ee91222-0406-46f4-bfb8-4df880eba49b\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"0ee91222-0406-46f4-bfb8-4df880eba49b\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -518,7 +518,7 @@
         },
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"f9322087-6ddd-485b-9615-e8073d5df800\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"f9322087-6ddd-485b-9615-e8073d5df800\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -621,7 +621,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(kcp_keb_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"$GA\"})",
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"$GA\"})",
           "hide": false,
           "instant": false,
           "interval": "",
