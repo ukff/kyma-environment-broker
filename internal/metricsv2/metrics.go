@@ -36,7 +36,7 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
-	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*7)
+	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*14)
 
 	opStats := NewOperationsStats(operations, time.Second*30, logger)
 	opStats.MustRegister(ctx)
