@@ -1,6 +1,7 @@
 package error
 
 import (
+	`encoding/json`
 	"errors"
 	"strings"
 	
@@ -11,17 +12,23 @@ import (
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
 
-// error reporter
-type LastError struct {
-	message   string  `json:"message"`
-	reason    ErrReason `json:"reason"`
-	component ErrComponent `json:"component"`
-}
-
 type ErrorReporter interface {
 	error
 	Reason() ErrReason
 	Component() ErrComponent
+}
+
+// error reporter
+type LastError struct {
+	message   string
+	reason    ErrReason
+	component ErrComponent
+}
+
+type LastErrorJSON struct {
+	Message   string  `json:"message"`
+	Reason    ErrReason `json:"reason"`
+	Component ErrComponent `json:"component"`
 }
 
 type ErrReason string
@@ -193,4 +200,25 @@ func UnwrapAll(err error) error {
 		break
 	}
 	return err
+}
+
+
+func (l LastError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(
+		LastErrorJSON{
+		Message:   l.message,
+		Reason:    l.reason,
+		Component: l.component,
+	})
+}
+
+func (l *LastError) UnmarshalJSON(data []byte) error {
+	tmp := &LastErrorJSON{}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	l.message = tmp.Message
+	l.reason = tmp.Reason
+	l.component = tmp.Component
+	return nil
 }

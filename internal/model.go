@@ -228,7 +228,7 @@ type Operation struct {
 	// KymaTemplate is read from the configuration then used in the apply_kyma step
 	KymaTemplate string `json:"KymaTemplate"`
 
-	LastError kebError.LastError `json:"lastError"`
+	LastError kebError.LastError `json:"last_error"`
 
 	// following fields are not stored in the storage and should be added to the Merge function
 	InputCreator ProvisionerInputCreator `json:"-"`
