@@ -1,10 +1,9 @@
 package error
 
 import (
-	"strings"
-
 	"errors"
-
+	"strings"
+	
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	apierr2 "k8s.io/apimachinery/pkg/api/meta"
@@ -14,9 +13,9 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 
 // error reporter
 type LastError struct {
-	message   string
-	reason    ErrReason
-	component ErrComponent
+	message   string  `json:"message"`
+	reason    ErrReason `json:"reason"`
+	component ErrComponent `json:"component"`
 }
 
 type ErrorReporter interface {
