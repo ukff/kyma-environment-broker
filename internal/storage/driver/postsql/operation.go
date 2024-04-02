@@ -112,8 +112,9 @@ func (s *operations) GetProvisioningOperationByInstanceID(instanceID string) (*i
 // UpdateOperation updates Operation, fails if not exists or optimistic locking failure occurs.
 func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation, error) {
 	op.UpdatedAt = time.Now()
-	dto, err := s.operationToDTO(&op)
-
+	fmt.Println(fmt.Sprintf("debug: v1 %s, %s, %s", op.LastError.Error(), op.LastError.Component, op.LastError.Reason))
+ 	dto, err := s.operationToDTO(&op)
+	fmt.Println(fmt.Sprintf("debug: v2 %s", dto.Data))
 	if err != nil {
 		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
 	}
