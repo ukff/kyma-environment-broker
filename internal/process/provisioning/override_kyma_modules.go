@@ -36,6 +36,9 @@ func NewOverrideKymaModules(os storage.Operations) *OverrideKymaModules {
 
 func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	k.logger = logger
+	k.logger.Infof("(lj-test)! starting %s step and it is expected to fails", k.Name())
+	return operation, 0, nil
+	
 	if operation.Type != internal.OperationTypeProvision {
 		k.logger.Infof("%s is supposed to run only for Provisioning, skipping logic.", k.Name())
 		return operation, 0, nil
