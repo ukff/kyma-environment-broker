@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	`github.com/pkg/errors`
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -37,9 +36,6 @@ func NewOverrideKymaModules(os storage.Operations) *OverrideKymaModules {
 
 func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	k.logger = logger
-	k.logger.Infof("(lj-test)! starting %s step and it is expected to fails", k.Name())
-	return operation, 0, errors.New("test error")
-	
 	if operation.Type != internal.OperationTypeProvision {
 		k.logger.Infof("%s is supposed to run only for Provisioning, skipping logic.", k.Name())
 		return operation, 0, nil
@@ -100,10 +96,7 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 	if err != nil {
 		return err
 	}
-	err = unstructured.SetNestedField(kymaTemplate.Object, toInsertUnmarshaled, "spec", "modules")
-	if err != nil {
-		return err
-	}
+	unstructured.SetNestedField(kymaTemplate.Object, toInsertUnmarshaled, "spec", "modules")
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
