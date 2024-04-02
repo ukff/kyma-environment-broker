@@ -1,10 +1,10 @@
 package error
 
 import (
-	`encoding/json`
+	"encoding/json"
 	"errors"
 	"strings"
-	
+
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	apierr2 "k8s.io/apimachinery/pkg/api/meta"
@@ -26,8 +26,8 @@ type LastError struct {
 }
 
 type LastErrorJSON struct {
-	Message   string  `json:"message"`
-	Reason    ErrReason `json:"reason"`
+	Message   string       `json:"message"`
+	Reason    ErrReason    `json:"reason"`
 	Component ErrComponent `json:"component"`
 }
 
@@ -202,14 +202,13 @@ func UnwrapAll(err error) error {
 	return err
 }
 
-
 func (l LastError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		LastErrorJSON{
-		Message:   l.message,
-		Reason:    l.reason,
-		Component: l.component,
-	})
+			Message:   l.message,
+			Reason:    l.reason,
+			Component: l.component,
+		})
 }
 
 func (l *LastError) UnmarshalJSON(data []byte) error {
