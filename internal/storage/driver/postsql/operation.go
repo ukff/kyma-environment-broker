@@ -112,7 +112,8 @@ func (s *operations) GetProvisioningOperationByInstanceID(instanceID string) (*i
 // UpdateOperation updates Operation, fails if not exists or optimistic locking failure occurs.
 func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation, error) {
 	op.UpdatedAt = time.Now()
- 	dto, err := s.operationToDTO(&op)
+	dto, err := s.operationToDTO(&op)
+
 	if err != nil {
 		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
 	}
@@ -166,63 +167,6 @@ func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.O
 	}
 
 	return ret, nil
-}
-
-func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error) {
-
-	operations, err := s.listOperationsByInstanceId(instanceID)
-	if err != nil {
-		return nil, fmt.Errorf("while loading operations list: %w", err)
-	}
-
-	grouped := internal.GroupedOperations{
-		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
-		UpgradeKymaOperations:    make([]internal.UpgradeKymaOperation, 0),
-		UpgradeClusterOperations: make([]internal.UpgradeClusterOperation, 0),
-		UpdateOperations:         make([]internal.UpdatingOperation, 0),
-	}
-
-	for _, op := range operations {
-		switch op.Type {
-		case internal.OperationTypeProvision:
-			ret, err := s.toProvisioningOperation(&op)
-			if err != nil {
-				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-			}
-			grouped.ProvisionOperations = append(grouped.ProvisionOperations, *ret)
-
-		case internal.OperationTypeDeprovision:
-			ret, err := s.toDeprovisioningOperation(&op)
-			if err != nil {
-				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-			}
-			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, *ret)
-
-		case internal.OperationTypeUpgradeKyma:
-			ret, err := s.toUpgradeKymaOperation(&op)
-			if err != nil {
-				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-			}
-			grouped.UpgradeKymaOperations = append(grouped.UpgradeKymaOperations, *ret)
-		case internal.OperationTypeUpgradeCluster:
-			ret, err := s.toUpgradeClusterOperation(&op)
-			if err != nil {
-				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-			}
-			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, *ret)
-		case internal.OperationTypeUpdate:
-			ret, err := s.toUpdateOperation(&op)
-			if err != nil {
-				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-			}
-			grouped.UpdateOperations = append(grouped.UpdateOperations, *ret)
-		default:
-			return nil, fmt.Errorf("while converting DTO to Operation: unrecognized type of operation")
-		}
-	}
-
-	return &grouped, nil
 }
 
 // InsertDeprovisioningOperation insert new DeprovisioningOperation to storage
@@ -1112,7 +1056,6 @@ func (s *operations) toDeprovisioningOperationList(ops []dbmodel.OperationDTO) (
 }
 
 func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDTO, error) {
-	fmt.Println(fmt.Sprintf("debug: v1 %s, %s, %s", op.LastError.Error(), op.LastError.Component, op.LastError.Reason))
 	serialized, err := json.Marshal(op)
 	if err != nil {
 		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing operation data %v: %w", op, err)
@@ -1124,7 +1067,6 @@ func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDT
 	}
 
 	ret.Data = string(serialized)
-	fmt.Println(fmt.Sprintf("debug: v2 %s", ret.Data))
 	return ret, nil
 }
 
@@ -1438,9 +1380,6 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 		lastErr = session.UpdateOperation(operation)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.ID)
-			if dberr.IsNotFound(lastErr) {
-				return false, lastErr
-			}
 			if lastErr != nil {
 				log.Errorf("while getting operation: %v", lastErr)
 				return false, nil
