@@ -124,7 +124,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
 		timeoutErr := kebError.TimeoutError("operation has reached the time limit")
 		operation.LastError = timeoutErr
-		defer m.publishOperationStepProcessed(*operation, err)
+		defer m.publishOperationStepProcessed(*operation, *operation, time.Since(operation.CreatedAt), err)
 		defer m.publishOperationFinishedEvent(*operation)
 		defer m.publishDeprovisioningOperation(*operation)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
@@ -245,16 +245,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 			}
 		}
 
-		m.publisher.Publish(context.TODO(), OperationStepProcessed{
-			StepProcessed: StepProcessed{
-				StepName: step.Name(),
-				Duration: time.Since(start),
-				When:     backoff,
-				Error:    err,
-			},
-			Operation:    processedOperation,
-			OldOperation: operation,
-		})
+		m.publishOperationStepProcessed(processedOperation, operation, time.Since(start), err)
 
 		// break the loop if:
 		// - the step does not need a retry
@@ -291,13 +282,13 @@ func (m *StagedManager) publishOperationSucceeded(operation internal.Operation) 
 	})
 }
 
-func (m *StagedManager) publishOperationStepProcessed(operation internal.Operation, err error) {
+func (m *StagedManager) publishOperationStepProcessed(operation, oldOperation internal.Operation, duration time.Duration, err error) {
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
 		StepProcessed: StepProcessed{
-			Duration: time.Since(operation.CreatedAt),
+			Duration: duration,
 			Error:    err,
 		},
-		OldOperation: operation,
+		OldOperation: oldOperation,
 		Operation:    operation,
 	})
 }
