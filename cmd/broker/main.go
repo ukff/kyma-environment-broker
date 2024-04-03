@@ -163,6 +163,8 @@ type Config struct {
 	Profiler ProfilerConfig
 
 	Events events.Config
+	
+	Metrics metricsv2.Config
 
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration
@@ -361,8 +363,7 @@ func main() {
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	if cfg.Metricsv2Enabled {
-		logs.Infof("Metricsv2 enabled")
-		_, _ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.Metrics, logs)
 	}
 
 	// setup runtime overrides appender
