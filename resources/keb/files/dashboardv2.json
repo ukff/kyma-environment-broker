@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 79,
-  "iteration": 1712138091594,
+  "id": 81,
+  "iteration": 1712138947678,
   "links": [],
   "panels": [
     {
@@ -699,8 +699,7 @@
       "pluginVersion": "7.5.29",
       "targets": [
         {
-          "exemplar": true,
-          "expr": "topk(3, count by (error, error_category, error_reason) (kcp_keb_v2_operation_result{plan_id=~\"$plan_id\", type=\"provision\", state=\"failed\"} unless (kcp_keb_v2_provisioning_result{plan_id=~\"$plan_id\", type=\"provision\", state=\"failed\"} offset $__range)))",
+          "expr": "topk(3, count by (error_category, error_reason) (kcp_keb_v2_provisioning_result{plan_id=~\"$plan_id\"} == 0 unless (kcp_keb_v2_provisioning_result{plan_id=~\"$plan_id\"} offset $__range == 0)))",
           "instant": true,
           "interval": "",
           "legendFormat": "{{error_category}} - {{error_reason}}",
@@ -768,8 +767,7 @@
       "pluginVersion": "7.5.29",
       "targets": [
         {
-          "exemplar": true,
-          "expr": "topk(3, count by (error, error_category, error_reason) (kcp_keb_v2_operation_result{plan_id=~\"$plan_id\", type=\"deprovision\", state=\"failed\"} unless (kcp_keb_v2_provisioning_result{plan_id=~\"$plan_id\", type=\"deprovision\", state=\"failed\"} offset $__range)))",
+          "expr": "topk(3, count by (error_category, error_reason) (kcp_keb_v2_deprovisioning_result{plan_id=~\"$plan_id\"} == 0 unless (kcp_keb_v2_deprovisioning_result{plan_id=~\"$plan_id\"} offset $__range == 0)))",
           "instant": true,
           "interval": "",
           "legendFormat": "{{error_category}} - {{error_reason}}",
@@ -1266,7 +1264,7 @@
       },
       "id": 199,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 159,
       "scopedVars": {
         "plan_id": {
@@ -1321,7 +1319,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 188,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1410,7 +1408,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 189,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1478,7 +1476,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 178,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1557,7 +1555,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 190,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1644,7 +1642,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 191,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1712,7 +1710,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 168,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1759,7 +1757,7 @@
       },
       "id": 206,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 159,
       "scopedVars": {
         "plan_id": {
@@ -1814,7 +1812,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 188,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1903,7 +1901,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 189,
       "repeatedByRow": true,
       "scopedVars": {
@@ -1971,7 +1969,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 178,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2050,7 +2048,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 190,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2137,7 +2135,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 191,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2205,7 +2203,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 168,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2252,7 +2250,7 @@
       },
       "id": 213,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 159,
       "scopedVars": {
         "plan_id": {
@@ -2307,7 +2305,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 188,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2396,7 +2394,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 189,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2464,7 +2462,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 178,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2543,7 +2541,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 190,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2630,7 +2628,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 191,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2698,7 +2696,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 168,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2745,7 +2743,7 @@
       },
       "id": 220,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 159,
       "scopedVars": {
         "plan_id": {
@@ -2800,7 +2798,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 188,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2889,7 +2887,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 189,
       "repeatedByRow": true,
       "scopedVars": {
@@ -2957,7 +2955,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 178,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3036,7 +3034,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 190,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3123,7 +3121,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 191,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3191,7 +3189,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 168,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3238,7 +3236,7 @@
       },
       "id": 227,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 159,
       "scopedVars": {
         "plan_id": {
@@ -3293,7 +3291,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 188,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3382,7 +3380,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 189,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3450,7 +3448,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 178,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3529,7 +3527,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 190,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3616,7 +3614,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 191,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3684,7 +3682,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 168,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3731,7 +3729,7 @@
       },
       "id": 234,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 159,
       "scopedVars": {
         "plan_id": {
@@ -3786,7 +3784,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 188,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3875,7 +3873,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 189,
       "repeatedByRow": true,
       "scopedVars": {
@@ -3943,7 +3941,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 178,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4022,7 +4020,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 190,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4109,7 +4107,7 @@
         "textMode": "value"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 191,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4177,7 +4175,7 @@
         "text": {}
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 168,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4289,7 +4287,6 @@
         {
           "exemplar": true,
           "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
@@ -4462,7 +4459,6 @@
         {
           "exemplar": true,
           "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
@@ -4592,7 +4588,7 @@
       },
       "id": 241,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 193,
       "scopedVars": {
         "plan_id": {
@@ -4647,7 +4643,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 161,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4659,40 +4655,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -4745,7 +4736,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 184,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4757,23 +4748,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -4826,7 +4814,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 182,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4838,40 +4826,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -4924,7 +4907,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 185,
       "repeatedByRow": true,
       "scopedVars": {
@@ -4936,23 +4919,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -4973,7 +4953,7 @@
       },
       "id": 246,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 193,
       "scopedVars": {
         "plan_id": {
@@ -5028,7 +5008,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 161,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5040,40 +5020,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -5126,7 +5101,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 184,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5138,23 +5113,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -5207,7 +5179,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 182,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5219,40 +5191,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -5305,7 +5272,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 185,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5317,23 +5284,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -5354,7 +5318,7 @@
       },
       "id": 251,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 193,
       "scopedVars": {
         "plan_id": {
@@ -5409,7 +5373,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 161,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5421,40 +5385,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -5507,7 +5466,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 184,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5519,23 +5478,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -5588,7 +5544,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 182,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5600,40 +5556,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -5686,7 +5637,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 185,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5698,23 +5649,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -5735,7 +5683,7 @@
       },
       "id": 256,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 193,
       "scopedVars": {
         "plan_id": {
@@ -5790,7 +5738,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 161,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5802,40 +5750,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -5888,7 +5831,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 184,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5900,23 +5843,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -5969,7 +5909,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 182,
       "repeatedByRow": true,
       "scopedVars": {
@@ -5981,40 +5921,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -6067,7 +6002,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 185,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6079,23 +6014,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -6116,7 +6048,7 @@
       },
       "id": 261,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 193,
       "scopedVars": {
         "plan_id": {
@@ -6171,7 +6103,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 161,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6183,40 +6115,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -6269,7 +6196,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 184,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6281,23 +6208,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -6350,7 +6274,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 182,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6362,40 +6286,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -6448,7 +6367,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 185,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6460,23 +6379,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -6497,7 +6413,7 @@
       },
       "id": 266,
       "panels": [],
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 193,
       "scopedVars": {
         "plan_id": {
@@ -6552,7 +6468,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 161,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6564,40 +6480,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -6650,7 +6561,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 184,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6662,23 +6573,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_cluster_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -6731,7 +6639,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 182,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6743,40 +6651,35 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
-          "hide": false,
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) or vector(0)",
           "interval": "",
           "legendFormat": "Total",
           "refId": "A"
         },
         {
           "exemplar": false,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==0) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 0)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
           "refId": "C"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==5) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 5)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceled",
           "refId": "D"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==1) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 1)) / count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range)) * 100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -6829,7 +6732,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.5.29",
-      "repeatIteration": 1712138091594,
+      "repeatIteration": 1712138947678,
       "repeatPanelId": 185,
       "repeatedByRow": true,
       "scopedVars": {
@@ -6841,23 +6744,20 @@
       },
       "targets": [
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==2) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 2)) or vector(0)",
           "interval": "",
           "legendFormat": "In Progress",
           "refId": "A"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==3) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 3)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Pending",
           "refId": "B"
         },
         {
-          "exemplar": true,
-          "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+          "expr": "count((kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"}==4) unless (kcp_keb_v2_upgrade_kyma_result{plan_id=\"$plan_id\"} offset $__range == 4)) or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Canceling",
@@ -8110,7 +8010,7 @@
     ]
   },
   "timezone": "",
-  "title": "KCP / Kyma Environment Broker Copy 3 Copy",
-  "uid": "YJPz2BbIk",
-  "version": 4
+  "title": "KCP / Kyma Environment Broker / v2 Copy",
+  "uid": "L8K4TfbSz",
+  "version": 6
 }
