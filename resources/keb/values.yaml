@@ -414,3 +414,6 @@ cleaning:
 
 metricsv2:
   enabled: false
+  operationResultRetentionPeriod: 336h
+  operationResultPoolingInterval: 1m
+  operationStatsPoolingInterval: 1m
