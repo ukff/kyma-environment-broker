@@ -286,7 +286,7 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 	})
 
 	m.publishOperationFinishedEvent(*operation)
-	
+
 	m.publishDeprovisioningSucceeded(operation)
 }
 
