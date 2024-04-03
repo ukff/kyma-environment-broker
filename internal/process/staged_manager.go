@@ -168,7 +168,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 				logStep.Infof("Operation %q got status %s. Process finished.", operation.ID, processedOperation.State)
 				operation.EventInfof("operation processing %v", processedOperation.State)
 				m.publishOperationFinishedEvent(&processedOperation)
-				m.publishDeprovisioningSucceeded(operation)
+				m.publishDeprovisioningSucceeded(&processedOperation)
 				return 0, nil
 			}
 
