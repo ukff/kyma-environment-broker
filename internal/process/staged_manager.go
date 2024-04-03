@@ -192,9 +192,9 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	processedOperation.State = domain.Succeeded
 	processedOperation.Description = "Processing finished"
 
-	m.publishOperationSucceeded(operation)
-	m.publishOperationFinishedEvent(operation)
-	m.publishDeprovisioningSucceeded(operation)
+	m.publishOperationSucceeded(&processedOperation)
+	m.publishOperationFinishedEvent(&processedOperation)
+	m.publishDeprovisioningSucceeded(&processedOperation)
 
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
 	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
