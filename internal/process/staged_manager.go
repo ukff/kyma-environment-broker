@@ -195,7 +195,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	m.publishOperationSucceeded(operation)
 	m.publishOperationFinishedEvent(operation)
 	m.publishDeprovisioningSucceeded(operation)
-	
+
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
 	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
 	if err != nil && !dberr.IsNotFound(err) {
@@ -245,7 +245,6 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 				logOperation.Errorf("Unable to save operation with resolved last error from step: %s", step.Name())
 			}
 		}
-		
 		m.publisher.Publish(context.TODO(), OperationStepProcessed{
 			StepProcessed: StepProcessed{
 				StepName: step.Name(),
@@ -256,7 +255,6 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 			Operation:    processedOperation,
 			OldOperation: operation,
 		})
-		
 		// break the loop if:
 		// - the step does not need a retry
 		// - step returns an error
@@ -280,7 +278,7 @@ func (m *StagedManager) publishOperationStepProcessed(operation, oldOperation *i
 	})
 }
 
-func (m* StagedManager) publishOperationSucceeded(operation *internal.Operation) {
+func (m *StagedManager) publishOperationSucceeded(operation *internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
 	})
