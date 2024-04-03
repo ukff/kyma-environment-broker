@@ -245,6 +245,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 				logOperation.Errorf("Unable to save operation with resolved last error from step: %s", step.Name())
 			}
 		}
+		
 		m.publisher.Publish(context.TODO(), OperationStepProcessed{
 			StepProcessed: StepProcessed{
 				StepName: step.Name(),
@@ -255,6 +256,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 			Operation:    processedOperation,
 			OldOperation: operation,
 		})
+		
 		// break the loop if:
 		// - the step does not need a retry
 		// - step returns an error
