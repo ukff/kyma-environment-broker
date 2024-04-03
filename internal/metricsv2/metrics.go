@@ -28,9 +28,9 @@ type Exposer interface {
 }
 
 type Config struct {
-	opResultRetentionPeriod time.Duration
-	opResultPoolingInterval time.Duration
-	opStatsPoolingInterval  time.Duration
+	OperationResultRetentionPeriod time.Duration  `envconfig:"default=336h"`
+	OperationResultPoolingInterval time.Duration  `envconfig:"default=1m"`
+	OperationStatsPoolingInterval  time.Duration  `envconfig:"default=1m"`
 }
 
 type RegisterContainer struct {
@@ -41,11 +41,12 @@ type RegisterContainer struct {
 }
 
 func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, cfg Config, logger logrus.FieldLogger) *RegisterContainer {
-
-	opDurationCollector := NewOperationDurationCollector()
+	logger = logger.WithField("service", logPrefix)
+	
+	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
 	
-	opInstanceCollector := NewInstancesCollector(instances)
+	opInstanceCollector := NewInstancesCollector(instances, logger)
 	prometheus.MustRegister(opInstanceCollector)
 
 	operationResult := NewOperationResult(ctx, operations, cfg, logger)

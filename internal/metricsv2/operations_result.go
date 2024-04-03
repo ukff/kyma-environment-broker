@@ -30,8 +30,8 @@ var _ Exposer = (*operationsResult)(nil)
 func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, logger logrus.FieldLogger) *operationsResult {
 	opInfo := &operationsResult{
 		operations: db,
-		lastUpdate: time.Now().Add(-cfg.opResultRetentionPeriod),
-		logger:     logger.WithField("source", logPrefix),
+		lastUpdate: time.Now().Add(-cfg.OperationResultRetentionPeriod),
+		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespacev2,
@@ -39,7 +39,7 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 			Name:      "operation_result",
 			Help:      "Results of metrics",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
-		poolingInterval: cfg.opResultPoolingInterval,
+		poolingInterval: cfg.OperationResultPoolingInterval,
 	}
 	go opInfo.Job(ctx)
 	return opInfo

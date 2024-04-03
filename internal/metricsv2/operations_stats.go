@@ -70,11 +70,11 @@ var _ Exposer = (*OperationStats)(nil)
 
 func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus.FieldLogger) *OperationStats {
 	return &OperationStats{
-		logger:          logger.WithField("source", logPrefix),
+		logger:          logger,
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
 		operations:      operations,
-		poolingInterval: cfg.opStatsPoolingInterval,
+		poolingInterval: cfg.OperationStatsPoolingInterval,
 	}
 }
 
