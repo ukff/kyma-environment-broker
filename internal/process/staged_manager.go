@@ -124,9 +124,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
 		timeoutErr := kebError.TimeoutError("operation has reached the time limit")
 		operation.LastError = timeoutErr
-		defer m.publishOperationStepProcessed(*operation, *operation, operation.CreatedAt, err)
-		defer m.publishOperationFinishedEvent(*operation)
-		defer m.publishDeprovisioningOperation(*operation)
+		defer m.publishEventOnFail(operation, err)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
 		operation.State = domain.Failed
 		_, err = m.operationStorage.UpdateOperation(*operation)
@@ -167,7 +165,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 				logStep.Infof("Operation %q got status %s. Process finished.", operation.ID, processedOperation.State)
 				operation.EventInfof("operation processing %v", processedOperation.State)
 				m.publishOperationFinishedEvent(processedOperation)
-				m.publishDeprovisioningOperation(processedOperation)
+				m.publishDeprovisioningSucceeded(operation)
 				return 0, nil
 			}
 
@@ -191,9 +189,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	processedOperation.State = domain.Succeeded
 	processedOperation.Description = "Processing finished"
 
-	m.publishOperationSucceeded(*operation)
-	m.publishOperationFinishedEvent(*operation)
-	m.publishDeprovisioningOperation(*operation)
+	m.publishEventOnSuccess(&processedOperation)
 
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
 	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
@@ -245,7 +241,16 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 			}
 		}
 
-		m.publishOperationStepProcessed(processedOperation, operation, start, err)
+		m.publisher.Publish(context.TODO(), OperationStepProcessed{
+			StepProcessed: StepProcessed{
+				StepName: step.Name(),
+				Duration: time.Since(start),
+				When:     backoff,
+				Error:    err,
+			},
+			Operation:    processedOperation,
+			OldOperation: operation,
+		})
 
 		// break the loop if:
 		// - the step does not need a retry
@@ -259,6 +264,32 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	}
 }
 
+func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
+	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
+	logOperation.Errorf("Last error: %s", operation.LastError.Error())
+
+	m.publishOperationFinishedEvent(*operation)
+
+	m.publisher.Publish(context.TODO(), OperationStepProcessed{
+		StepProcessed: StepProcessed{
+			Duration: time.Since(operation.CreatedAt),
+			Error:    err,
+		},
+		OldOperation: *operation,
+		Operation:    *operation,
+	})
+}
+
+func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
+	m.publisher.Publish(context.TODO(), OperationSucceeded{
+		Operation: *operation,
+	})
+
+	m.publishOperationFinishedEvent(*operation)
+
+	m.publishDeprovisioningSucceeded(operation)
+}
+
 func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationFinished{
 		OpId:    operation.ID,
@@ -268,27 +299,11 @@ func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operati
 	})
 }
 
-func (m *StagedManager) publishDeprovisioningOperation(operation internal.Operation) {
+
+func (m *StagedManager) publishDeprovisioningSucceeded(operation *internal.Operation) {
 	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
 		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
-			Operation: internal.DeprovisioningOperation{Operation: operation},
+			Operation: internal.DeprovisioningOperation{Operation: *operation},
 		})
 	}
-}
-
-func (m *StagedManager) publishOperationSucceeded(operation internal.Operation) {
-	m.publisher.Publish(context.TODO(), OperationSucceeded{
-		Operation: operation,
-	})
-}
-
-func (m *StagedManager) publishOperationStepProcessed(operation, oldOperation internal.Operation, start time.Time, err error) {
-	m.publisher.Publish(context.TODO(), OperationStepProcessed{
-		StepProcessed: StepProcessed{
-			Duration: time.Since(start),
-			Error:    err,
-		},
-		OldOperation: oldOperation,
-		Operation:    operation,
-	})
 }
