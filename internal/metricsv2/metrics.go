@@ -28,7 +28,7 @@ type Exposer interface {
 }
 
 type Config struct {
-	Enabled 					  bool          `envconfig:"default=false"`
+	Enabled                        bool          `envconfig:"default=false"`
 	OperationResultRetentionPeriod time.Duration `envconfig:"default=336h"`
 	OperationResultPoolingInterval time.Duration `envconfig:"default=1m"`
 	OperationStatsPoolingInterval  time.Duration `envconfig:"default=1m"`
@@ -49,7 +49,7 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 
 	opInstanceCollector := NewInstancesCollector(instances, logger)
 	prometheus.MustRegister(opInstanceCollector)
-	
+
 	opResult := NewOperationResult(ctx, operations, cfg, logger)
 
 	opStats := NewOperationsStats(operations, cfg, logger)
