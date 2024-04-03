@@ -28,6 +28,7 @@ type Exposer interface {
 }
 
 type Config struct {
+	Enabled 					  bool          `envconfig:"default=false"`
 	OperationResultRetentionPeriod time.Duration `envconfig:"default=336h"`
 	OperationResultPoolingInterval time.Duration `envconfig:"default=1m"`
 	OperationStatsPoolingInterval  time.Duration `envconfig:"default=1m"`
