@@ -48,8 +48,8 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 
 	opInstanceCollector := NewInstancesCollector(instances, logger)
 	prometheus.MustRegister(opInstanceCollector)
-
-	operationResult := NewOperationResult(ctx, operations, cfg, logger)
+	
+	opResult := NewOperationResult(ctx, operations, cfg, logger)
 
 	opStats := NewOperationsStats(operations, cfg, logger)
 	opStats.MustRegister(ctx)
@@ -59,12 +59,12 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
-	sub.Subscribe(process.DeprovisioningSucceeded{}, operationResult.Handler)
+	sub.Subscribe(process.DeprovisioningSucceeded{}, opResult.Handler)
 
 	logger.Infof(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
-		OperationResult:            operationResult,
+		OperationResult:            opResult,
 		OperationStats:             opStats,
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,

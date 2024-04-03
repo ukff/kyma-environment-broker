@@ -124,7 +124,8 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
 		timeoutErr := kebError.TimeoutError("operation has reached the time limit")
 		operation.LastError = timeoutErr
-		defer m.publishOperationStepProcessed(*operation, *operation, time.Since(operation.CreatedAt), err)
+		t := time.Since(operation.CreatedAt)
+		defer m.publishOperationStepProcessed(*operation, *operation, t, err)
 		defer m.publishOperationFinishedEvent(*operation)
 		defer m.publishDeprovisioningOperation(*operation)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
