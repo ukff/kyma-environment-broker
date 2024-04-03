@@ -163,7 +163,7 @@ type Config struct {
 	Profiler ProfilerConfig
 
 	Events events.Config
-	
+
 	Metrics metricsv2.Config
 
 	Provisioning    process.StagedManagerConfiguration

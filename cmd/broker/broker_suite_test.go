@@ -114,8 +114,8 @@ type BrokerSuiteTest struct {
 
 	poller broker.Poller
 
-	eventBroker    *event.PubSub
-	metrics *metricsv2.RegisterContainer
+	eventBroker *event.PubSub
+	metrics     *metricsv2.RegisterContainer
 }
 
 type componentProviderDecorated struct {

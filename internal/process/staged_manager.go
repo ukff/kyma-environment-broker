@@ -194,7 +194,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	m.publishOperationSucceeded(*operation)
 	m.publishOperationFinishedEvent(*operation)
 	m.publishDeprovisioningOperation(*operation)
-	
+
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
 	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
 	if err != nil && !dberr.IsNotFound(err) {

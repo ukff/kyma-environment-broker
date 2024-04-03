@@ -6,8 +6,8 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	`github.com/sirupsen/logrus`
-	
+	"github.com/sirupsen/logrus"
+
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -22,7 +22,7 @@ import (
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec
-	logger logrus.FieldLogger
+	logger                  logrus.FieldLogger
 }
 
 func NewOperationDurationCollector(logger logrus.FieldLogger) *OperationDurationCollector {

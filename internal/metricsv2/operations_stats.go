@@ -164,7 +164,7 @@ func (s *OperationStats) Job(ctx context.Context) {
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update metrics metrics", err)
 	}
-	
+
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {

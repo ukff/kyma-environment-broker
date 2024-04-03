@@ -28,13 +28,13 @@ type InstancesCollector struct {
 	instancesDesc        *prometheus.Desc
 	instancesPerGAIDDesc *prometheus.Desc
 	licenseTypeDesc      *prometheus.Desc
-	logger 				 logrus.FieldLogger
+	logger               logrus.FieldLogger
 }
 
 func NewInstancesCollector(statsGetter InstancesStatsGetter, logger logrus.FieldLogger) *InstancesCollector {
 	return &InstancesCollector{
 		statsGetter: statsGetter,
-		logger:  logger,
+		logger:      logger,
 		instancesDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "instances_total"),
 			"The total number of instances",
