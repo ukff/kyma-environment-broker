@@ -71,9 +71,9 @@ func TestOperationsCounter(t *testing.T) {
 	assert.NoError(t, err)
 
 	cfg := Config{
-		OperationStatsPoolingInterval:  1 * time.Minute,
+		OperationStatsPoolingInterval:  1 * time.Millisecond,
 		OperationResultPoolingInterval: 1 * time.Millisecond,
-		OperationResultRetentionPeriod: 1 * time.Millisecond,
+		OperationResultRetentionPeriod: 1 * time.Minute,
 	}
 
 	t.Run("create counter key", func(t *testing.T) {
