@@ -71,7 +71,6 @@ var _ Exposer = (*OperationStats)(nil)
 
 func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus.FieldLogger) *OperationStats {
 	_, file, _, _ := runtime.Caller(1)
-	s.logger.Infof(fmt.Sprintf("Operation stats metrics are enabled and will be collected every %s", cfg.OperationStatsPoolingInterval))
 	return &OperationStats{
 		logger:          logger.WithField("file", file),
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),

@@ -4,7 +4,8 @@ import (
 	"context"
 	"reflect"
 	"sync"
-
+	`time`
+	
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,7 +29,7 @@ type PubSub struct {
 
 func NewPubSub(log logrus.FieldLogger) *PubSub {
 	return &PubSub{
-		log:      log,
+		log:      log.WithField("source", "@pubsub"),
 		handlers: make(map[reflect.Type][]Handler),
 	}
 }
@@ -39,9 +40,12 @@ func (b *PubSub) Publish(ctx context.Context, ev interface{}) {
 	if found {
 		for _, handler := range hList {
 			go func(h Handler) {
+				t := reflect.TypeOf(ev)
 				err := h(ctx, ev)
 				if err != nil {
-					b.log.Errorf("error while calling pubsub event handler: %s", err.Error())
+					b.log.Errorf("error while calling event handler for %s type: %s", t.String(), err.Error())
+				} else {
+					b.log.Infof("event handler handled event for %s type with success at %s", t.String(), time.Now())
 				}
 			}(handler)
 		}
