@@ -3,6 +3,7 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	`runtime`
 	"strings"
 	"sync"
 	"time"
@@ -41,7 +42,7 @@ var (
 		broker.SapConvergedCloudPlanID,
 		broker.TrialPlanID,
 		broker.FreemiumPlanID,
-		broker.PreviewPlanName,
+		broker.PreviewPlanID,
 	}
 	opTypes = []internal.OperationType{
 		internal.OperationTypeProvision,
@@ -69,8 +70,10 @@ type OperationStats struct {
 var _ Exposer = (*OperationStats)(nil)
 
 func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus.FieldLogger) *OperationStats {
+	_, file, _, _ := runtime.Caller(1)
+	s.logger.Infof(fmt.Sprintf("Operation stats metrics are enabled and will be collected every %s", cfg.OperationStatsPoolingInterval))
 	return &OperationStats{
-		logger:          logger,
+		logger:          logger.WithField("file", file),
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
 		operations:      operations,
@@ -81,7 +84,7 @@ func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus
 func (s *OperationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
+			s.logger.Errorf("panic recovered while creating and registering operations stats metrics: %v", recovery)
 		}
 	}()
 
@@ -114,7 +117,7 @@ func (s *OperationStats) MustRegister(ctx context.Context) {
 			}
 		}
 	}
-
+	
 	go s.Job(ctx)
 }
 
@@ -124,7 +127,7 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
+			s.logger.Error("panic recovered while handling operation counting event in operation stats: %v", recovery)
 		}
 	}()
 
@@ -157,12 +160,12 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 func (s *OperationStats) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
+			s.logger.Errorf("panic recovered while checking in progress operation from db: %v", recovery)
 		}
 	}()
 
 	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update metrics metrics", err)
+		s.logger.Error("failed to update metrics", err)
 	}
 
 	ticker := time.NewTicker(s.poolingInterval)
@@ -170,7 +173,7 @@ func (s *OperationStats) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operation stats metrics", err)
+				s.logger.Error("failed to update operation stats metrics from db", err)
 			}
 		case <-ctx.Done():
 			return
@@ -184,7 +187,7 @@ func (s *OperationStats) updateMetrics() error {
 
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
-		return fmt.Errorf("cannot fetch in progress metrics from operations : %s", err.Error())
+		return fmt.Errorf("cannot get operations in progress metrics from db : %s", err.Error())
 	}
 	setStats := make(map[metricKey]struct{})
 	for _, stat := range stats {

@@ -308,3 +308,20 @@ func (m *StagedManager) publishDeprovisioningSucceeded(operation *internal.Opera
 		)
 	}
 }
+
+func (m *StagedManager) publichOperationStepProcessed(operation, oldOperation *internal.Operation, err error) {
+	m.publisher.Publish(context.TODO(), OperationStepProcessed{
+		StepProcessed: StepProcessed{
+			Duration: time.Since(operation.CreatedAt),
+			Error:    err,
+		},
+		OldOperation: *oldOperation,
+		Operation:    *operation,
+	})
+}
+
+func (m *StagedManager) publishOperationSucceeded(operation *internal.Operation) {
+	m.publisher.Publish(context.TODO(), OperationSucceeded{
+		Operation: *operation,
+	})
+}

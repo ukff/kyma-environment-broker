@@ -1,14 +1,12 @@
 package metricsv2
 
 import (
+	`runtime`
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
-
-//
-// COPY OF THE internal/metrics/instances_collector.go for test purposes, will be refactored
-//
 
 // InstancesStatsGetter provides number of all instances failed, succeeded or orphaned
 //
@@ -17,6 +15,7 @@ import (
 // - kcp_keb_instances_total - total number of all instances
 // - kcp_keb_global_account_id_instances_total - total number of all instances per global account
 // - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
+
 type InstancesStatsGetter interface {
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
@@ -32,9 +31,10 @@ type InstancesCollector struct {
 }
 
 func NewInstancesCollector(statsGetter InstancesStatsGetter, logger logrus.FieldLogger) *InstancesCollector {
+	_, file, _, _ := runtime.Caller(1)
 	return &InstancesCollector{
 		statsGetter: statsGetter,
-		logger:      logger,
+		logger:      logger.WithField("file", file),
 		instancesDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "instances_total"),
 			"The total number of instances",

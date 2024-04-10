@@ -3,6 +3,7 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	`runtime`
 	"sync"
 	"time"
 
@@ -28,10 +29,11 @@ type operationsResult struct {
 var _ Exposer = (*operationsResult)(nil)
 
 func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, logger logrus.FieldLogger) *operationsResult {
+	_, file, _, _ := runtime.Caller(1)
 	opInfo := &operationsResult{
 		operations: db,
 		lastUpdate: time.Now().Add(-cfg.OperationResultRetentionPeriod),
-		logger:     logger,
+		logger:     logger.WithField("file", file),
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespacev2,
@@ -82,14 +84,14 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 func (s *operationsResult) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("panic recovered: %v", r)
+			err = fmt.Errorf("panic recovered in operation result while fetching from db: %v", r)
 		}
 	}()
 
 	now := time.Now()
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
-		return fmt.Errorf("failed to list metrics: %v", err)
+		return fmt.Errorf("failed to fetch metrics in db for operations results: %v", err)
 	}
 	for _, op := range operations {
 		s.updateOperation(op)
@@ -104,7 +106,7 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
+			s.logger.Errorf("panic recovered while receiving operation result event: %v", recovery)
 		}
 	}()
 
@@ -120,12 +122,12 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 func (s *operationsResult) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
+			s.logger.Errorf("panic recovered while getting operation results from db: %v", recovery)
 		}
 	}()
 
 	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update metrics metrics", err)
+		s.logger.Error("failed to update metrics", err)
 	}
 
 	ticker := time.NewTicker(s.poolingInterval)

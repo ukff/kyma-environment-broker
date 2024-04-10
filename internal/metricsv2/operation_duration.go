@@ -3,7 +3,8 @@ package metricsv2
 import (
 	"context"
 	"fmt"
-
+	`runtime`
+	
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/sirupsen/logrus"
@@ -11,10 +12,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-//
-// COPY OF THE internal/metrics/operation_duration.go for test porpuses, will be refactored
-//
 
 // OperationDurationCollector provides histograms which describes the time of provisioning/deprovisioning operations:
 // - kcp_keb_provisioning_duration_minutes
@@ -26,6 +23,7 @@ type OperationDurationCollector struct {
 }
 
 func NewOperationDurationCollector(logger logrus.FieldLogger) *OperationDurationCollector {
+	_, file, _, _ := runtime.Caller(1)
 	return &OperationDurationCollector{
 		provisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespacev2,
@@ -41,7 +39,7 @@ func NewOperationDurationCollector(logger logrus.FieldLogger) *OperationDuration
 			Help:      "The time of the deprovisioning process",
 			Buckets:   prometheus.LinearBuckets(10, 2, 56),
 		}, []string{"plan_id"}),
-		logger: logger,
+		logger: logger.WithField("file", file),
 	}
 }
 

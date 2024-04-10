@@ -648,7 +648,7 @@ func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 
 func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error) {
 	var rows []dbmodel.OperationStatEntryV2
-	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s where state='in progress' group by type, state, plan_id", OperationTableName)).Load(&rows)
+	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s where type in('provision', 'deprovision', 'update') and state='in progress' group by type, state, plan_id", OperationTableName)).Load(&rows)
 	return rows, err
 }
 

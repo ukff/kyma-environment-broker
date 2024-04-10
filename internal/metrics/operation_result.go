@@ -36,7 +36,7 @@ const (
 
 // OperationResultCollector provides the following metrics:
 // - kcp_keb_provisioning_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
-// - kcp_keb_deprovisioning_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
+// - {"operation_id", "instance_id", "global_account_id", "plan_id"}
 // - kcp_keb_upgrade_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
 // These gauges show the status of the operation.
 // The value of the gauge could be:
