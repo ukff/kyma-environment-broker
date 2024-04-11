@@ -7,7 +7,6 @@ The Kyma Environment Broker release pipeline creates proper artifacts:
  - `kyma-environment-deprovision-retrigger` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-deprovision-retrigger)
  - `kyma-environments-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environments-cleanup-job )
  - `kyma-environment-runtime-reconciler` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-runtime-reconciler)
- - `kyma-environment-trial-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-trial-cleanup-job)
  - `kyma-environment-subaccount-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-cleanup-job)
  - `kyma-environment-archiver-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-archiver-job)
  - `kyma-environment-expirator-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-expirator-job)
@@ -36,7 +35,6 @@ To create a release, follow these steps:
 - `post-keb-deprovision-retrigger-job-release-build`
 - `post-keb-cleanup-job-release-build`
 - `post-keb-runtime-reconciler-job-release-build`
-- `post-keb-trial-cleanup-job-release-build` 
 - `post-keb-subaccount-cleanup-job-release-build`
 - `post-keb-archiver-job-release-build`
 - `post-keb-expirator-release-build`
