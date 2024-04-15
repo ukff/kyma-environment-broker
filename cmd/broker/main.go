@@ -76,7 +76,7 @@ import (
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
-
+// test
 // Config holds configuration for the whole application
 type Config struct {
 	// DbInMemory allows to use memory storage instead of the postgres one.
