@@ -111,6 +111,7 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 
 	switch ev := event.(type) {
 	case process.DeprovisioningSucceeded:
+		s.logger.info("dep succeeded")
 		s.updateOperation(ev.Operation.Operation)
 	default:
 		s.logger.Errorf("unexpected event type: %T", event)
@@ -137,6 +138,7 @@ func (s *operationsResult) Job(ctx context.Context) {
 				s.logger.Error("failed to update operation info metrics", err)
 			}
 		case <-ctx.Done():
+			s.logger.Error("ctx done")
 			return
 		}
 	}
