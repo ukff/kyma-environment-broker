@@ -91,10 +91,11 @@ func (s *operationsResult) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	fmt.Println("v2Metrics: %d", len(operations))
+	s.logger.Errorf("updateMetrics start:")
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
+	s.logger.Errorf("updateMetrics end with %s:", len(operations))
 	s.lastUpdate = now
 	return nil
 }
@@ -126,6 +127,7 @@ func (s *operationsResult) Job(ctx context.Context) {
 		}
 	}()
 
+	s.logger.Errorf("updateMetrics called")
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update metrics metrics", err)
 	}
@@ -134,6 +136,7 @@ func (s *operationsResult) Job(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
+			s.logger.Error("tick")
 			if err := s.updateMetrics(); err != nil {
 				s.logger.Error("failed to update operation info metrics", err)
 			}
