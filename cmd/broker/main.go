@@ -73,6 +73,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// test
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
