@@ -112,7 +112,7 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 
 	switch ev := event.(type) {
 	case process.DeprovisioningSucceeded:
-		s.logger.info("dep succeeded")
+		s.logger.Infof("dep succeeded")
 		s.updateOperation(ev.Operation.Operation)
 	default:
 		s.logger.Errorf("unexpected event type: %T", event)
