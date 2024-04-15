@@ -366,8 +366,10 @@ func main() {
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	if cfg.MetricsV2.Enabled {
 		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
+	} else {
+		logrus.Infof("yes v2 are enableds")
 	}
-
+	
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 
