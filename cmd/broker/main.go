@@ -156,8 +156,6 @@ type Config struct {
 	// FreemiumProviders is a list of providers for freemium
 	FreemiumProviders []string `envconfig:"default=aws"`
 
-	FreemiumWhitelistedGlobalAccountsFilePath string
-
 	DomainName string
 
 	// Enable/disable profiler configuration. The profiler samples will be stored
@@ -493,10 +491,6 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	whitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
-
-	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
-	fatalOnError(err)
-	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
