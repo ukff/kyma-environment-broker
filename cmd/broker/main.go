@@ -319,7 +319,7 @@ func main() {
 	fatalOnError(err)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err)
-
+	logger.Info("LJ CUSTOM DEPLOYMENT")
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
