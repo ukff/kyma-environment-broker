@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	`github.com/kyma-project/kyma-environment-broker/internal/metricsv2`
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -86,8 +87,11 @@ func (s *opsMetricService) updateOperation(op internal.Operation) {
 }
 
 func (s *opsMetricService) updateMetrics() (err error) {
+	metricsv2.Debug(s.logger, "@metricsv1", "Job started")
 	defer func() {
+		metricsv2.Debug(s.logger, "@metricsv1", "Job started")
 		if r := recover(); r != nil {
+			metricsv2.Debug(s.logger, "@metricsv1", "Panic happen in Job")
 			// it's not desirable to panic metrics goroutine, instead it should return and log the error
 			err = fmt.Errorf("panic recovered: %v", r)
 		}
@@ -95,28 +99,36 @@ func (s *opsMetricService) updateMetrics() (err error) {
 	now := time.Now()
 	operations, err := s.db.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
+		metricsv2.Debug(s.logger,"@Debug", "@metricsv1 failed to list operations")
 		return fmt.Errorf("failed to list operations: %v", err)
 	}
-	s.logger.Infof("v1metrcs %d", len(operations))
+	metricsv2.Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv1 -> %s ops processing start", len(operations)))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
+	metricsv2.Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv1 -> %s ops processing end", len(operations)))
 	s.lastUpdate = now
 	return nil
 }
 
 func (s *opsMetricService) run(ctx context.Context) {
+	metricsv2.Debug(s.logger, "@metricsv1", "tick tick")
 	if err := s.updateMetrics(); err != nil {
+		metricsv2.Debug(s.logger, "@metricsv1", "Job started fist time")
 		s.logger.Error("failed to update operations metrics", err)
 	}
 	ticker := time.NewTicker(PollingInterval)
 	for {
 		select {
 		case <-ticker.C:
+			metricsv2.Debug(s.logger, "@metricsv1", "tick tick")
 			if err := s.updateMetrics(); err != nil {
+				metricsv2.Debug(s.logger, "@metricsv1", "ctx done")
 				s.logger.Error("failed to update operations metrics", err)
 			}
 		case <-ctx.Done():
+			metricsv2.Debug(s.logger, "@metricsv1", "ctx done")
+			s.logger.Error("ctx done")
 			return
 		}
 	}

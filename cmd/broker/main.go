@@ -73,7 +73,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-// test
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
@@ -155,6 +154,8 @@ type Config struct {
 
 	// FreemiumProviders is a list of providers for freemium
 	FreemiumProviders []string `envconfig:"default=aws"`
+
+	FreemiumWhitelistedGlobalAccountsFilePath string
 
 	DomainName string
 
@@ -363,7 +364,6 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
-	logrus.Infof("are metrics enabled: %v", cfg.MetricsV2.Enabled)
 	if cfg.MetricsV2.Enabled {
 		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 	}
@@ -491,6 +491,10 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	whitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
+
+	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err)
+	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{

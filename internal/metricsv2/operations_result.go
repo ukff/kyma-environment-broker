@@ -91,10 +91,11 @@ func (s *operationsResult) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	s.logger.Errorf("updateMetrics start:")
+	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 -> %s ops processing start", len(operations)))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
+	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 -> %s ops processing end", len(operations)))
 	s.logger.Errorf("updateMetrics end with %s:", len(operations))
 	s.lastUpdate = now
 	return nil
@@ -121,14 +122,19 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 }
 
 func (s *operationsResult) Job(ctx context.Context) {
+	Debug(s.logger, "@metricsv2", "Job started")
 	defer func() {
+		Debug(s.logger, "@metricsv2", "Job ended")
 		if recovery := recover(); recovery != nil {
+			Debug(s.logger, "@metricsv2", "Panic happen in Job")
 			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
 		}
 	}()
 
 	s.logger.Errorf("updateMetrics called")
+	Debug(s.logger, "@metricsv2", "Job started fist time")
 	if err := s.updateMetrics(); err != nil {
+		Debug(s.logger, "@metricsv2", "Job started first time failed")
 		s.logger.Error("failed to update metrics metrics", err)
 	}
 
@@ -136,11 +142,13 @@ func (s *operationsResult) Job(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			s.logger.Error("tick")
+			Debug(s.logger, "@metricsv2", "tick tick")
 			if err := s.updateMetrics(); err != nil {
+				Debug(s.logger, "@metricsv2", "in Job loop failed to update metrics")
 				s.logger.Error("failed to update operation info metrics", err)
 			}
 		case <-ctx.Done():
+			Debug(s.logger, "@metricsv2", "ctx done")
 			s.logger.Error("ctx done")
 			return
 		}
