@@ -161,7 +161,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		if !step.disabled {
 			err := provisionManager.AddStep(step.stage, step.step, step.condition)
 			if err != nil {
-				fatalOnError(err)
+				fatalOnError(err, logs)
 			}
 		}
 	}

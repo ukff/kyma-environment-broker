@@ -3,6 +3,7 @@ package archive
 import (
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -33,7 +34,7 @@ func NewService(db storage.BrokerStorage, dryRun bool, performDeletion bool, bat
 }
 
 func (s *Service) Run() (error, int, int) {
-	l := slog.Default()
+	l := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	instanceIDs, err := s.instances.ListDeletedInstanceIDs(s.batchSize)
 	if err != nil {
