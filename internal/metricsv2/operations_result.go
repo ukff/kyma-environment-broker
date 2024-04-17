@@ -70,11 +70,15 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
+		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 0 with state %s and type %s", op.ID, op.State, op.Type))
 	}
 	s.setOperation(op, 1)
+	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 1 with state %s and type %s", op.ID, op.State, op.Type))
 	if op.State == domain.Failed || op.State == domain.Succeeded {
+		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : deleting operation ID %s from cache with status %s and type %s", op.ID, op.State, op.Type))
 		delete(s.cache, op.ID)
 	} else {
+		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : adding operation ID %s to cache with status %s and type %s", op.ID, op.State, op.Type))
 		s.cache[op.ID] = op
 	}
 }
@@ -88,6 +92,7 @@ func (s *operationsResult) updateMetrics() (err error) {
 
 	now := time.Now()
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
+	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : getting operations from window %s to %s", s.lastUpdate, now))
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
@@ -105,7 +110,9 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 	s.sync.Lock()
 
 	defer func() {
+		Debug(s.logger, "@metricsv2", "Handler func end")
 		if recovery := recover(); recovery != nil {
+			Debug(s.logger, "@metricsv2", "Handler func end with defer")
 			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
 		}
 	}()
@@ -113,8 +120,10 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 	switch ev := event.(type) {
 	case process.DeprovisioningSucceeded:
 		s.logger.Infof("dep succeeded")
+		Debug(s.logger, "@metricsv2", "DeprovisioningSucceeded event received")
 		s.updateOperation(ev.Operation.Operation)
 	default:
+		Debug(s.logger, "@metricsv2", fmt.Sprintf("unexpected event type: %T", event))
 		s.logger.Errorf("unexpected event type: %T", event)
 	}
 	return nil
