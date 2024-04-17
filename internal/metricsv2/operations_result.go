@@ -91,11 +91,11 @@ func (s *operationsResult) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 -> %d ops processing start", len(operations)))
+	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : %d ops processing start", len(operations)))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
-	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 -> %d ops processing end", len(operations)))
+	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : %d ops processing end", len(operations)))
 	s.lastUpdate = now
 	return nil
 }
