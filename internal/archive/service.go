@@ -66,7 +66,8 @@ func (s *Service) Run() (error, int, int) {
 
 		archived, err := NewInstanceArchivedFromOperations(operations)
 		if err != nil {
-			return err, numberOfInstancesProcessed, numberOfOperationsDeleted
+			logger.Error(fmt.Sprintf("Unable to create archived instance: %s", err.Error()))
+			continue
 		}
 
 		if s.dryRun {
