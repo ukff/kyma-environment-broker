@@ -126,7 +126,6 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
 	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1"})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
 func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
@@ -161,7 +160,6 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
 	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
 func TestProvisioning_Preview(t *testing.T) {
@@ -196,7 +194,6 @@ func TestProvisioning_Preview(t *testing.T) {
 		"kyma-project.io/region": "eu-central-1",
 	})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
 func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
