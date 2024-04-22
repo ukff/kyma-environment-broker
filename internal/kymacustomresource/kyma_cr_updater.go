@@ -32,6 +32,8 @@ type Updater struct {
 func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource, sleepDuration time.Duration, labelKey string) (*Updater, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+	logger.Info(fmt.Sprintf("Creating Kyma CR updater for label: %s", labelKey))
+
 	return &Updater{
 		k8sClient:     k8sClient,
 		queue:         queue,
@@ -46,9 +48,12 @@ func (u *Updater) Run() error {
 	for {
 		item, ok := u.queue.Extract()
 		if !ok {
+			u.logger.Debug("Updater goes to sleep, queue is empty")
 			time.Sleep(u.sleepDuration)
+			u.logger.Debug("Updater wakes up")
 			continue
 		}
+		u.logger.Debug(fmt.Sprintf("Dequeueing item - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})
@@ -62,6 +67,7 @@ func (u *Updater) Run() error {
 			continue
 		}
 		retryRequired := false
+		u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount", len(unstructuredList.Items)))
 		for _, kymaCrUnstructured := range unstructuredList.Items {
 			if err := u.updateBetaEnabledLabel(kymaCrUnstructured, item.BetaEnabled); err != nil {
 				u.logger.Warn("while updating Kyma CR: " + err.Error() + "item will be added back to the queue")
@@ -69,7 +75,7 @@ func (u *Updater) Run() error {
 			}
 		}
 		if retryRequired {
-			u.logger.Info("adding item back to the queue")
+			u.logger.Info(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
 			u.queue.Insert(item)
 		}
 	}
