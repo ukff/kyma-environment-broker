@@ -78,15 +78,16 @@ func (s *Service) Run() (error, int, int) {
 			// do not throw error if the instance is already archived
 			err = s.archived.Insert(archived)
 			if err != nil && !errors.IsAlreadyExists(err) {
-				return err, numberOfInstancesProcessed, numberOfOperationsDeleted
+				logger.Warn(fmt.Sprintf("Unable to insert archived instance [%+v]: %s", archived, err.Error()))
+				continue
 			}
 		}
 
 		for _, operation := range operations {
-			log := logger.With("operationID", operation.ID).With("type", operation.Type)
+			logger := logger.With("operationID", operation.ID).With("type", operation.Type)
 
 			if s.dryRun {
-				log.Debug("DryRun: Operation would be deleted")
+				logger.Debug("DryRun: Operation would be deleted")
 				continue
 			}
 
@@ -95,13 +96,13 @@ func (s *Service) Run() (error, int, int) {
 			// If the deletion of operation fails, it can be retried, because such instance ID will be fetched by
 			// the next run of ListDeletedInstanceIDs() method.
 
-			log.Debug("Deleting runtime states for operation")
+			logger.Debug("Deleting runtime states for operation")
 			err := s.runtimeStates.DeleteByOperationID(operation.ID)
 			if err != nil {
 				logger.Error(fmt.Sprintf("Unable to delete runtime states for operation: %s", err.Error()))
 				continue
 			}
-			log.Debug("Deleting operation")
+			logger.Debug("Deleting operation")
 			err = s.operations.DeleteByID(operation.ID)
 			if err != nil {
 				logger.Error(fmt.Sprintf("Unable to delete operation: %s", err.Error()))
