@@ -44,15 +44,22 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 	result.PlanID = provisioningOperation.ProvisioningParameters.PlanID
 	result.PlanName = broker.PlanNamesMapping[result.PlanID]
 	result.InstanceID = provisioningOperation.InstanceID
+	result.GlobalAccountID = provisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID
+	result.SubaccountID = provisioningOperation.ProvisioningParameters.ErsContext.SubAccountID
+	if provisioningOperation.ProvisioningParameters.Parameters.Region != nil {
+		result.Region = *provisioningOperation.ProvisioningParameters.Parameters.Region
+	}
 
 	if len(operations) > 1 {
 		lastDeprovisioning := operations[len(operations)-1]
-		result.SubaccountID = lastDeprovisioning.SubAccountID
-		result.GlobalAccountID = lastDeprovisioning.GlobalAccountID
 		result.ShootName = lastDeprovisioning.ShootName
 		result.Region = lastDeprovisioning.Region
 		result.LastRuntimeID = lastDeprovisioning.RuntimeID
 		result.LastDeprovisioningFinishedAt = lastDeprovisioning.UpdatedAt
+
+		// if GA or SA has been changed, let's take it from the last deprovisioning operation
+		result.GlobalAccountID = lastDeprovisioning.ProvisioningParameters.ErsContext.GlobalAccountID
+		result.SubaccountID = lastDeprovisioning.ProvisioningParameters.ErsContext.SubAccountID
 	}
 	result.InternalUser = strings.Contains(provisioningOperation.ProvisioningParameters.ErsContext.UserID, "@sap.com")
 	result.SubaccountRegion = provisioningOperation.ProvisioningParameters.PlatformRegion
