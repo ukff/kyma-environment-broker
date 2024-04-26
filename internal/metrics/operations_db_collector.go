@@ -97,6 +97,7 @@ func (s *opsMetricService) updateMetrics() (err error) {
 		}
 	}()
 	now := time.Now()
+	metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : getting operations from window %s to %s", s.lastUpdate, now))
 	operations, err := s.db.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
 		metricsv2.Debug(s.logger, "@Debug", "@metricsv1 failed to list operations")
