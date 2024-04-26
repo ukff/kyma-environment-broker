@@ -4,8 +4,8 @@ run-name: Create release ${{ inputs.name }}
 env:
   IMAGE_REPO: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
-  GIT_EMAIL: lukasz.jezak@sap.com
-  GIT_NAME: ukff
+  GIT_EMAIL: team-gopher+1@sap.com
+  GIT_NAME: kyma-gopher-bot
   BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 on:
@@ -81,6 +81,9 @@ jobs:
         with:
           fetch-depth: 0
       - run: git pull
+
+      - name: Update sec-scanners-config.yaml
+        run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
 
       - name: Bump KEB chart
         run: scripts/bump_keb_chart.sh ${{ inputs.name }}
@@ -166,8 +169,62 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.bumps.outputs.latest_commit}}
-      - name: Echo
-        run: echo "$"
+
+      - name: Check post-keb-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-runtime-reconciler-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-runtime-reconciler-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-subaccount-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-subaccount-cleanup-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-cleanup-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-deprovision-retrigger-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-deprovision-retrigger-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-archiver-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-archiver-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-expirator-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-expirator-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-subaccount-sync-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-subaccount-sync-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
   publish-release:
     name: Publish release
