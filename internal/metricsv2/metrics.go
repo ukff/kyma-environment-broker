@@ -43,7 +43,7 @@ type RegisterContainer struct {
 
 func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, cfg Config, logger logrus.FieldLogger) *RegisterContainer {
 	logger = logger.WithField("from:", logPrefix)
-
+	logrus.Infof("Registering metricsv2")
 	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
 
