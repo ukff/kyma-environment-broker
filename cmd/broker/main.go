@@ -326,13 +326,10 @@ func main() {
 	cfg.Gardener.DNSProviders, err = gardener.ReadDNSProvidersValuesFromYAML(cfg.SkrDnsProvidersValuesYAMLFilePath)
 	fatalOnError(err, logs)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
-<<<<<<< HEAD
-	fatalOnError(err)
+	
 	logger.Info("LJ CUSTOM DEPLOYMENT")
-=======
 	fatalOnError(err, logs)
 
->>>>>>> upstream/main
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
