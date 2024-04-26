@@ -77,21 +77,25 @@ func (s *opsMetricService) updateOperation(op internal.Operation) {
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
+		metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : operation ID %s set to 0 with state %s and type %s", op.ID, op.State, op.Type))
 	}
 	s.setOperation(op, 1)
+	metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : operation ID %s set to 1 with state %s and type %s", op.ID, op.State, op.Type))
 	if op.State == domain.Failed || op.State == domain.Succeeded {
+		metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : deleting operation ID %s from cache with status %s and type %s", op.ID, op.State, op.Type))
 		delete(s.cache, op.ID)
 	} else {
+		metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : adding operation ID %s to cache with status %s and type %s", op.ID, op.State, op.Type))
 		s.cache[op.ID] = op
 	}
 }
 
 func (s *opsMetricService) updateMetrics() (err error) {
-	metricsv2.Debug(s.logger, "@metricsv1", "Job started")
+	metricsv2.Debug(s.logger, "@metricsv1", "updateMetrics started")
 	defer func() {
-		metricsv2.Debug(s.logger, "@metricsv1", "Job started")
+		metricsv2.Debug(s.logger, "@metricsv1", "updateMetrics finished")
 		if r := recover(); r != nil {
-			metricsv2.Debug(s.logger, "@metricsv1", "Panic happen in Job")
+			metricsv2.Debug(s.logger, "@metricsv1", "updateMetrics panic recovered")
 			// it's not desirable to panic metrics goroutine, instead it should return and log the error
 			err = fmt.Errorf("panic recovered: %v", r)
 		}
@@ -113,9 +117,9 @@ func (s *opsMetricService) updateMetrics() (err error) {
 }
 
 func (s *opsMetricService) run(ctx context.Context) {
-	metricsv2.Debug(s.logger, "@metricsv1", "tick tick")
+	metricsv2.Debug(s.logger, "@metricsv1", "run tick ticker")
 	if err := s.updateMetrics(); err != nil {
-		metricsv2.Debug(s.logger, "@metricsv1", "Job started fist time")
+		metricsv2.Debug(s.logger, "@metricsv1", "Job started first time failed")
 		s.logger.Error("failed to update operations metrics", err)
 	}
 	ticker := time.NewTicker(PollingInterval)
@@ -124,12 +128,12 @@ func (s *opsMetricService) run(ctx context.Context) {
 		case <-ticker.C:
 			metricsv2.Debug(s.logger, "@metricsv1", "tick tick")
 			if err := s.updateMetrics(); err != nil {
-				metricsv2.Debug(s.logger, "@metricsv1", "ctx done")
+				metricsv2.Debug(s.logger, "@metricsv1", "in Job loop failed to update metrics")
 				s.logger.Error("failed to update operations metrics", err)
 			}
 		case <-ctx.Done():
 			metricsv2.Debug(s.logger, "@metricsv1", "ctx done")
-			s.logger.Error("ctx done")
+			s.logger.Info("ctx done")
 			return
 		}
 	}

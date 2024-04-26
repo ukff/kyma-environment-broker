@@ -131,7 +131,7 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 }
 
 func (s *operationsResult) Job(ctx context.Context) {
-	Debug(s.logger, "@metricsv2", "Job started")
+	Debug(s.logger, "@metricsv2", "run tick ticker")
 	defer func() {
 		Debug(s.logger, "@metricsv2", "Job ended")
 		if recovery := recover(); recovery != nil {
@@ -158,7 +158,7 @@ func (s *operationsResult) Job(ctx context.Context) {
 			}
 		case <-ctx.Done():
 			Debug(s.logger, "@metricsv2", "ctx done")
-			s.logger.Error("ctx done")
+			s.logger.Info("ctx done")
 			return
 		}
 	}
