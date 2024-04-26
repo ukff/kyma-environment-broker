@@ -109,6 +109,7 @@ func (s *opsMetricService) updateMetrics() (err error) {
 	}
 	metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : %d ops processing start", len(operations)))
 	for _, op := range operations {
+		metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : processing operation ID %s, created_at %s updated_at %s", op.ID, op.CreatedAt, op.UpdatedAt))
 		s.updateOperation(op)
 	}
 	metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : %d ops processing end", len(operations)))
