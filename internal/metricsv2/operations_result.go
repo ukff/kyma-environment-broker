@@ -86,6 +86,7 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 func (s *operationsResult) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			Debug(s.logger, "@Debug", "panic recovered while updateMetrics()")
 			err = fmt.Errorf("panic recovered: %v", r)
 		}
 	}()
@@ -96,12 +97,12 @@ func (s *operationsResult) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : %d ops processing start", len(operations)))
+	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : number of %d operations processing start", len(operations)))
 	for _, op := range operations {
 		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : processing operation ID %s, created_at %s updated_at %s", op.ID, op.CreatedAt, op.UpdatedAt))
 		s.updateOperation(op)
 	}
-	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : %d ops processing end", len(operations)))
+	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : number of %d operations processing end", len(operations)))
 	s.lastUpdate = now
 	return nil
 }
@@ -111,16 +112,15 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 	s.sync.Lock()
 
 	defer func() {
-		Debug(s.logger, "@metricsv2", "Handler func end")
+		Debug(s.logger, "@metricsv2", "Handler event func end")
 		if recovery := recover(); recovery != nil {
-			Debug(s.logger, "@metricsv2", "Handler func end with defer")
+			Debug(s.logger, "@metricsv2", "Handler func end with recovery from panic")
 			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
 		}
 	}()
 
 	switch ev := event.(type) {
 	case process.DeprovisioningSucceeded:
-		s.logger.Infof("dep succeeded")
 		Debug(s.logger, "@metricsv2", "DeprovisioningSucceeded event received")
 		s.updateOperation(ev.Operation.Operation)
 	default:
