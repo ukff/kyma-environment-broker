@@ -70,15 +70,15 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
-		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 0 with state %s and type %s", op.ID, op.State, op.Type))
+		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 0 with state %s and type %s", op.ID, op.State, op.Type))
 	}
 	s.setOperation(op, 1)
-	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 1 with state %s and type %s", op.ID, op.State, op.Type))
+	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 1 with state %s and type %s", op.ID, op.State, op.Type))
 	if op.State == domain.Failed || op.State == domain.Succeeded {
-		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : deleting operation ID %s from cache with status %s and type %s", op.ID, op.State, op.Type))
+		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : deleting operation ID %s from cache with status %s and type %s", op.ID, op.State, op.Type))
 		delete(s.cache, op.ID)
 	} else {
-		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : adding operation ID %s to cache with status %s and type %s", op.ID, op.State, op.Type))
+		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : adding operation ID %s to cache with status %s and type %s", op.ID, op.State, op.Type))
 		s.cache[op.ID] = op
 	}
 }
@@ -92,16 +92,16 @@ func (s *operationsResult) updateMetrics() (err error) {
 
 	now := time.Now()
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
-	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : getting operations from window %s to %s", s.lastUpdate, now))
+	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : getting operations from window %s to %s", s.lastUpdate, now))
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : %d ops processing start", len(operations)))
+	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : %d ops processing start", len(operations)))
 	for _, op := range operations {
-		Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : processing operation ID %s, created_at %s updated_at %s", op.ID, op.CreatedAt, op.UpdatedAt))
+		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : processing operation ID %s, created_at %s updated_at %s", op.ID, op.CreatedAt, op.UpdatedAt))
 		s.updateOperation(op)
 	}
-	Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv2 : %d ops processing end", len(operations)))
+	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : %d ops processing end", len(operations)))
 	s.lastUpdate = now
 	return nil
 }

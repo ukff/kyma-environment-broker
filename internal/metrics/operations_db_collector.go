@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	`github.com/kyma-project/kyma-environment-broker/internal/metricsv2`
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -99,14 +99,14 @@ func (s *opsMetricService) updateMetrics() (err error) {
 	now := time.Now()
 	operations, err := s.db.ListOperationsInTimeRange(s.lastUpdate, now)
 	if err != nil {
-		metricsv2.Debug(s.logger,"@Debug", "@metricsv1 failed to list operations")
+		metricsv2.Debug(s.logger, "@Debug", "@metricsv1 failed to list operations")
 		return fmt.Errorf("failed to list operations: %v", err)
 	}
-	metricsv2.Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv1 : %d ops processing start", len(operations)))
+	metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : %d ops processing start", len(operations)))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
-	metricsv2.Debug(s.logger,"@Debug", fmt.Sprintf("@metricsv1 : %d ops processing end", len(operations)))
+	metricsv2.Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv1 : %d ops processing end", len(operations)))
 	s.lastUpdate = now
 	return nil
 }

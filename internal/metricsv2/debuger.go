@@ -2,7 +2,7 @@ package metricsv2
 
 import (
 	"sync"
-	
+
 	"github.com/sirupsen/logrus"
 )
 
