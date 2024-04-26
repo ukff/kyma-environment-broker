@@ -5,18 +5,18 @@ metadata:
   name: subaccount-sync
   namespace: kcp-system
   labels:
-    app: subaccount-sync
+    app.kubernetes.io/name: subaccount-sync
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: subaccount-sync
+      app.kubernetes.io/name: subaccount-sync
   template:
     metadata:
       labels:
-        app: subaccount-sync
+        app.kubernetes.io/name: subaccount-sync
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}
@@ -28,7 +28,9 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-sync:{{ .Values.global.images.kyma_environment_subaccount_sync.version }}"
           imagePullPolicy: Always
           ports:
-          - containerPort: 80
+          - containerPort: {{ .Values.subaccountSync.metricsPort }}
+            name: http
+            protocol: TCP
           env:
             - name: SUBACCOUNT_SYNC_KYMA_VERSION
               value: {{ .Values.kymaVersion | required "please specify Values.kymaVersion" | quote}}
@@ -59,9 +61,9 @@ spec:
                   name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
                   key: secret
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL
-              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
+              value: {{ .Values.cis.v2.authURL | required "please specify .Values.cis.v2.authURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
-              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
+              value: {{ .Values.cis.v2.eventServiceURL | required "please specify .Values.cis.v2.eventServiceURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.events.rateLimitingInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL

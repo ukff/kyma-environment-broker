@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	queues "github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -90,12 +91,15 @@ func (s *SyncService) Run() {
 
 	// create and register metrics
 	metricsRegistry := prometheus.NewRegistry()
+	metricsRegistry.MustRegister(collectors.NewGoCollector())
+
 	metrics := NewMetrics(metricsRegistry, s.appName)
-	promHandler := promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{})
+	promHandler := promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{Registry: metricsRegistry})
 	http.Handle("/metrics", promHandler)
 
 	go func() {
-		err := http.ListenAndServe(s.cfg.MetricsPort, nil)
+		address := fmt.Sprintf(":%s", s.cfg.MetricsPort)
+		err := http.ListenAndServe(address, nil)
 		if err != nil {
 			logger.Error(fmt.Sprintf("while serving metrics: %s", err))
 		}
@@ -110,6 +114,7 @@ func (s *SyncService) Run() {
 		OnExtract: func(queueSize int, timeEnqueued int64) {
 			metrics.queue.Set(float64(queueSize))
 			metrics.queueOps.With(prometheus.Labels{"operation": "extract"}).Inc()
+			metrics.timeInQueue.Set(float64(epochInMillis() - timeEnqueued))
 		},
 	})
 
@@ -117,7 +122,15 @@ func (s *SyncService) Run() {
 	var updater *kymacustomresource.Updater
 	var err error
 	if s.cfg.UpdateResources {
-		updater, err = kymacustomresource.NewUpdater(s.k8sClient, priorityQueue, s.kymaGVR, s.cfg.SyncQueueSleepInterval, betaEnabledLabel)
+		logger.Debug("Resource update is enabled, creating updater")
+		updater, err = kymacustomresource.NewUpdater(
+			s.k8sClient,
+			priorityQueue,
+			s.kymaGVR,
+			s.cfg.SyncQueueSleepInterval,
+			betaEnabledLabel,
+			s.ctx,
+			logger.With("component", "updater"))
 		fatalOnError(err)
 	}
 
@@ -146,6 +159,8 @@ func (s *SyncService) Run() {
 	go stateReconciler.runCronJobs(s.cfg, s.ctx)
 
 	if s.cfg.UpdateResources && stateReconciler.updater != nil {
+		logger.Info("Starting updater")
+
 		go func() {
 			err := stateReconciler.updater.Run()
 			if err != nil {

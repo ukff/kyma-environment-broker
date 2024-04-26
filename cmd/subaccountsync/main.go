@@ -51,6 +51,7 @@ func main() {
 
 	slog.Info(fmt.Sprintf("Configuration: event window size:%s, event sync interval:%s, accounts sync interval: %s, storage sync interval: %s, queue sleep interval: %s",
 		cfg.EventsWindowSize, cfg.EventsSyncInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
+	slog.Info(fmt.Sprintf("Configuration: updateResources: %t", cfg.UpdateResources))
 
 	// create config provider - provider still uses logrus logger
 	configProvider := kebConfig.NewConfigProvider(
