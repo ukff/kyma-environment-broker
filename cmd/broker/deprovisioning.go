@@ -104,7 +104,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	for _, step := range deprovisioningSteps {
 		if !step.disabled {
 			err := deprovisionManager.AddStep(step.step.Name(), step.step, nil)
-			fatalOnError(err)
+			fatalOnError(err, logs)
 		}
 	}
 

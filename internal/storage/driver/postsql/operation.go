@@ -832,7 +832,6 @@ func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperatio
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			log.Warn(lastErr.Error())
 			return false, lastErr
 		}
 		return true, nil
@@ -896,7 +895,6 @@ func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClu
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			log.Warn(lastErr.Error())
 			return false, lastErr
 		}
 		return true, nil
@@ -1447,7 +1445,6 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
-			log.Warn(lastErr.Error())
 			return false, lastErr
 		}
 		return true, nil

@@ -5,18 +5,18 @@ metadata:
   name: subaccount-sync
   namespace: kcp-system
   labels:
-    app: subaccount-sync
+    app.kubernetes.io/name: subaccount-sync
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: subaccount-sync
+      app.kubernetes.io/name: subaccount-sync
   template:
     metadata:
       labels:
-        app: subaccount-sync
+        app.kubernetes.io/name: subaccount-sync
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}
@@ -28,7 +28,9 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-sync:{{ .Values.global.images.kyma_environment_subaccount_sync.version }}"
           imagePullPolicy: Always
           ports:
-          - containerPort: 80
+          - containerPort: {{ .Values.subaccountSync.metricsPort }}
+            name: http
+            protocol: TCP
           env:
             - name: SUBACCOUNT_SYNC_KYMA_VERSION
               value: {{ .Values.kymaVersion | required "please specify Values.kymaVersion" | quote}}
