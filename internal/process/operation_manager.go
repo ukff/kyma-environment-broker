@@ -41,6 +41,8 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 		// keep the original err object for error categorizer
 		retErr = fmt.Errorf("%s: %w", description, err)
 	}
+
+	log.Errorf("Step execution failed: %w", retErr)
 	operation.EventErrorf(err, "operation failed")
 
 	return op, 0, retErr

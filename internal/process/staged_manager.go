@@ -228,10 +228,11 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	for {
 		start = time.Now()
 		logger.Infof("Start step")
-		processedOperation, backoff, err = step.Run(processedOperation, logger)
+		stepLogger := logger.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID})
+		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
 			processedOperation.LastError = kebError.ReasonForError(err)
-			logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
 			logOperation.Warnf("Last error from step: %s", processedOperation.LastError.Error())
 			// only save to storage, skip for alerting if error
 			_, err = m.operationStorage.UpdateOperation(processedOperation)
