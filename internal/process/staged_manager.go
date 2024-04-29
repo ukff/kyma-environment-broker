@@ -256,8 +256,10 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - step returns an error
 		// - the loop takes too much time (to not block the worker too long)
 		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
-			logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
-			logOperation.Errorf("Last Error that terminated the step: %s", processedOperation.LastError.Error())
+			if err != nil {
+				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+				logOperation.Errorf("Last Error that terminated the step: %s", processedOperation.LastError.Error())
+			}
 			return processedOperation, backoff, err
 		}
 		operation.EventInfof("step %v sleeping for %v", step.Name(), backoff)
