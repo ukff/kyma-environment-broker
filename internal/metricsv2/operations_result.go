@@ -30,7 +30,7 @@ var _ Exposer = (*operationsResult)(nil)
 func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, logger logrus.FieldLogger) *operationsResult {
 	opInfo := &operationsResult{
 		operations: db,
-		lastUpdate: time.Now().Add(-cfg.OperationResultRetentionPeriod),
+		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -45,7 +45,16 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 	return opInfo
 }
 
+func (s *operationsResult) Metrics() *prometheus.GaugeVec {
+	return s.metrics
+}
+
 func (s *operationsResult) setOperation(op internal.Operation, val float64) {
+	labels := getLabels(op)
+	s.metrics.With(labels).Set(val)
+}
+
+func getLabels(op internal.Operation) map[string]string {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
@@ -56,9 +65,8 @@ func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	labels["error_category"] = string(op.LastError.Component())
 	labels["error_reason"] = string(op.LastError.Reason())
 	labels["error"] = op.LastError.Error()
-	s.metrics.With(labels).Set(val)
+	return labels
 }
-
 // operation_result metrics works on 0/1 system.
 // each metric have labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
@@ -91,7 +99,7 @@ func (s *operationsResult) updateMetrics() (err error) {
 		}
 	}()
 
-	now := time.Now()
+	now := time.Now().UTC()
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : getting operations from window %s to %s", s.lastUpdate, now))
 	if err != nil {
