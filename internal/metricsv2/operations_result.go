@@ -67,6 +67,7 @@ func getLabels(op internal.Operation) map[string]string {
 	labels["error"] = op.LastError.Error()
 	return labels
 }
+
 // operation_result metrics works on 0/1 system.
 // each metric have labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
