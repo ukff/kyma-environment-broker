@@ -107,12 +107,8 @@ func (s *operationsResult) updateMetrics() (err error) {
 		}
 	}()
 
-<<<<<<< HEAD
 	now := time.Now().UTC()
-=======
-	now := time.Now()
 
->>>>>>> upstream/main
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
 
