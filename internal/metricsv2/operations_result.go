@@ -25,6 +25,7 @@ type operationsResult struct {
 	poolingInterval                  time.Duration
 	sync                             sync.Mutex
 	finishedOperationRetentionPeriod time.Duration // zero means metrics are stored forever, otherwise they are deleted after this period (starting from the time of operation finish)
+	jobRunning                       bool
 }
 
 var _ Exposer = (*operationsResult)(nil)
@@ -43,6 +44,7 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
 		poolingInterval:                  cfg.OperationResultPoolingInterval,
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
+		jobRunning:                       false,
 	}
 	go opInfo.Job(ctx)
 	return opInfo
@@ -84,6 +86,7 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 		s.setOperation(oldOp, 0)
 	}
 	s.setOperation(op, 1)
+	logrus.Debug("Setting operation: ", op.ID)
 	if op.State == domain.Failed || op.State == domain.Succeeded {
 		delete(s.cache, op.ID)
 
@@ -108,15 +111,18 @@ func (s *operationsResult) updateMetrics() (err error) {
 	}()
 
 	now := time.Now().UTC()
-
+	
+	s.jobRunning = true
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
-
+	s.jobRunning = false
+	
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
 	for _, op := range operations {
 		s.updateOperation(op)
+		fmt.Println("Operation ID: ", op.ID)
 	}
 	s.lastUpdate = now
 	return nil

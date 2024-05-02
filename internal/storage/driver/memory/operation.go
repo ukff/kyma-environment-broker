@@ -1106,3 +1106,11 @@ func (s *operations) filterUpgradeClusterByInstanceID(instanceID string, filter 
 func (s *operations) equalFilter(a, b string) bool {
 	return a == b
 }
+
+func (s *operations) GetAllOperations() ([]internal.Operation, error) {
+	ops := make([]internal.Operation, 0)
+	for _, k := range s.operations {
+		ops = append(ops, k)
+	}
+	return ops, nil
+}
