@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	tries = 1000000
+)
+
 func randomState() domain.LastOperationState {
 	return domain.LastOperationState(opStates[rand.Intn(len(opStates))])
 }
@@ -35,56 +39,87 @@ func randomUpdatedAtAfterCreatedAt() time.Time {
 	return randomCreatedAt().Add(time.Duration(rand.Intn(10)) * time.Minute)
 }
 
+
 func TestOperationsResult(t *testing.T) {
 	var ops []internal.Operation
 	operations := storage.NewMemoryStorage().Operations()
-	for i := 0; i < 1000; i++ {
-		o := internal.Operation{
-			ID:         uuid.New().String(),
-			InstanceID: uuid.New().String(),
-			ProvisioningParameters: internal.ProvisioningParameters{
-				PlanID: randomPlanId(),
-			},
-			CreatedAt: randomCreatedAt(),
-			UpdatedAt: randomUpdatedAtAfterCreatedAt(),
-			Type:      randomType(),
-			State:     randomState(),
-		}
-		err := operations.InsertOperation(o)
-		ops = append(ops, o)
-		assert.NoError(t, err)
-	}
+	operationResult := NewOperationResult(
+		context.Background(), operations, Config{
+			Enabled: true, OperationResultPoolingInterval: 1 * time.Second,
+			OperationStatsPoolingInterval: 1 * time.Second, OperationResultRetentionPeriod: 1 * time.Hour,
+		}, logrus.New(),
+	)
+	
+	t.Run("1000 ops", func(t *testing.T) {
+			for i := 0; i < tries; i++ {
+				o := internal.Operation{
+					ID:         uuid.New().String(),
+					InstanceID: uuid.New().String(),
+					ProvisioningParameters: internal.ProvisioningParameters{
+						PlanID: randomPlanId(),
+					},
+					CreatedAt: randomCreatedAt(),
+					UpdatedAt: randomUpdatedAtAfterCreatedAt(),
+					Type:      randomType(),
+					State:     randomState(),
+				}
+				err := operations.InsertOperation(o)
+				ops = append(ops, o)
+				assert.NoError(t, err)
+			}
+			
+			// wait for job on start to finish
+			time.Sleep(100 * time.Second)
+			
+			// all ops should be proccessed and published with 1
+			for _, op := range ops {
+				assert.Equal(
+					t, float64(1), testutil.ToFloat64(
+						operationResult.metrics.With(getLabels(op)),
+					),
+				)
+			}
+			
+			// job working in time windows
+			
+			// simulate new op
+			newOp := getRandomOp()
+			err := operations.InsertOperation(newOp)
+			
+			// wait for job
+			time.Sleep(1 * time.Second)
+			
+			assert.NoError(t, err)
+			assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
+			
+			// simulate new op updated
+			newOp.State = randomState()
+			newOp.UpdatedAt = time.Now().UTC()
+			_, err = operations.UpdateOperation(newOp)
+			assert.NoError(t, err)
+			nonExistingOp1 := getRandomOp()
+			getLabels(nonExistingOp1)
+			nonExistingOp2 := getRandomOp()
+			getLabels(nonExistingOp2)
+			
+			// wait for job
+			time.Sleep(1 * time.Second)
+			assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
+			assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp2))))
+	})
+}
 
-	operationResult := NewOperationResult(context.Background(), operations, Config{Enabled: true, OperationResultPoolingInterval: 1 * time.Second, OperationStatsPoolingInterval: 1 * time.Second, OperationResultRetentionPeriod: 1 * time.Hour}, logrus.New())
 
-	time.Sleep(15 * time.Second)
-
-	for _, op := range ops {
-		l := getLabels(op)
-		assert.Equal(
-			t, float64(1), testutil.ToFloat64(
-				operationResult.metrics.With(l),
-			))
-	}
-
-	newOp := internal.Operation{
+func getRandomOp() internal.Operation {
+	return internal.Operation{
 		ID:         uuid.New().String(),
 		InstanceID: uuid.New().String(),
 		ProvisioningParameters: internal.ProvisioningParameters{
 			PlanID: randomPlanId(),
 		},
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: randomCreatedAt(),
+		UpdatedAt: randomUpdatedAtAfterCreatedAt(),
 		Type:      randomType(),
 		State:     randomState(),
 	}
-	err := operations.InsertOperation(newOp)
-	time.Sleep(15 * time.Second)
-	assert.NoError(t, err)
-	assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
-	newOp.State = domain.Failed
-	newOp.UpdatedAt = time.Now().UTC()
-	_, err = operations.UpdateOperation(newOp)
-	assert.NoError(t, err)
-	time.Sleep(15 * time.Second)
-	assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
 }
