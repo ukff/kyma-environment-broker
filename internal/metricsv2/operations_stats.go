@@ -41,7 +41,7 @@ var (
 		broker.SapConvergedCloudPlanID,
 		broker.TrialPlanID,
 		broker.FreemiumPlanID,
-		broker.PreviewPlanName,
+		broker.PreviewPlanID,
 	}
 	opTypes = []internal.OperationType{
 		internal.OperationTypeProvision,
