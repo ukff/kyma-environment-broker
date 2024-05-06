@@ -2,6 +2,7 @@ package metricsv2
 
 import (
 	"context"
+	`fmt`
 	"math/rand"
 	"testing"
 	"time"
@@ -20,21 +21,12 @@ const (
 )
 
 func TestOperationsResult(t *testing.T) {
-	operations := storage.NewMemoryStorage().Operations()
-	operationResult := NewOperationResult(
-		context.Background(), operations, Config{
-			Enabled: true, OperationResultPoolingInterval: 100 * time.Minute,
-			OperationStatsPoolingInterval: 100 * time.Minute, OperationResultRetentionPeriod: 24 * time.Hour,
-		}, logrus.New(),
-	)
 	t.Run("1000 ops", func(t *testing.T) {
-		var ops []internal.Operation
-		var iids []string
+		operations := storage.NewMemoryStorage().Operations()
 		for i := 0; i < tries; i++ {
-			iid := uuid.New().String()
-			iids = append(iids, iid)
+			id := uuid.New().String()
 			o := internal.Operation{
-				ID:        iid,
+				ID:        id,
 				InstanceID: uuid.New().String(),
 				ProvisioningParameters: internal.ProvisioningParameters{
 					PlanID: randomPlanId(),
@@ -46,29 +38,44 @@ func TestOperationsResult(t *testing.T) {
 			}
 			err := operations.InsertOperation(o)
 			assert.NoError(t, err)
-			ops = append(ops, o)
 		}
-
-		// wait for job on start to finish
-		for operationResult.jobRunning{}
-
+		
+		operationResult := NewOperationResult(
+			context.Background(), operations, Config{
+				Enabled: true, OperationResultPoolingInterval: 1 * time.Second,
+				OperationStatsPoolingInterval: 1 * time.Second, OperationResultRetentionPeriod: 24 * time.Hour,
+			}, logrus.New(),
+		)
+		
+		time.Sleep(10 * time.Second)
+		
+		ops, err := operations.GetAllOperations()
+		assert.NoError(t, err)
+		assert.Equal(t, tries, len(ops))
+		
 		// all ops should be processed and published with 1
 		for _, op := range ops {
+			l := getLabels(op)
+			fmt.Println(fmt.Sprintf("Checking operation: %s %s %s", op.ID, l["state"], l["type"]) )// prints: Checking operation: 1a2b3c4d5e6f7g8h9i10j11k12l13m14n15o16p17q18r19s20t21u22v23w24x25y26z InProgress 1a2b3c4d5e6f7g8h9i10j11k12l13m14n15o16p17q18r19s20t21u22v23w24x25y26z
 			assert.Equal(
 				t, float64(1), testutil.ToFloat64(
-					operationResult.metrics.With(getLabels(op)),
+					operationResult.metrics.With(l),
 				),
 			)
+			fmt.Println(fmt.Sprintf("Operation ID %s is OK", op.ID))
 		}
 
 		// job seeking now in time windows
 
 		// simulate new op
 		newOp := getRandomOp(domain.InProgress)
-		err := operations.InsertOperation(newOp)
+		newOp.CreatedAt = time.Now().UTC()
+		fmt.Println(fmt.Sprintf("newOp created: %s", newOp.CreatedAt))
+		err = operations.InsertOperation(newOp)
+		time.Sleep(10 * time.Second)
 
 		// wait for job
-		for operationResult.jobRunning {}
+		time.Sleep(30 * time.Second)
 
 		assert.NoError(t, err)
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
@@ -78,33 +85,33 @@ func TestOperationsResult(t *testing.T) {
 		newOp.UpdatedAt = time.Now().UTC().Add(1*time.Second)
 		_, err = operations.UpdateOperation(newOp)
 		assert.NoError(t, err)
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
 		
-		
+		// non existings ops
 		nonExistingOp1 := getRandomOp(domain.InProgress)
-		getLabels(nonExistingOp1)
 		nonExistingOp2 := getRandomOp(domain.Failed)
-		getLabels(nonExistingOp2)
+		time.Sleep(10 * time.Second)
 
 		// wait for job
-		for operationResult.jobRunning {}
 		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp1))))
 		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp2))))
 		
+		//new ops
 		existingOp1 := getRandomOp(domain.InProgress)
-		getLabels(existingOp1)
+		operations.InsertOperation(existingOp1)
 		existingOp2 := getRandomOp(domain.Succeeded)
-		getLabels(existingOp2)
+		operations.InsertOperation(existingOp2)
+		existingOp3 := getRandomOp(domain.InProgress)
+		operations.InsertOperation(existingOp3)
+		existingOp4 := getRandomOp(domain.Failed)
+		operations.InsertOperation(existingOp4)
 		
-		existingOp4 := getRandomOp(domain.InProgress)
-		getLabels(existingOp4)
-		existingOp3 := getRandomOp(domain.Failed)
-		getLabels(existingOp3)
+		time.Sleep(10 * time.Second)
 		
 		// wait for job
-		for operationResult.jobRunning {}
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp1))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp2))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp3))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp4))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp3))))
 	})
 }
