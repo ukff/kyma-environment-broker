@@ -53,22 +53,8 @@ func (s *operationsResult) Metrics() *prometheus.GaugeVec {
 }
 
 func (s *operationsResult) setOperation(op internal.Operation, val float64) {
-	labels := getLabels(op)
+	labels := GetLabels(op)
 	s.metrics.With(labels).Set(val)
-}
-
-func getLabels(op internal.Operation) map[string]string {
-	labels := make(map[string]string)
-	labels["operation_id"] = op.ID
-	labels["instance_id"] = op.InstanceID
-	labels["global_account_id"] = op.GlobalAccountID
-	labels["plan_id"] = op.ProvisioningParameters.PlanID
-	labels["type"] = string(op.Type)
-	labels["state"] = string(op.State)
-	labels["error_category"] = string(op.LastError.Component())
-	labels["error_reason"] = string(op.LastError.Reason())
-	labels["error"] = op.LastError.Error()
-	return labels
 }
 
 // operation_result metrics works on 0/1 system.

@@ -15,6 +15,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	`github.com/kyma-project/kyma-environment-broker/internal/storage/dberr`
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
@@ -140,6 +141,13 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 }
 
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
 	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), cfg.MetricsV2, logrus.New())
 	broker.router.Handle("/metrics", promhttp.Handler())
@@ -451,6 +459,25 @@ func (s *BrokerSuiteTest) WaitForOperationState(operationID string, state domain
 		return op.State == state, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s != %s. The existing operation %+v", state, op.State, op)
+}
+
+func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
+	var op *internal.Operation
+	err := s.poller.Invoke(func() (done bool, err error) {
+		op, err = s.db.Operations().GetOperationByID(operationID)
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	
+	if dberr.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return nil
+	}
+	
+	return op
 }
 
 func (s *BrokerSuiteTest) WaitForLastOperation(iid string, state domain.LastOperationState) string {
@@ -1646,6 +1673,16 @@ func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, sta
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
 }
 
+func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operation) {
+	if expected == 0 && operation.ID == "" {
+		assert.Truef(s.t, true, "expected 0 metrics for operation %s", operation.ID)
+		return
+	}
+	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
+   	assert.NotNil(s.t, a)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
+}
+
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {
 	list := &unstructured.UnstructuredList{}
 	list.SetGroupVersionKind(gvk)
@@ -1653,6 +1690,8 @@ func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sCli
 	assert.NoError(t, err)
 	assert.Zero(t, len(list.Items))
 }
+
+
 
 func createResource(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client, namespace string, name string) {
 	object := &unstructured.Unstructured{}
