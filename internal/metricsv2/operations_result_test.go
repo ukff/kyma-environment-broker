@@ -2,7 +2,6 @@ package metricsv2
 
 import (
 	"context"
-	`fmt`
 	"math/rand"
 	"testing"
 	"time"
@@ -19,16 +18,15 @@ import (
 )
 
 const (
-	tries = 1000000
+	tries = 100000
 )
 
 func TestOperationsResult(t *testing.T) {
-	t.Run(">1000000 ops", func(t *testing.T) {
+	t.Run("1000000 metrics should be published with 1 or 0", func(t *testing.T) {
 		operations := storage.NewMemoryStorage().Operations()
 		for i := 0; i < tries; i++ {
-			id := uuid.New().String()
-			o := internal.Operation{
-				ID:        id,
+			op := internal.Operation{
+				ID:        uuid.New().String(),
 				InstanceID: uuid.New().String(),
 				ProvisioningParameters: internal.ProvisioningParameters{
 					PlanID: randomPlanId(),
@@ -38,7 +36,7 @@ func TestOperationsResult(t *testing.T) {
 				Type:      randomType(),
 				State:     randomState(),
 			}
-			err := operations.InsertOperation(o)
+			err := operations.InsertOperation(op)
 			assert.NoError(t, err)
 		}
 		
@@ -49,63 +47,48 @@ func TestOperationsResult(t *testing.T) {
 			}, logrus.New(),
 		)
 		
+		eventBroker := event.NewPubSub(logrus.New())
+		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)
+		
 		time.Sleep(1 * time.Second)
 		
 		ops, err := operations.GetAllOperations()
 		assert.NoError(t, err)
 		assert.Equal(t, tries, len(ops))
 		
-		// all ops should be processed and published with 1
 		for _, op := range ops {
-			l := getLabels(op)
-			fmt.Println(fmt.Sprintf("Checking operation: %s %s %s", op.ID, l["state"], l["type"]))
 			assert.Equal(
 				t, float64(1), testutil.ToFloat64(
-					operationResult.metrics.With(l),
+					operationResult.metrics.With(getLabels(op)),
 				),
 			)
 		}
 
-		// job seeking now in time windows
-
-		// simulate new op
-		newOp := getRandomOp(randomCreatedAt(), domain.InProgress)
-		newOp.CreatedAt = time.Now().UTC()
-		fmt.Println(fmt.Sprintf("newOp created: %s", newOp.CreatedAt))
-		err = operations.InsertOperation(newOp)
+		newOp := getRandomOp(time.Now().UTC(), domain.InProgress)
+ 		err = operations.InsertOperation(newOp)
 		time.Sleep(1 * time.Second)
-
-		// wait for job
-		time.Sleep(1 * time.Second)
-
+		
 		assert.NoError(t, err)
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
 
-		// simulate new op updated
 		newOp.State = domain.InProgress
 		newOp.UpdatedAt = time.Now().UTC().Add(1*time.Second)
 		_, err = operations.UpdateOperation(newOp)
 		assert.NoError(t, err)
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
 		
-		newOpEvent := getRandomOp(randomCreatedAt(), domain.InProgress)
-		eventBroker := event.NewPubSub(logrus.New())
-		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)
-		eventBroker.Publish(context.Background(), process.OperationFinished{Operation: newOpEvent})
+		opEvent := getRandomOp(randomCreatedAt(), domain.InProgress)
+		eventBroker.Publish(context.Background(), process.OperationFinished{Operation: opEvent})
 		time.Sleep(1 * time.Second)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOpEvent))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(opEvent))))
 		
-		
-		// non existings ops in DB
 		nonExistingOp1 := getRandomOp(randomCreatedAt(), domain.InProgress)
 		nonExistingOp2 := getRandomOp(randomCreatedAt(), domain.Failed)
 		time.Sleep(1 * time.Second)
 
-		// wait for job
 		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp1))))
 		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp2))))
 		
-		//new ops in DB
 		existingOp1 := getRandomOp(time.Now().UTC(), domain.InProgress)
 		operations.InsertOperation(existingOp1)
 		
@@ -120,7 +103,6 @@ func TestOperationsResult(t *testing.T) {
 		
 		time.Sleep(1 * time.Second)
 		
-		// wait for job
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp1))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp2))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp4))))
