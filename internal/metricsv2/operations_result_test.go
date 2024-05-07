@@ -103,10 +103,10 @@ func TestOperationsResult(t *testing.T) {
 		
 		time.Sleep(1 * time.Second)
 		
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp1))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp2))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp4))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp3))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp1))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp2))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp4))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp3))))
 	})
 }
 
