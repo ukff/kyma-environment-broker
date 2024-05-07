@@ -79,7 +79,7 @@ func TestMetrics(t *testing.T) {
 		suite.processProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op := suite.GetOperation(opID)
-		
+
 		instance2 := uuid.New().String()
 		opID = provisionReq(instance2, broker.TrialPlanID)
 		suite.failProvisioningByOperationID(opID)
@@ -179,7 +179,7 @@ func TestMetrics(t *testing.T) {
 		suite.AssertMetric(internal.OperationTypeDeprovision, domain.Succeeded, broker.TrialPlanID, 0)
 		suite.AssertMetric(internal.OperationTypeDeprovision, domain.Failed, broker.AzurePlanID, 0)
 		suite.AssertMetric(internal.OperationTypeDeprovision, domain.Failed, broker.AWSPlanID, 1)
-		
+
 		suite.AssertMetrics2(1, *op)
 		suite.AssertMetrics2(1, *op1)
 		suite.AssertMetrics2(1, *op2)

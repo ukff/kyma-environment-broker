@@ -15,7 +15,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	`github.com/kyma-project/kyma-environment-broker/internal/storage/dberr`
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
@@ -470,13 +470,13 @@ func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
 		}
 		return true, nil
 	})
-	
+
 	if dberr.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return nil
 	}
-	
+
 	return op
 }
 
@@ -1679,7 +1679,7 @@ func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operat
 		return
 	}
 	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
-   	assert.NotNil(s.t, a)
+	assert.NotNil(s.t, a)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
 }
 
@@ -1690,8 +1690,6 @@ func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sCli
 	assert.NoError(t, err)
 	assert.Zero(t, len(list.Items))
 }
-
-
 
 func createResource(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client, namespace string, name string) {
 	object := &unstructured.Unstructured{}

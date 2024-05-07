@@ -59,7 +59,7 @@ func TestOperationsResult(t *testing.T) {
 		for _, op := range ops {
 			assert.Equal(
 				t, float64(1), testutil.ToFloat64(
-					operationResult.metrics.With(getLabels(op)),
+					operationResult.metrics.With(GetLabels(op)),
 				),
 			)
 		}
@@ -69,25 +69,25 @@ func TestOperationsResult(t *testing.T) {
 		time.Sleep(1 * time.Second)
 		
 		assert.NoError(t, err)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(newOp))))
 
 		newOp.State = domain.InProgress
 		newOp.UpdatedAt = time.Now().UTC().Add(1*time.Second)
 		_, err = operations.UpdateOperation(newOp)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(newOp))))
 		
 		opEvent := getRandomOp(randomCreatedAt(), domain.InProgress)
 		eventBroker.Publish(context.Background(), process.OperationFinished{Operation: opEvent})
 		time.Sleep(1 * time.Second)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(opEvent))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(opEvent))))
 		
 		nonExistingOp1 := getRandomOp(randomCreatedAt(), domain.InProgress)
 		nonExistingOp2 := getRandomOp(randomCreatedAt(), domain.Failed)
 		time.Sleep(1 * time.Second)
 
-		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp1))))
-		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp2))))
+		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(GetLabels(nonExistingOp1))))
+		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(GetLabels(nonExistingOp2))))
 		
 		existingOp1 := getRandomOp(time.Now().UTC(), domain.InProgress)
 		operations.InsertOperation(existingOp1)
