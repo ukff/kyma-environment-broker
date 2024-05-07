@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	tries = 5
+	tries = 1000000
 )
 
 func TestOperationsResult(t *testing.T) {
-	t.Run("1000 ops", func(t *testing.T) {
+	t.Run(">1000000 ops", func(t *testing.T) {
 		operations := storage.NewMemoryStorage().Operations()
 		for i := 0; i < tries; i++ {
 			id := uuid.New().String()
@@ -58,13 +58,12 @@ func TestOperationsResult(t *testing.T) {
 		// all ops should be processed and published with 1
 		for _, op := range ops {
 			l := getLabels(op)
-			fmt.Println(fmt.Sprintf("Checking operation: %s %s %s", op.ID, l["state"], l["type"]) )// prints: Checking operation: 1a2b3c4d5e6f7g8h9i10j11k12l13m14n15o16p17q18r19s20t21u22v23w24x25y26z InProgress 1a2b3c4d5e6f7g8h9i10j11k12l13m14n15o16p17q18r19s20t21u22v23w24x25y26z
+			fmt.Println(fmt.Sprintf("Checking operation: %s %s %s", op.ID, l["state"], l["type"]))
 			assert.Equal(
 				t, float64(1), testutil.ToFloat64(
 					operationResult.metrics.With(l),
 				),
 			)
-			fmt.Println(fmt.Sprintf("Operation ID %s is OK", op.ID))
 		}
 
 		// job seeking now in time windows
