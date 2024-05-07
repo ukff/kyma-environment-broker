@@ -49,7 +49,7 @@ func TestOperationsResult(t *testing.T) {
 			}, logrus.New(),
 		)
 		
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 		
 		ops, err := operations.GetAllOperations()
 		assert.NoError(t, err)
@@ -74,10 +74,10 @@ func TestOperationsResult(t *testing.T) {
 		newOp.CreatedAt = time.Now().UTC()
 		fmt.Println(fmt.Sprintf("newOp created: %s", newOp.CreatedAt))
 		err = operations.InsertOperation(newOp)
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		// wait for job
-		time.Sleep(30 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		assert.NoError(t, err)
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOp))))
@@ -93,14 +93,14 @@ func TestOperationsResult(t *testing.T) {
 		eventBroker := event.NewPubSub(logrus.New())
 		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)
 		eventBroker.Publish(context.Background(), process.OperationFinished{Operation: newOpEvent})
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(newOpEvent))))
 		
 		
 		// non existings ops in DB
 		nonExistingOp1 := getRandomOp(randomCreatedAt(), domain.InProgress)
 		nonExistingOp2 := getRandomOp(randomCreatedAt(), domain.Failed)
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		// wait for job
 		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(getLabels(nonExistingOp1))))
@@ -119,7 +119,7 @@ func TestOperationsResult(t *testing.T) {
 		existingOp4 := getRandomOp(time.Now().UTC(),domain.Failed)
  		operations.InsertOperation(existingOp4)
 		
-		time.Sleep(20 * time.Second)
+		time.Sleep(1 * time.Second)
 		
 		// wait for job
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(getLabels(existingOp1))))
