@@ -54,7 +54,6 @@ func (s *operationsResult) Metrics() *prometheus.GaugeVec {
 
 func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	labels := getLabels(op)
-	fmt.Println(fmt.Sprintf("Setting operation: %s, value: %f", op.ID, val))
 	s.metrics.With(labels).Set(val)
 }
 
@@ -85,7 +84,6 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 		s.setOperation(oldOp, 0)
 	}
 	s.setOperation(op, 1)
-	logrus.Debug("Setting operation: ", op.ID)
 	if op.State == domain.Failed || op.State == domain.Succeeded {
 		delete(s.cache, op.ID)
 
@@ -111,16 +109,15 @@ func (s *operationsResult) updateMetrics() (err error) {
 
 	now := time.Now().UTC()
 	
-	fmt.Println(fmt.Sprintf("looking on metrics from %s to %s", s.lastUpdate, now))
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
-	s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
-	fmt.Println(fmt.Sprintf("UpdateMetrics: %d operations found", len(operations)))
+	if len(operations) != 0 {
+		s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
+	}
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
 	
 	for _, op := range operations {
-		fmt.Println(fmt.Sprintf("newOp created: %s", op.CreatedAt))
 		s.updateOperation(op)
 	}
 	s.lastUpdate = now
@@ -160,7 +157,6 @@ func (s *operationsResult) Job(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Println("tick tick")
 			if err := s.updateMetrics(); err != nil {
 				s.logger.Error("failed to update operation info metrics", err)
 			}
