@@ -377,7 +377,7 @@ func main() {
 	} else {
 		logrus.Infof("yes v2 are enableds")
 	}
-	
+
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 
