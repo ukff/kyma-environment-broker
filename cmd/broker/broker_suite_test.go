@@ -12,13 +12,12 @@ import (
 	"sort"
 	"testing"
 	"time"
-
+	
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-
+	
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -471,9 +470,7 @@ func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
 		return true, nil
 	})
 
-	if dberr.IsNotFound(err) {
-		return nil
-	} else if err != nil {
+	if err != nil {
 		return nil
 	}
 
