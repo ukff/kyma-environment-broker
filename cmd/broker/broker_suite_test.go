@@ -464,10 +464,7 @@ func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
 	var op *internal.Operation
 	err := s.poller.Invoke(func() (done bool, err error) {
 		op, err = s.db.Operations().GetOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
+		return err != nil, nil
 	})
 
 	if err != nil {
