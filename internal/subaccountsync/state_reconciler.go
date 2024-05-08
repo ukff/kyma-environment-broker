@@ -12,6 +12,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 )
 
+const (
+	usedForProductionLabel    = "USED_FOR_PRODUCTION"
+	notUsedForProductionLabel = "NOT_USED_FOR_PRODUCTION"
+)
+
 func (reconciler *stateReconcilerType) recreateStateFromDB() {
 	logs := reconciler.logger
 	dbStates, err := reconciler.db.SubaccountStates().ListStates()
@@ -64,28 +69,54 @@ func (reconciler *stateReconcilerType) setMetrics() {
 	if reconciler.metrics == nil {
 		return
 	}
-	reconciler.metrics.states.With(prometheus.Labels{"type": "total"}).Set(float64(len(reconciler.inMemoryState)))
-	//count subaccounts with beta enabled
-	betaEnabled := 0
-	//create map for UsedForProduction
+	total := len(reconciler.inMemoryState)
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "total"}).Set(float64(total))
+
+	betaEnabledCount := 0
+	betaDisabledCount := 0
+	resourcesStatesCount := 0
+	runtimesCount := 0
+	pendingDeleteCount := 0
+
 	usedForProduction := make(map[string]int)
 	for _, state := range reconciler.inMemoryState {
 		if state.cisState != (CisStateType{}) {
 			if state.cisState.BetaEnabled {
-				betaEnabled++
+				betaEnabledCount++
+			} else {
+				betaDisabledCount++
 			}
-			//increment counter for UsedForProduction
 			usedForProduction[state.cisState.UsedForProduction]++
 		}
+		if state.resourcesState != nil {
+			resourcesStatesCount++
+			runtimesCount += len(state.resourcesState)
+		}
+		if state.pendingDelete {
+			pendingDeleteCount++
+		}
 	}
-	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled"}).Set(float64(betaEnabled))
-	// for each UsedForProduction value set the counter
+
+	totalResourcesStatesCount := betaEnabledCount + betaDisabledCount
+	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "true"}).Set(float64(betaEnabledCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "false"}).Set(float64(betaDisabledCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "cis-states"}).Set(float64(totalResourcesStatesCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "resources-states"}).Set(float64(resourcesStatesCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "pending-delete"}).Set(float64(pendingDeleteCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "runtimes"}).Set(float64(runtimesCount))
+
+	others := 0
 	for key, value := range usedForProduction {
-		reconciler.metrics.states.With(prometheus.Labels{"type": key}).Set(float64(value))
+		if key != usedForProductionLabel && key != notUsedForProductionLabel {
+			others += value
+		}
 	}
+	reconciler.metrics.states.With(prometheus.Labels{"type": usedForProductionLabel, "value": usedForProductionLabel}).Set(float64(usedForProduction[usedForProductionLabel]))
+	reconciler.metrics.states.With(prometheus.Labels{"type": usedForProductionLabel, "value": notUsedForProductionLabel}).Set(float64(usedForProduction[notUsedForProductionLabel]))
+	reconciler.metrics.states.With(prometheus.Labels{"type": usedForProductionLabel, "value": "others"}).Set(float64(others))
 }
 
-func (reconciler *stateReconcilerType) periodicAccountsSync() {
+func (reconciler *stateReconcilerType) periodicAccountsSync() (successes int, failures int) {
 	logs := reconciler.logger
 
 	// get distinct subaccounts from inMemoryState
@@ -99,32 +130,38 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() {
 			continue
 		}
 		if err != nil {
+			failures++
 			logs.Error(fmt.Sprintf("while getting data for subaccount:%s", err))
 		} else {
+			successes++
 			reconciler.reconcileCisAccount(subaccountID, subaccountDataFromCis)
 		}
 	}
+	return successes, failures
 }
 
-func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) {
+func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) (success bool) {
 
 	logs := reconciler.logger
 	eventsClient := reconciler.eventsClient
 	subaccountsSet := reconciler.getAllSubaccountIDsFromState()
+	success = true
 
 	logs.Info(fmt.Sprintf("Running CIS events synchronization from epoch: %d for %d subaccounts", fromActionTime, len(subaccountsSet)))
 
 	eventsOfInterest, err := eventsClient.getEventsForSubaccounts(fromActionTime, *logs, subaccountsSet)
 	if err != nil {
+		success = false
 		logs.Error(fmt.Sprintf("while getting subaccount events: %s", err))
 		// we will retry in the next run
 	}
 
-	ew := reconciler.eventWindow
 	for _, event := range eventsOfInterest {
 		reconciler.reconcileCisEvent(event)
-		ew.UpdateToTime(event.ActionTime)
+		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
+	logs.Debug(fmt.Sprintf("Events synchronization finished, the most recent reconciled event time: %d", reconciler.eventWindow.lastToTime))
+	return success
 }
 
 func (reconciler *stateReconcilerType) getAllSubaccountIDsFromState() subaccountsSetType {
@@ -139,24 +176,30 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	s := gocron.NewScheduler(time.UTC)
 
 	logs := reconciler.logger
-	ew := reconciler.eventWindow
 
 	_, err := s.Every(cfg.EventsSyncInterval).Do(func() {
 		// establish actual time window
-		eventsFrom := ew.GetNextFromTime()
+		eventsFrom := reconciler.eventWindow.GetNextFromTime()
 
-		reconciler.periodicEventsSync(eventsFrom)
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "events"}).Inc()
+		ok := reconciler.periodicEventsSync(eventsFrom)
+		if ok {
+			reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "events", "status": "success"}).Inc()
+		} else {
+			reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "events", "status": "failure"}).Inc()
+		}
 
-		ew.UpdateFromTime(eventsFrom)
+		reconciler.eventWindow.UpdateFromTime(eventsFrom)
+		logs.Debug(fmt.Sprintf("Running events synchronization from epoch: %d, lastFromTime: %d, lastToTime: %d", eventsFrom, reconciler.eventWindow.lastFromTime, reconciler.eventWindow.lastToTime))
 	})
 	if err != nil {
 		logs.Error(fmt.Sprintf("while scheduling events sync job: %s", err))
 	}
 
 	_, err = s.Every(cfg.AccountsSyncInterval).Do(func() {
-		reconciler.periodicAccountsSync()
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts"}).Inc()
+		successes, failures := reconciler.periodicAccountsSync()
+
+		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "failure"}).Add(float64(failures))
+		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "success"}).Add(float64(successes))
 	})
 	if err != nil {
 		logs.Error(fmt.Sprintf("while scheduling accounts sync job: %s", err))
@@ -292,9 +335,9 @@ func (reconciler *stateReconcilerType) isResourceOutdated(state subaccountStateT
 		runtimes := state.resourcesState
 		cisState := state.cisState
 		for _, runtimeState := range runtimes {
-			outdated = outdated || runtimeState.betaEnabled == "" // label not set at all
-			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled == "false")
-			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled == "true") // label set to different value
+			outdated = outdated || runtimeState.betaEnabled == ""
+			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled != "true")
+			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
 		}
 	}
 	return outdated

@@ -4,6 +4,7 @@ import "github.com/prometheus/client_golang/prometheus"
 
 type Metrics struct {
 	queue       prometheus.Gauge
+	timeInQueue prometheus.Gauge
 	queueOps    *prometheus.CounterVec
 	cisRequests *prometheus.CounterVec
 	states      *prometheus.GaugeVec
@@ -16,7 +17,7 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Namespace: namespace,
 			Name:      "in_memory_states",
 			Help:      "Information about in-memory states.",
-		}, []string{"type"}),
+		}, []string{"type", "value"}),
 		queueOps: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "priority_queue_ops",
@@ -26,7 +27,7 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Namespace: namespace,
 			Name:      "cis_requests",
 			Help:      "CIS requests.",
-		}, []string{"endpoint"}),
+		}, []string{"endpoint", "status"}),
 		informer: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "informer",
@@ -37,7 +38,12 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Name:      "priority_queue_size",
 			Help:      "Queue size.",
 		}),
+		timeInQueue: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "time_in_queue",
+			Help:      "Time spent in queue.",
+		}),
 	}
-	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests)
+	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests, m.timeInQueue)
 	return m
 }
