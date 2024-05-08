@@ -94,7 +94,7 @@ func (s *operationsResult) updateMetrics() (err error) {
 	}()
 
 	now := time.Now().UTC()
-	
+
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if len(operations) != 0 {
 		s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
@@ -102,7 +102,7 @@ func (s *operationsResult) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	
+
 	for _, op := range operations {
 		s.updateOperation(op)
 	}

@@ -3,15 +3,15 @@ package metricsv2
 import (
 	"context"
 	"fmt"
-	`math/rand`
+	"math/rand"
 	"time"
-	
-	`github.com/google/uuid`
-	`github.com/kyma-project/kyma-environment-broker/internal`
+
+	"github.com/google/uuid"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	`github.com/pivotal-cf/brokerapi/v8/domain`
+	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -77,7 +77,6 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	}
 }
 
-
 func randomState() domain.LastOperationState {
 	return opStates[rand.Intn(len(opStates))]
 }
@@ -112,8 +111,7 @@ func GetRandom(createdAt time.Time, state domain.LastOperationState) internal.Op
 	}
 }
 
-
-func GetLabels(op internal.Operation) map[string]string{
+func GetLabels(op internal.Operation) map[string]string {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
@@ -126,4 +124,3 @@ func GetLabels(op internal.Operation) map[string]string{
 	labels["error"] = op.LastError.Error()
 	return labels
 }
-
