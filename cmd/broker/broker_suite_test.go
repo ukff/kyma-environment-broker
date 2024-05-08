@@ -462,14 +462,10 @@ func (s *BrokerSuiteTest) WaitForOperationState(operationID string, state domain
 
 func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
 	var op *internal.Operation
-	err := s.poller.Invoke(func() (done bool, err error) {
+	_ = s.poller.Invoke(func() (done bool, err error) {
 		op, err = s.db.Operations().GetOperationByID(operationID)
 		return err != nil, nil
 	})
-
-	if err != nil {
-		return nil
-	}
 
 	return op
 }
