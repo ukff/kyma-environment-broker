@@ -371,7 +371,6 @@ func main() {
 	eventBroker := event.NewPubSub(logs)
 
 	// metrics collectors
-	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
 	if cfg.MetricsV2.Enabled {
 		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 	}
