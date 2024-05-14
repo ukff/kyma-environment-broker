@@ -9,5 +9,5 @@ metadata:
     app: monitoring-grafana
 data:
   {{ include "kyma-env-broker.fullname" . }}-dashboardv2.json: |-
-{{ .Files.Get "files/dashboardv2.json" | indent 4 }}
+{{ .Files.Get "files/dashboards/dashboardv2.json" | indent 4 }}
 {{ end }}
