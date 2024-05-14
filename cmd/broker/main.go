@@ -343,7 +343,7 @@ func main() {
 		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues)
 	fatalOnError(err, logs)
 
-	edpClient := edp.NewClient(cfg.EDP, logs.WithField("service", "edpClient"))
+	edpClient := edp.NewClient(cfg.EDP)
 
 	panicOnError(cfg.Avs.ReadMaintenanceModeDuringUpgradeAlwaysDisabledGAIDsFromYaml(
 		cfg.AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath))

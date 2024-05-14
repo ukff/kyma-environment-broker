@@ -42,7 +42,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 		retErr = fmt.Errorf("%s: %w", description, err)
 	}
 
-	log.Errorf("Step execution failed: %w", retErr)
+	log.Errorf("Step execution failed: %v", retErr)
 	operation.EventErrorf(err, "operation failed")
 
 	return op, 0, retErr

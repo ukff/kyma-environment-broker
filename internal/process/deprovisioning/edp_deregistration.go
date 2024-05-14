@@ -16,8 +16,8 @@ import (
 
 //go:generate mockery --name=EDPClient --output=automock --outpkg=automock --case=underscore
 type EDPClient interface {
-	DeleteDataTenant(name, env string) error
-	DeleteMetadataTenant(name, env, key string) error
+	DeleteDataTenant(name, env string, log logrus.FieldLogger) error
+	DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) error
 }
 
 type EDPDeregistrationStep struct {
@@ -81,14 +81,14 @@ func (s *EDPDeregistrationStep) Run(operation internal.Operation, log logrus.Fie
 		edp.MaasConsumerSubAccountKey,
 		edp.MaasConsumerServicePlan,
 	} {
-		err := s.client.DeleteMetadataTenant(subAccountID, s.config.Environment, key)
+		err := s.client.DeleteMetadataTenant(subAccountID, s.config.Environment, key, log)
 		if err != nil {
 			return s.handleError(operation, err, log, fmt.Sprintf("cannot remove DataTenant metadata with key: %s", key))
 		}
 	}
 
 	log.Info("Delete DataTenant")
-	err = s.client.DeleteDataTenant(subAccountID, s.config.Environment)
+	err = s.client.DeleteDataTenant(subAccountID, s.config.Environment, log)
 	if err != nil {
 		return s.handleError(operation, err, log, "cannot remove DataTenant")
 	}
