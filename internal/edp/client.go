@@ -205,7 +205,7 @@ func (c *Client) processResponse(response *http.Response, allowNotFound bool, id
 	}
 
 	if response.StatusCode >= 500 {
-		log.Warnf("EDP server returns failed status %s: %s", responseLog(response), body)
+		log.Infof("EDP server returns failed status %s: %s", responseLog(response), body)
 		return kebError.WrapNewTemporaryError(NewEDPOtherError(id, response.StatusCode, "EDP server returns failed status %s", responseLog(response)))
 	}
 
