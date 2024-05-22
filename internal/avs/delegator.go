@@ -169,9 +169,10 @@ func (del *Delegator) SetStatus(log logrus.FieldLogger, lifecycleData *internal.
 			log.Errorf("%s: %s", errMsg, err)
 			return err
 		}
+
+		// update operation with newly configured status
+		evalAssistant.SetEvalStatus(lifecycleData, status)
 	}
-	// update operation with newly configured status
-	evalAssistant.SetEvalStatus(lifecycleData, status)
 
 	return nil
 }
