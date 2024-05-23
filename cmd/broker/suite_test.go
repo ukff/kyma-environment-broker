@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
@@ -42,7 +41,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtimeoverrides"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -176,8 +174,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 
 	eventBroker := event.NewPubSub(logs)
 
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
-
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(kymaVer, runtimeversion.NewAccountVersionMapping(ctx, cli, defaultNamespace, kymaVersionsConfigName, logs), nil)
 
 	avsClient, _ := avs.NewClient(ctx, avs.Config{}, logs)
@@ -189,13 +185,11 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	notificationFakeClient := notification.NewFakeClient()
 	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
 
-	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(cli)
-
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
+	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
 		Retry:              2 * time.Millisecond,
 		StatusCheck:        20 * time.Millisecond,
 		UpgradeKymaTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, &cfg, avs.NewInternalEvalAssistant(cfg.Avs), reconcilerClient, notificationBundleBuilder, k8sClientProvider, logs, cli, 1000)
+	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, &cfg, avs.NewInternalEvalAssistant(cfg.Avs), notificationBundleBuilder, logs, cli, 1000)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
 		Retry:                 2 * time.Millisecond,
@@ -411,10 +405,6 @@ func (s *OrchestrationSuite) createOrchestration(oType orchestration.Type, queue
 	return o.OrchestrationID
 }
 
-func (s *OrchestrationSuite) CreateUpgradeKymaOrchestration(params orchestration.Parameters) string {
-	return s.createOrchestration(orchestration.UpgradeKymaOrchestration, s.kymaQueue, params)
-}
-
 func (s *OrchestrationSuite) CreateUpgradeClusterOrchestration(params orchestration.Parameters) string {
 	return s.createOrchestration(orchestration.UpgradeClusterOrchestration, s.clusterQueue, params)
 }
@@ -431,22 +421,6 @@ func (s *OrchestrationSuite) finishOperationByProvisioner(operationType gqlschem
 	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
 }
 
-func (s *OrchestrationSuite) FinishUpgradeOperationByReconciler(runtimeID string) {
-	err := wait.Poll(time.Millisecond*20, 2*time.Second, func() (bool, error) {
-		c, err := s.reconcilerClient.GetLatestCluster(runtimeID)
-		if err != nil {
-			return false, nil
-		}
-		if c.ConfigurationVersion == 0 {
-			return false, nil
-		}
-		s.reconcilerClient.ChangeClusterState(runtimeID, c.ConfigurationVersion, reconcilerApi.StatusReady)
-		return true, nil
-	})
-
-	assert.NoError(s.t, err, "timeout waiting for reconciler cluster to exist")
-}
-
 func (s *OrchestrationSuite) FinishUpgradeShootOperationByProvisioner(runtimeID string) {
 	s.finishOperationByProvisioner(gqlschema.OperationTypeUpgradeShoot, runtimeID)
 }
@@ -458,17 +432,6 @@ func (s *OrchestrationSuite) WaitForOrchestrationState(orchestrationID string, s
 		return orchestration.State == state, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the orchestration expected state %s. The existing orchestration %+v", state, orchestration)
-}
-
-func (s *OrchestrationSuite) AssertRuntimeUpgraded(runtimeID string, version string) {
-	c, _ := s.reconcilerClient.LastClusterConfig(runtimeID)
-	assert.Equal(s.t, version, c.KymaConfig.Version, "The runtime %s expected to be upgraded", runtimeID)
-}
-
-func (s *OrchestrationSuite) AssertRuntimeNotUpgraded(runtimeID string) {
-	_, err := s.reconcilerClient.LastClusterConfig(runtimeID)
-	// error means not found
-	assert.Error(s.t, err)
 }
 
 func (s *OrchestrationSuite) AssertShootUpgraded(runtimeID string) {
@@ -682,7 +645,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
 
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
@@ -696,8 +658,8 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, avsDel,
-		internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides, edpClient, accountProvider,
-		reconcilerClient, kubeconfig.NewFakeK8sClientProvider(cli), cli, logs)
+		internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, edpClient, accountProvider,
+		kubeconfig.NewFakeK8sClientProvider(cli), cli, logs)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
@@ -836,7 +798,7 @@ func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(
 	assert.NoError(s.t, err)
 }
 
-func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconciler(operationID string) {
+func (s *ProvisioningSuite) FinishProvisioningOperationByProvisioner(operationID string) {
 	var op *internal.Operation
 	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
@@ -850,16 +812,6 @@ func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconcile
 	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, op.RuntimeID)
 
 	s.ProcessInfrastructureManagerProvisioningByRuntimeID(op.RuntimeID)
-	err = wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
-		op, _ = s.storage.Operations().GetOperationByID(operationID)
-		if op.ClusterConfigurationVersion != 0 {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with Cluster Configuration Version. The existing operation %+v", op)
-
-	s.finishOperationByReconciler(op)
 }
 
 func (s *ProvisioningSuite) AssertProvisionerStartedProvisioning(operationID string) {
@@ -896,22 +848,6 @@ func (s *ProvisioningSuite) AssertAllStagesFinished(operationID string) {
 	}
 }
 
-func (s *ProvisioningSuite) finishOperationByReconciler(op *internal.Operation) {
-	time.Sleep(50 * time.Millisecond)
-	err := wait.Poll(pollingInterval, 10*time.Second, func() (bool, error) {
-		state, err := s.reconcilerClient.GetCluster(op.RuntimeID, op.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(op.RuntimeID, op.ClusterConfigurationVersion, reconcilerApi.StatusReady)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
 func (s *ProvisioningSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
 		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
@@ -931,14 +867,6 @@ func (s *ProvisioningSuite) AssertProvisioningRequest() {
 	assert.Equal(s.t, instanceID, labels["broker_instance_id"])
 	assert.Contains(s.t, labels, "global_subaccount_id")
 	assert.NotEmpty(s.t, input.ClusterConfig.GardenerConfig.Name)
-}
-
-func (s *ProvisioningSuite) AssertKymaProfile(opID string, expectedProfile gqlschema.KymaProfile) {
-	operation, _ := s.storage.Operations().GetProvisioningOperationByID(opID)
-	s.fetchProvisionInput()
-	c, _ := s.reconcilerClient.LastClusterConfig(operation.RuntimeID)
-
-	assert.Equal(s.t, string(expectedProfile), c.KymaConfig.Profile)
 }
 
 func (s *ProvisioningSuite) AssertProvider(provider string) {
