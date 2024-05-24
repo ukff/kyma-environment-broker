@@ -72,6 +72,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instance with ID %s does not exist", instanceID))
 		return
 	default:
+		h.log.Errorf("while getting instance for a kubeconfig, error: %s", err)
 		h.handleResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -93,6 +94,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("provisioning operation for instance with ID %s does not exist", instanceID))
 		return
 	default:
+		h.log.Errorf("while getting provision operation for kubeconfig, error: %s", err)
 		h.handleResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -118,6 +120,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		newKubeconfig, err = h.kubeconfigBuilder.Build(instance)
 	}
 	if err != nil {
+		h.log.Errorf("while building kubeconfig, error: %s", err)
 		h.handleResponse(w, http.StatusInternalServerError, fmt.Errorf("cannot fetch SKR kubeconfig: %s", err))
 		return
 	}
