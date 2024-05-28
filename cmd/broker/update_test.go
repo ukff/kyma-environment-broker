@@ -508,7 +508,6 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 
 	// Process Suspension
 	// OSB context update (suspension)
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -522,16 +521,13 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
-	suite.MarkClusterConfigurationDeleted(iid)
 	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
 	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
-	suite.RemoveFromReconcilerByInstanceID(iid)
 
 	suite.assertServiceBindingAndInstancesAreRemoved(t)
 
 	// OSB update
 	suite.Log("*** Unsuspension ***")
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusReady)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -657,7 +653,6 @@ func TestUpdateWithOwnClusterPlan(t *testing.T) {
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.FinishReconciliation(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -676,8 +671,10 @@ func TestUpdateWithOwnClusterPlan(t *testing.T) {
    }`)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
-
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	suite.AssertKymaResourceExists(upgradeOperationID)
+	suite.AssertKymaLabelsExist(upgradeOperationID, map[string]string{
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }
 
 func TestUpdateOidcForSuspendedInstance(t *testing.T) {
@@ -1990,7 +1987,6 @@ func TestUpdateMachineType(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	mockBTPOperatorClusterID()
 	id := "InstanceID-machineType"
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
@@ -2014,8 +2010,8 @@ func TestUpdateMachineType(t *testing.T) {
 	assert.NoError(t, err, "instance after provisioning")
 	rs, err := suite.db.RuntimeStates().ListByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "runtime states after provisioning")
-	assert.Equal(t, 2, len(rs), "runtime states after provisioning")
-	assert.Equal(t, "m5.xlarge", rs[1].ClusterConfig.MachineType, "after provisioning")
+	assert.Equal(t, 1, len(rs), "runtime states after provisioning")
+	assert.Equal(t, "m5.xlarge", rs[0].ClusterConfig.MachineType, "after provisioning")
 
 	// when patch to change machine type
 
@@ -2036,13 +2032,12 @@ func TestUpdateMachineType(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
 	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
-	suite.FinishUpdatingOperationByReconciler(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 
 	// check call to provisioner that machine type has been updated
 	rs, err = suite.db.RuntimeStates().ListByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "runtime states after update")
-	assert.Equal(t, 3, len(rs), "runtime states after update")
+	assert.Equal(t, 2, len(rs), "runtime states after update")
 	assert.Equal(t, "m5.2xlarge", rs[0].ClusterConfig.MachineType, "after update")
 }
 
@@ -2050,7 +2045,6 @@ func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	mockBTPOperatorClusterID()
 	id := "InstanceID-BTPOperator"
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
@@ -2079,48 +2073,16 @@ func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	i, err := suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "getting instance after provisioning, before update")
-	rs, err := suite.db.RuntimeStates().GetLatestWithReconcilerInputByRuntimeID(i.RuntimeID)
-	if rs.ClusterSetup == nil {
-		t.Fatal("expected cluster setup post provisioning kyma 2.0 cluster")
-	}
-	if rs.ClusterSetup.KymaConfig.Version != "2.0" {
-		t.Fatalf("expected cluster setup kyma config version to match 2.0, got %v", rs.ClusterSetup.KymaConfig.Version)
-	}
+	rs, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
 	assert.Equal(t, opID, rs.OperationID, "runtime state provisioning operation ID")
 	assert.NoError(t, err, "getting runtime state after provisioning, before update")
 	assert.ElementsMatch(t, rs.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-	assert.ElementsMatch(t, componentNames(rs.ClusterSetup.KymaConfig.Components),
-		[]string{"cluster-essentials", "ory", "monitoring", "btp-operator"})
 
-	rsu1, err := suite.db.RuntimeStates().GetLatestWithReconcilerInputByRuntimeID(i.RuntimeID)
+	rsu1, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "getting runtime after update")
 	i, err = suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "getting instance after update")
 	assert.ElementsMatch(t, rsu1.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-	assert.ElementsMatch(t, componentNames(rsu1.ClusterSetup.KymaConfig.Components),
-		[]string{"cluster-essentials", "ory", "monitoring", "btp-operator"})
-	for _, c := range rsu1.ClusterSetup.KymaConfig.Components {
-		if c.Component == "btp-operator" {
-			exp := reconcilerApi.Component{
-				Component: "btp-operator",
-				Namespace: "kyma-system",
-				URL:       "https://btp-operator",
-				Configuration: []reconcilerApi.Configuration{
-					{Key: "global.domainName", Value: i.InstanceDetails.ShootName + ".kyma.sap.com", Secret: false},
-					{Key: "foo", Value: "bar", Secret: false},
-					{Key: "global.booleanOverride.enabled", Value: false, Secret: false},
-					{Key: "manager.secret.clientid", Value: "cid", Secret: true},
-					{Key: "manager.secret.clientsecret", Value: "cs", Secret: true},
-					{Key: "manager.secret.url", Value: "sm_url"},
-					{Key: "manager.secret.sm_url", Value: "sm_url"},
-					{Key: "manager.secret.tokenurl", Value: "url"},
-					{Key: "cluster.id", Value: i.InstanceDetails.ServiceManagerClusterID},
-					{Key: "manager.priorityClassName", Value: "kyma-system"},
-				},
-			}
-			suite.AssertComponent(exp, c)
-		}
-	}
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -2142,36 +2104,13 @@ func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
 	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
-	suite.FinishUpdatingOperationByReconciler(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 
-	// check call to reconciler and see that creds are updated
-	rsu2, err := suite.db.RuntimeStates().GetLatestWithReconcilerInputByRuntimeID(i.RuntimeID)
+	rsu2, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "getting runtime after update")
 	i, err = suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "getting instance after update")
 	assert.ElementsMatch(t, rsu2.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-	assert.ElementsMatch(t, componentNames(rsu2.ClusterSetup.KymaConfig.Components),
-		[]string{"cluster-essentials", "ory", "monitoring", "btp-operator"})
-	for _, c := range rsu2.ClusterSetup.KymaConfig.Components {
-		if c.Component == "btp-operator" {
-			exp := reconcilerApi.Component{
-				Component: "btp-operator",
-				Namespace: "kyma-system",
-				URL:       "https://btp-operator",
-				Configuration: []reconcilerApi.Configuration{
-					{Key: "manager.secret.clientid", Value: "testClientID", Secret: true},
-					{Key: "manager.secret.clientsecret", Value: "testClientSecret", Secret: true},
-					{Key: "manager.secret.url", Value: "https://service-manager.kyma.com"},
-					{Key: "manager.secret.sm_url", Value: "https://service-manager.kyma.com"},
-					{Key: "manager.secret.tokenurl", Value: "https://test.auth.com"},
-					{Key: "cluster.id", Value: i.InstanceDetails.ServiceManagerClusterID},
-					{Key: "manager.priorityClassName", Value: "kyma-system"},
-				},
-			}
-			suite.AssertComponent(exp, c)
-		}
-	}
 }
 
 func TestUpdateNetworkFilterPersisted(t *testing.T) {
@@ -2237,7 +2176,6 @@ func TestUpdateNetworkFilterPersisted(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
 	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
-	suite.FinishUpdatingOperationByReconciler(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
 	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
@@ -2250,7 +2188,6 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
-	mockBTPOperatorClusterID()
 	id := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", id),
@@ -2321,7 +2258,6 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
-	mockBTPOperatorClusterID()
 	id := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", id),
@@ -2369,7 +2305,6 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
 	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
-	suite.FinishUpdatingOperationByReconciler(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 	instance2 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
@@ -2390,18 +2325,9 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	updateOperation2ID := suite.DecodeOperationID(resp)
 	suite.WaitForLastOperation(id, domain.InProgress)
 	suite.FinishUpdatingOperationByProvisioner(updateOperation2ID)
-	suite.FinishUpdatingOperationByReconciler(updateOperation2ID)
 	suite.WaitForOperationState(updateOperation2ID, domain.Succeeded)
 	instance3 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance3.Parameters.ErsContext.LicenseType)
 	disabled = true
 	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, updateOperation2ID, &disabled)
-}
-
-func componentNames(components []reconcilerApi.Component) []string {
-	names := make([]string, 0, len(components))
-	for _, c := range components {
-		names = append(names, c.Component)
-	}
-	return names
 }
