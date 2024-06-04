@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -13,427 +12,24 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	cloudProvider "github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime/components"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-var emptyVersion = internal.RuntimeVersionData{}
-
-func TestShouldEnableComponents(t *testing.T) {
-	t.Run("When creating ProvisionRuntimeInput", func(t *testing.T) {
-		// given
-
-		// One base component: dex
-		// Two optional components: Kiali and Tracing
-		// The test checks, if EnableOptionalComponent method adds an optional component
-		optionalComponentsDisablers := runtime.ComponentsDisablers{
-			components.Kiali:   runtime.NewGenericComponentDisabler(components.Kiali),
-			components.Tracing: runtime.NewGenericComponentDisabler(components.Tracing),
-		}
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).
-			Return([]internal.KymaComponent{
-				{Name: components.Kiali},
-				{Name: components.Tracing},
-				{Name: "dex"},
-			}, nil)
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(runtime.NewOptionalComponentsService(optionalComponentsDisablers), runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "")
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		creator.EnableOptionalComponent(components.Kiali)
-		input, err := creator.CreateProvisionRuntimeInput()
-		require.NoError(t, err)
-
-		// then
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: components.Kiali,
-		})
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: "dex",
-		})
-		assert.Len(t, input.KymaConfig.Components, 2)
-	})
-
-	t.Run("When creating UpgradeRuntimeInput", func(t *testing.T) {
-		// given
-
-		// One base component: dex
-		// Two optional components: Kiali and Tracing
-		// The test checks, if EnableOptionalComponent method adds an optional component
-		optionalComponentsDisablers := runtime.ComponentsDisablers{
-			components.Kiali:   runtime.NewGenericComponentDisabler(components.Kiali),
-			components.Tracing: runtime.NewGenericComponentDisabler(components.Tracing),
-		}
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).
-			Return([]internal.KymaComponent{
-				{Name: components.Kiali},
-				{Name: components.Tracing},
-				{Name: "dex"},
-			}, nil)
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(runtime.NewOptionalComponentsService(optionalComponentsDisablers), runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "1.14.0")
-		creator, err := builder.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.14.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		creator.EnableOptionalComponent(components.Kiali)
-		input, err := creator.CreateUpgradeRuntimeInput()
-		require.NoError(t, err)
-
-		// then
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: components.Kiali,
-		})
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: "dex",
-		})
-		assert.Len(t, input.KymaConfig.Components, 2)
-	})
-}
-
 func fixTrialProviders() []string {
 	return []string{"azure", "aws"}
 }
 
-func TestShouldDisableComponents(t *testing.T) {
-	t.Run("When creating ProvisionRuntimeInput", func(t *testing.T) {
-		// given
-		pp := fixProvisioningParameters(broker.AzurePlanID, "")
-
-		optionalComponentsDisablers := runtime.ComponentsDisablers{}
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).
-			Return([]internal.KymaComponent{
-				{Name: components.Kiali},
-				{Name: components.Tracing},
-				{Name: components.Backup},
-			}, nil)
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(runtime.NewOptionalComponentsService(optionalComponentsDisablers), runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		input, err := creator.CreateProvisionRuntimeInput()
-		require.NoError(t, err)
-
-		// then
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: components.Tracing,
-		})
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: components.Kiali,
-		})
-		assert.Len(t, input.KymaConfig.Components, 2)
-	})
-
-	t.Run("When creating UpgradeRuntimeInput", func(t *testing.T) {
-		// given
-		pp := fixProvisioningParameters(broker.AzurePlanID, "1.14.0")
-
-		optionalComponentsDisablers := runtime.ComponentsDisablers{}
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).
-			Return([]internal.KymaComponent{
-				{Name: components.Kiali},
-				{Name: components.Tracing},
-				{Name: components.Backup},
-			}, nil)
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(runtime.NewOptionalComponentsService(optionalComponentsDisablers), runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.14.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		input, err := creator.CreateUpgradeRuntimeInput()
-		require.NoError(t, err)
-
-		// then
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: components.Tracing,
-		})
-		assertComponentExists(t, input.KymaConfig.Components, gqlschema.ComponentConfigurationInput{
-			Component: components.Kiali,
-		})
-		assert.Len(t, input.KymaConfig.Components, 2)
-	})
-}
-
-func TestDisabledComponentsForPlanNotExist(t *testing.T) {
-	// given
-	pp := fixProvisioningParameters("invalid-plan", "")
-
-	optionalComponentsDisablers := runtime.ComponentsDisablers{}
-	componentsProvider := &automock.ComponentListProvider{}
-	componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).
-		Return([]internal.KymaComponent{
-			{Name: components.Kiali},
-			{Name: components.Tracing},
-			{Name: components.Backup},
-		}, nil)
-
-	configProvider := mockConfigProvider()
-
-	builder, err := NewInputBuilderFactory(runtime.NewOptionalComponentsService(optionalComponentsDisablers), runtime.NewDisabledComponentsProvider(),
-		componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-		fixture.FixOIDCConfigDTO(), false)
-	assert.NoError(t, err)
-	// when
-	_, err = builder.CreateProvisionInput(pp, emptyVersion)
-	require.Error(t, err)
-}
-
-func TestInputBuilderFactoryOverrides(t *testing.T) {
-	t.Run("should append overrides for the same components multiple times", func(t *testing.T) {
-		// given
-		var (
-			dummyOptComponentsSvc = dummyOptionalComponentServiceMock(fixKymaComponentList())
-
-			overridesA1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "pico"},
-				{Key: "key-2", Value: "bello"},
-			}
-			overridesA2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-3", Value: "hakuna"},
-				{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-			}
-		)
-
-		configProvider := mockConfigProvider()
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "")
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
-		builder, err := NewInputBuilderFactory(dummyOptComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		creator.
-			AppendOverrides("keb", overridesA1).
-			AppendOverrides("keb", overridesA2)
-
-		// then
-		out, err := creator.CreateProvisionRuntimeInput()
-		require.NoError(t, err)
-
-		overriddenComponent, found := find(out.KymaConfig.Components, "keb")
-		require.True(t, found)
-
-		assertContainsAllOverrides(t, overriddenComponent.Configuration, overridesA1, overridesA2)
-	})
-
-	t.Run("should append global overrides for ProvisionRuntimeInput", func(t *testing.T) {
-		// given
-		var (
-			optComponentsSvc = dummyOptionalComponentServiceMock(fixKymaComponentList())
-
-			overridesA1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "pico"},
-				{Key: "key-2", Value: "bello"},
-				{Key: "key-true", Value: "true"},
-			}
-			overridesA2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-3", Value: "hakuna"},
-				{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-				{Key: "key-false", Value: "false"},
-			}
-		)
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "")
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		creator.
-			AppendGlobalOverrides(overridesA1).
-			AppendGlobalOverrides(overridesA2)
-
-		// then
-		out, err := creator.CreateProvisionRuntimeInput()
-		require.NoError(t, err)
-
-		assertContainsAllOverrides(t, out.KymaConfig.Configuration, overridesA1, overridesA2)
-	})
-
-	t.Run("should append global overrides for UpgradeRuntimeInput", func(t *testing.T) {
-		// given
-		var (
-			optComponentsSvc = dummyOptionalComponentServiceMock(fixKymaComponentList())
-
-			overridesA1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "pico"},
-				{Key: "key-2", Value: "bello"},
-			}
-			overridesA2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-3", Value: "hakuna"},
-				{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-			}
-		)
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
-		configProvider := mockConfigProvider()
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "1.14.0")
-		builder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.14.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		creator.
-			AppendGlobalOverrides(overridesA1).
-			AppendGlobalOverrides(overridesA2)
-
-		// then
-		out, err := creator.CreateUpgradeRuntimeInput()
-		require.NoError(t, err)
-
-		assertContainsAllOverrides(t, out.KymaConfig.Configuration, overridesA1, overridesA2)
-	})
-
-	t.Run("should overwrite already applied component and global overrides", func(t *testing.T) {
-		// given
-		var (
-			dummyOptComponentsSvc = dummyOptionalComponentServiceMock(fixKymaComponentList())
-
-			overridesA1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "initial"},
-				{Key: "key-2", Value: "bello"},
-			}
-			overridesA2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "new"},
-				{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-			}
-			globalOverrides1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-g-1", Value: "initial-g"},
-				{Key: "key-g-2", Value: "hakuna", Secret: ptr.Bool(true)},
-			}
-			globalOverrides2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-g-1", Value: "new"},
-				{Key: "key-g-4", Value: "matata", Secret: ptr.Bool(true)},
-			}
-		)
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "")
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(dummyOptComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important", fixTrialRegionMapping(), fixTrialProviders(),
-			fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-
-		// when
-		creator.
-			AppendOverrides("keb", overridesA1).
-			AppendOverrides("keb", overridesA2).
-			AppendGlobalOverrides(globalOverrides1).
-			AppendGlobalOverrides(globalOverrides2)
-
-		// then
-		out, err := creator.CreateProvisionRuntimeInput()
-		require.NoError(t, err)
-
-		overriddenComponent, found := find(out.KymaConfig.Components, "keb")
-		require.True(t, found)
-
-		// assert component overrides
-		assertContainsAllOverrides(t, overriddenComponent.Configuration, []*gqlschema.ConfigEntryInput{
-			{Key: "key-1", Value: "new"},
-			{Key: "key-2", Value: "bello"},
-			{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-		})
-
-		// assert global overrides
-		assertContainsAllOverrides(t, out.KymaConfig.Configuration, []*gqlschema.ConfigEntryInput{
-			{Key: "key-g-1", Value: "new"},
-			{Key: "key-g-2", Value: "hakuna", Secret: ptr.Bool(true)},
-			{Key: "key-g-4", Value: "matata", Secret: ptr.Bool(true)},
-		})
-	})
-}
-
 func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	// given
-	var (
-		inputComponentList  = fixKymaComponentList()
-		mappedComponentList = mapToGQLComponentConfigurationInput(inputComponentList)
-		toDisableComponents = []string{"kiali"}
-		kebOverrides        = []*gqlschema.ConfigEntryInput{
-			{Key: "key-1", Value: "pico"},
-			{Key: "key-2", Value: "bello", Secret: ptr.Bool(true)},
-		}
-	)
-
-	optComponentsSvc := &automock.OptionalComponentService{}
-	defer optComponentsSvc.AssertExpectations(t)
-	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return(toDisableComponents)
-	optComponentsSvc.On("ExecuteDisablers", mappedComponentList, toDisableComponents[0]).Return(mappedComponentList, nil)
-
 	config := Config{
 		URL: "",
 	}
-	componentsProvider := &automock.ComponentListProvider{}
-	componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(inputComponentList, nil)
-	defer componentsProvider.AssertExpectations(t)
-
 	configProvider := mockConfigProvider()
 
-	factory, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-		componentsProvider, configProvider, config, "1.10.0",
-		fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+	factory, err := NewInputBuilderFactory(configProvider, config, "1.10.0", fixTrialRegionMapping(),
+		fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 	pp := fixProvisioningParameters(broker.AzurePlanID, "")
 
@@ -455,8 +51,7 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 		}).
 		SetShootName(shootName).
 		SetLabel("label1", "value1").
-		SetShootDomain("shoot.domain.sap").
-		AppendOverrides("keb", kebOverrides)
+		SetShootDomain("shoot.domain.sap")
 	input, err := builder.CreateProvisionRuntimeInput()
 	require.NoError(t, err)
 	clusterInput, err := builder.CreateProvisionClusterInput()
@@ -466,21 +61,17 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	assert.Equal(t, input.ClusterConfig, clusterInput.ClusterConfig)
 	assert.Equal(t, input.RuntimeInput, clusterInput.RuntimeInput)
 	assert.Nil(t, clusterInput.KymaConfig)
-	assert.EqualValues(t, mappedComponentList, input.KymaConfig.Components)
 	assert.Contains(t, input.RuntimeInput.Name, "azure-cluster")
 	assert.Equal(t, "azure", input.ClusterConfig.GardenerConfig.Provider)
 	assert.Equal(t, "azure-secret", input.ClusterConfig.GardenerConfig.TargetSecret)
 	require.NotNil(t, input.ClusterConfig.GardenerConfig.Purpose)
 	assert.Equal(t, "development", *input.ClusterConfig.GardenerConfig.Purpose)
 	assert.Nil(t, input.ClusterConfig.GardenerConfig.LicenceType)
-	assert.EqualValues(t, mappedComponentList, input.KymaConfig.Components)
 	assert.Equal(t, shootName, input.ClusterConfig.GardenerConfig.Name)
 	assert.NotNil(t, input.ClusterConfig.Administrators)
 	assert.Equal(t, gqlschema.Labels{
 		"label1": "value1",
 	}, input.RuntimeInput.Labels)
-
-	assertOverrides(t, "keb", input.KymaConfig.Components, kebOverrides)
 }
 
 func TestShouldAdjustRuntimeName(t *testing.T) {
@@ -507,14 +98,9 @@ func TestShouldAdjustRuntimeName(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			// given
-			optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-			componentsProvider := &automock.ComponentListProvider{}
-			componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 			configProvider := mockConfigProvider()
 
-			builder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-				componentsProvider, configProvider, Config{TrialNodesNumber: 0}, "not-important", fixTrialRegionMapping(),
+			builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 0}, "not-important", fixTrialRegionMapping(),
 				fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 			assert.NoError(t, err)
 
@@ -546,14 +132,9 @@ func TestShouldAdjustRuntimeName(t *testing.T) {
 
 func TestShouldSetNumberOfNodesForTrialPlan(t *testing.T) {
 	// given
-	optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-	componentsProvider := &automock.ComponentListProvider{}
-	componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 	configProvider := mockConfigProvider()
 
-	builder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-		componentsProvider, configProvider, Config{TrialNodesNumber: 2}, "not-important",
+	builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 2}, "not-important",
 		fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
@@ -577,14 +158,9 @@ func TestShouldSetNumberOfNodesForTrialPlan(t *testing.T) {
 func TestShouldSetGlobalConfiguration(t *testing.T) {
 	t.Run("When creating ProvisionRuntimeInput", func(t *testing.T) {
 		// given
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		builder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "",
+		builder, err := NewInputBuilderFactory(configProvider, Config{}, "",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -605,14 +181,9 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 
 	t.Run("When creating UpgradeRuntimeInput", func(t *testing.T) {
 		// given
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		builder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "",
+		builder, err := NewInputBuilderFactory(configProvider, Config{}, "",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -650,14 +221,9 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.4", fixTrialRegionMapping(),
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.4", fixTrialRegionMapping(),
 			fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -686,14 +252,9 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.4",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.4",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -732,14 +293,9 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -772,14 +328,9 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -813,14 +364,9 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -849,147 +395,6 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 	})
 }
 
-func TestCreateClusterConfiguration_Overrides(t *testing.T) {
-	t.Run("Should apply component and global overrides with proper types", func(t *testing.T) {
-		// given
-		id := uuid.New().String()
-
-		componentList := []internal.KymaComponent{
-			{Name: "dex", Namespace: "kyma-system"},
-			{Name: "ory", Namespace: "kyma-system"},
-			{
-				Name:      "custom",
-				Namespace: "kyma-system",
-				Source:    &internal.ComponentSource{URL: "http://source.url"},
-			},
-		}
-
-		optComponentsSvc := dummyOptionalComponentServiceMock(componentList)
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(componentList, nil)
-
-		configProvider := mockConfigProvider()
-
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-
-		provisioningParams := fixture.FixProvisioningParameters(id)
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
-		require.NoError(t, err)
-		setRuntimeProperties(creator)
-		creator.AppendOverrides("dex", []*gqlschema.ConfigEntryInput{
-			{Key: "key-1", Value: "pico"},
-			{Key: "key-false", Value: "false"},
-			{Key: "key-true", Value: "true"},
-			{Key: "key-secret", Value: "classified", Secret: ptr.Bool(true)},
-		})
-		creator.AppendGlobalOverrides([]*gqlschema.ConfigEntryInput{
-			{Key: "global-key-string", Value: "global-pico"},
-			{Key: "global-key-false", Value: "false"},
-			{Key: "global-key-true", Value: "true"},
-			{Key: "global-key-secret", Value: "global-classified", Secret: ptr.Bool(true)},
-		})
-
-		// when
-		inventoryInput, err := creator.CreateClusterConfiguration()
-		require.NoError(t, err)
-
-		// then
-		assertAllConfigsContainsGlobals(t, inventoryInput.KymaConfig.Components, "shoot-name.domain.sap")
-		assert.Equal(t, reconcilerApi.Component{
-			URL:       "",
-			Component: "dex",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{Key: "global.domainName", Value: "shoot-name.domain.sap", Secret: false},
-				{Key: "global-key-string", Value: "global-pico", Secret: false},
-				{Key: "global-key-false", Value: false, Secret: false},
-				{Key: "global-key-true", Value: true, Secret: false},
-				{Key: "global-key-secret", Value: "global-classified", Secret: true},
-				{Key: "key-1", Value: "pico", Secret: false},
-				{Key: "key-false", Value: false, Secret: false},
-				{Key: "key-true", Value: true, Secret: false},
-				{Key: "key-secret", Value: "classified", Secret: true},
-			},
-		}, inventoryInput.KymaConfig.Components[0])
-
-		// check custom source URL
-		for _, component := range inventoryInput.KymaConfig.Components {
-			if component.Component == "custom" {
-				assert.Equal(t, "http://source.url", component.URL)
-			}
-		}
-	})
-
-	t.Run("should overwrite already existing component and global overrides", func(t *testing.T) {
-		// given
-		var (
-			dummyOptComponentsSvc = dummyOptionalComponentServiceMock(fixKymaComponentList())
-
-			overridesA1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "initial"},
-				{Key: "key-2", Value: "bello"},
-			}
-			overridesA2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-1", Value: "new"},
-				{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-			}
-			globalOverrides1 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-g-1", Value: "initial-g"},
-				{Key: "key-g-2", Value: "hakuna", Secret: ptr.Bool(true)},
-			}
-			globalOverrides2 = []*gqlschema.ConfigEntryInput{
-				{Key: "key-g-1", Value: "new"},
-				{Key: "key-g-4", Value: "matata", Secret: ptr.Bool(true)},
-			}
-		)
-
-		pp := fixProvisioningParameters(broker.AzurePlanID, "2.0.0-rc6")
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
-		configProvider := mockConfigProvider()
-
-		builder, err := NewInputBuilderFactory(dummyOptComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "not-important",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
-		require.NoError(t, err)
-		setRuntimeProperties(creator)
-
-		// when
-		creator.
-			AppendOverrides("keb", overridesA1).
-			AppendOverrides("keb", overridesA2).
-			AppendGlobalOverrides(globalOverrides1).
-			AppendGlobalOverrides(globalOverrides2)
-
-		// then
-		out, err := creator.CreateClusterConfiguration()
-		require.NoError(t, err)
-		t.Logf("out %+v\n", out)
-
-		overriddenComponent, found := findForReconciler(out.KymaConfig.Components, "keb")
-		require.True(t, found)
-		t.Logf("overriddenComponent %+v\n", overriddenComponent)
-
-		assertAllConfigsContainsGlobals(t, []reconcilerApi.Component{overriddenComponent}, "shoot-name.domain.sap")
-		// assert component and global overrides
-		assertContainsAllOverridesForReconciler(t, overriddenComponent.Configuration, []*gqlschema.ConfigEntryInput{
-			{Key: "global.domainName", Value: "shoot-name.domain.sap"},
-			{Key: "key-1", Value: "new"},
-			{Key: "key-2", Value: "bello"},
-			{Key: "key-4", Value: "matata", Secret: ptr.Bool(true)},
-			{Key: "key-g-1", Value: "new"},
-			{Key: "key-g-2", Value: "hakuna", Secret: ptr.Bool(true)},
-			{Key: "key-g-4", Value: "matata", Secret: ptr.Bool(true)},
-		})
-	})
-}
-
 func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 	t.Run("should apply default admin from user_id field", func(t *testing.T) {
 		// given
@@ -997,14 +402,9 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -1018,12 +418,9 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 		// when
 		input, err := creator.CreateProvisionRuntimeInput()
 		require.NoError(t, err)
-		inventoryInput, err := creator.CreateClusterConfiguration()
-		require.NoError(t, err)
 
 		// then
 		assert.Equal(t, expectedAdmins, input.ClusterConfig.Administrators)
-		assert.Equal(t, expectedAdmins, inventoryInput.KymaConfig.Administrators)
 	})
 
 	t.Run("should apply new admin list", func(t *testing.T) {
@@ -1032,14 +429,9 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -1053,26 +445,10 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 		// when
 		input, err := creator.CreateProvisionRuntimeInput()
 		require.NoError(t, err)
-		inventoryInput, err := creator.CreateClusterConfiguration()
-		require.NoError(t, err)
 
 		// then
 		assert.Equal(t, expectedAdmins, input.ClusterConfig.Administrators)
-		assert.Equal(t, expectedAdmins, inventoryInput.KymaConfig.Administrators)
 	})
-}
-
-func assertAllConfigsContainsGlobals(t *testing.T, components []reconcilerApi.Component, domainName string) {
-	for _, cmp := range components {
-		found := false
-		for _, cfg := range cmp.Configuration {
-			if cfg.Key == "global.domainName" {
-				assert.Equal(t, domainName, cfg.Value)
-				found = true
-			}
-		}
-		assert.True(t, found, "Component %s must contain `global.domainName` config", cmp.Component)
-	}
 }
 
 func setRuntimeProperties(creator internal.ProvisionerInputCreator) {
@@ -1091,14 +467,9 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -1129,14 +500,9 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		id := uuid.New().String()
 
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -1165,14 +531,9 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 	t.Run("should not apply CreateUpgradeShootInput with provisioning autoscaler parameters", func(t *testing.T) {
 		// given
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -1207,14 +568,9 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 
 	t.Run("should not apply CreateUpgradeShootInput with provider autoscaler parameters", func(t *testing.T) {
 		// given
-		optComponentsSvc := dummyOptionalComponentServiceMock(fixKymaComponentList())
-		componentsProvider := &automock.ComponentListProvider{}
-		componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(fixKymaComponentList(), nil)
-
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-			componentsProvider, configProvider, Config{}, "1.24.0",
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -1250,100 +606,11 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 	})
 }
 
-func assertOverrides(t *testing.T, componentName string, components internal.ComponentConfigurationInputList, overrides []*gqlschema.ConfigEntryInput) {
-	overriddenComponent, found := find(components, componentName)
-	require.True(t, found)
-
-	assert.Equal(t, overriddenComponent.Configuration, overrides)
-}
-
-func find(in internal.ComponentConfigurationInputList, name string) (*gqlschema.ComponentConfigurationInput, bool) {
-	for _, c := range in {
-		if c.Component == name {
-			return c, true
-		}
-	}
-	return nil, false
-}
-
-func findForReconciler(in []reconcilerApi.Component, name string) (reconcilerApi.Component, bool) {
-	for _, c := range in {
-		if c.Component == name {
-			return c, true
-		}
-	}
-	return reconcilerApi.Component{}, false
-}
-
-func fixKymaComponentList() []internal.KymaComponent {
-	return []internal.KymaComponent{
-		{Name: "dex", Namespace: "kyma-system"},
-		{Name: "ory", Namespace: "kyma-system"},
-		{Name: "keb", Namespace: "kyma-system"},
-	}
-}
-
-func dummyOptionalComponentServiceMock(inputComponentList []internal.KymaComponent) *automock.OptionalComponentService {
-	mappedComponentList := mapToGQLComponentConfigurationInput(inputComponentList)
-
-	optComponentsSvc := &automock.OptionalComponentService{}
-	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return([]string{})
-	optComponentsSvc.On("ExecuteDisablers", mappedComponentList).Return(mappedComponentList, nil)
-	return optComponentsSvc
-}
-
-func assertContainsAllOverrides(t *testing.T, gotOverrides []*gqlschema.ConfigEntryInput, expOverrides ...[]*gqlschema.ConfigEntryInput) {
-	var expected []*gqlschema.ConfigEntryInput
-	for _, o := range expOverrides {
-		expected = append(expected, o...)
-	}
-
-	require.Len(t, gotOverrides, len(expected))
-	for _, o := range expected {
-		assert.Contains(t, gotOverrides, o)
-	}
-}
-
-func assertContainsAllOverridesForReconciler(t *testing.T, gotOverrides []reconcilerApi.Configuration, expOverrides []*gqlschema.ConfigEntryInput) {
-	var expected []reconcilerApi.Configuration
-	for _, o := range expOverrides {
-		expected = append(expected, reconcilerApi.Configuration{
-			Key:    o.Key,
-			Value:  o.Value,
-			Secret: falseIfNil(o.Secret),
-		})
-	}
-
-	require.Len(t, gotOverrides, len(expected))
-	for _, o := range expected {
-		assert.Contains(t, gotOverrides, o)
-	}
-}
-
-func assertComponentExists(t *testing.T,
-	components []*gqlschema.ComponentConfigurationInput,
-	expected gqlschema.ComponentConfigurationInput) {
-
-	for _, component := range components {
-		if component.Component == expected.Component {
-			return
-		}
-	}
-	assert.Failf(t, "component list does not contain %s", expected.Component)
-}
-
 func mockConfigProvider() ConfigurationProvider {
 	configProvider := &automock.ConfigurationProvider{}
 	configProvider.On("ProvideForGivenVersionAndPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
-		Return(&internal.ConfigForPlan{
-			AdditionalComponents: []internal.KymaComponent{
-				{
-					Name:      "kyma-component1",
-					Namespace: "kyma-system",
-				},
-			},
-		}, nil)
+		Return(&internal.ConfigForPlan{}, nil)
 	return configProvider
 }

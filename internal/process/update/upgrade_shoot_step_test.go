@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	inputAutomock "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -79,51 +78,19 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 }
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
-	optComponentsSvc := &inputAutomock.OptionalComponentService{}
-
-	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return([]string{})
-	optComponentsSvc.On("ExecuteDisablers", internal.ComponentConfigurationInputList{
-		{
-			Component:     "to-remove-component",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}).Return(internal.ComponentConfigurationInputList{
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}, nil)
-
-	componentsProvider := &inputAutomock.ComponentListProvider{}
 	const kymaVersion = "1.20"
-	defer componentsProvider.AssertExpectations(t)
 
 	configProvider := &inputAutomock.ConfigurationProvider{}
 	configProvider.On("ProvideForGivenVersionAndPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
-		Return(&internal.ConfigForPlan{
-			AdditionalComponents: []internal.KymaComponent{
-				{
-					Name:      "kyma-component1",
-					Namespace: "kyma-system",
-				},
-			},
-		}, nil)
+		Return(&internal.ConfigForPlan{}, nil)
 
 	const k8sVersion = "1.18"
-	ibf, err := input.NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-		componentsProvider, configProvider, input.Config{
-			KubernetesVersion:           k8sVersion,
-			DefaultGardenerShootPurpose: "test",
-		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
+	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		KubernetesVersion:           k8sVersion,
+		DefaultGardenerShootPurpose: "test",
+	}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{

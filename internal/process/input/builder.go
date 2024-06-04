@@ -8,30 +8,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	cloudProvider "github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 )
 
-//go:generate mockery --name=ComponentListProvider --output=automock --outpkg=automock --case=underscore
 //go:generate mockery --name=CreatorForPlan --output=automock --outpkg=automock --case=underscore
-//go:generate mockery --name=ComponentsDisabler --output=automock --outpkg=automock --case=underscore
-//go:generate mockery --name=OptionalComponentService --output=automock --outpkg=automock --case=underscore
 
 type (
-	OptionalComponentService interface {
-		ExecuteDisablers(components internal.ComponentConfigurationInputList, names ...string) (internal.ComponentConfigurationInputList, error)
-		ComputeComponentsToDisable(optComponentsToKeep []string) []string
-		AddComponentToDisable(name string, disabler runtime.ComponentDisabler)
-	}
-
-	ComponentsDisabler interface {
-		DisableComponents(components internal.ComponentConfigurationInputList) (internal.ComponentConfigurationInputList, error)
-	}
-
-	DisabledComponentsProvider interface {
-		DisabledComponentsPerPlan(planID string) (map[string]struct{}, error)
-		DisabledForAll() map[string]struct{}
-	}
-
 	HyperscalerInputProvider interface {
 		Defaults() *gqlschema.ClusterConfigInput
 		ApplyParameters(input *gqlschema.ClusterConfigInput, params internal.ProvisioningParameters)
@@ -47,10 +28,6 @@ type (
 		GetPlanDefaults(planID string, platformProvider internal.CloudProvider, parametersProvider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error)
 	}
 
-	ComponentListProvider interface {
-		AllComponents(kymaVersion internal.RuntimeVersionData, config *internal.ConfigForPlan) ([]internal.KymaComponent, error)
-	}
-
 	ConfigurationProvider interface {
 		ProvideForGivenVersionAndPlan(kymaVersion, planName string) (*internal.ConfigForPlan, error)
 	}
@@ -59,9 +36,6 @@ type (
 type InputBuilderFactory struct {
 	kymaVersion                string
 	config                     Config
-	optComponentsSvc           OptionalComponentService
-	componentsProvider         ComponentListProvider
-	disabledComponentsProvider DisabledComponentsProvider
 	configProvider             ConfigurationProvider
 	trialPlatformRegionMapping map[string]string
 	enabledFreemiumProviders   map[string]struct{}
@@ -69,8 +43,7 @@ type InputBuilderFactory struct {
 	useSmallerMachineTypes     bool
 }
 
-func NewInputBuilderFactory(optComponentsSvc OptionalComponentService, disabledComponentsProvider DisabledComponentsProvider,
-	componentsListProvider ComponentListProvider, configProvider ConfigurationProvider,
+func NewInputBuilderFactory(configProvider ConfigurationProvider,
 	config Config, defaultKymaVersion string, trialPlatformRegionMapping map[string]string,
 	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO, useSmallerMachineTypes bool) (CreatorForPlan, error) {
 
@@ -82,9 +55,6 @@ func NewInputBuilderFactory(optComponentsSvc OptionalComponentService, disabledC
 	return &InputBuilderFactory{
 		kymaVersion:                defaultKymaVersion,
 		config:                     config,
-		optComponentsSvc:           optComponentsSvc,
-		componentsProvider:         componentsListProvider,
-		disabledComponentsProvider: disabledComponentsProvider,
 		configProvider:             configProvider,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		enabledFreemiumProviders:   freemiumProviders,
@@ -176,30 +146,19 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 		return nil, fmt.Errorf("during creating provision input: %w", err)
 	}
 
-	initInput, err := f.initProvisionRuntimeInput(provider, version, cfg)
+	initInput, err := f.initProvisionRuntimeInput(provider, version)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing ProvisionRuntimeInput: %w", err)
 	}
 
-	disabledForPlan, err := f.disabledComponentsProvider.DisabledComponentsPerPlan(provisioningParameters.PlanID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting disabled components for plan %s: %w", provisioningParameters.PlanID, err)
-	}
-	disabledComponents := mergeMaps(disabledForPlan, f.disabledComponentsProvider.DisabledForAll())
-
 	return &RuntimeInput{
-		provisionRuntimeInput:     initInput,
-		overrides:                 make(map[string][]*gqlschema.ConfigEntryInput, 0),
-		labels:                    make(map[string]string),
-		globalOverrides:           make([]*gqlschema.ConfigEntryInput, 0),
-		config:                    cfg,
-		hyperscalerInputProvider:  provider,
-		optionalComponentsService: f.optComponentsSvc,
-		provisioningParameters:    provisioningParameters,
-		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
-		enabledOptionalComponents: map[string]struct{}{},
-		oidcDefaultValues:         f.oidcDefaultValues,
-		trialNodesNumber:          f.config.TrialNodesNumber,
+		provisionRuntimeInput:    initInput,
+		labels:                   make(map[string]string),
+		config:                   cfg,
+		hyperscalerInputProvider: provider,
+		provisioningParameters:   provisioningParameters,
+		oidcDefaultValues:        f.oidcDefaultValues,
+		trialNodesNumber:         f.config.TrialNodesNumber,
 	}, nil
 }
 
@@ -230,30 +189,15 @@ func (f *InputBuilderFactory) forTrialPlan(provider *internal.CloudProvider) Hyp
 
 }
 
-func (f *InputBuilderFactory) provideComponentList(version internal.RuntimeVersionData, config *internal.ConfigForPlan) (internal.ComponentConfigurationInputList, error) {
-	allComponents, err := f.componentsProvider.AllComponents(version, config)
-	if err != nil {
-		return internal.ComponentConfigurationInputList{}, fmt.Errorf("while fetching components for %s Kyma version: %w", version.Version, err)
-	}
-
-	return mapToGQLComponentConfigurationInput(allComponents), nil
-}
-
-func (f *InputBuilderFactory) initProvisionRuntimeInput(provider HyperscalerInputProvider, version internal.RuntimeVersionData, config *internal.ConfigForPlan) (gqlschema.ProvisionRuntimeInput, error) {
-	components, err := f.provideComponentList(version, config)
-	if err != nil {
-		return gqlschema.ProvisionRuntimeInput{}, err
-	}
-
+func (f *InputBuilderFactory) initProvisionRuntimeInput(provider HyperscalerInputProvider, version internal.RuntimeVersionData) (gqlschema.ProvisionRuntimeInput, error) {
 	kymaProfile := provider.Profile()
 
 	provisionInput := gqlschema.ProvisionRuntimeInput{
 		RuntimeInput:  &gqlschema.RuntimeInput{},
 		ClusterConfig: provider.Defaults(),
 		KymaConfig: &gqlschema.KymaConfigInput{
-			Profile:    &kymaProfile,
-			Version:    version.Version,
-			Components: components.DeepCopy(),
+			Profile: &kymaProfile,
+			Version: version.Version,
 		},
 	}
 
@@ -294,82 +238,39 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 		return nil, fmt.Errorf("during createing provision input: %w", err)
 	}
 
-	upgradeKymaInput, err := f.initUpgradeRuntimeInput(version, provider, cfg)
+	upgradeKymaInput, err := f.initUpgradeRuntimeInput(version, provider)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing UpgradeRuntimeInput: %w", err)
 	}
 
-	kymaInput, err := f.initProvisionRuntimeInput(provider, version, cfg)
+	kymaInput, err := f.initProvisionRuntimeInput(provider, version)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing RuntimeInput: %w", err)
 	}
 
-	disabledForPlan, err := f.disabledComponentsProvider.DisabledComponentsPerPlan(provisioningParameters.PlanID)
-	if err != nil {
-		return nil, fmt.Errorf("every supported plan should be specified in the disabled components map: %w", err)
-	}
-	disabledComponents := mergeMaps(disabledForPlan, f.disabledComponentsProvider.DisabledForAll())
-
 	return &RuntimeInput{
-		provisionRuntimeInput:     kymaInput,
-		upgradeRuntimeInput:       upgradeKymaInput,
-		overrides:                 make(map[string][]*gqlschema.ConfigEntryInput, 0),
-		globalOverrides:           make([]*gqlschema.ConfigEntryInput, 0),
-		optionalComponentsService: f.optComponentsSvc,
-		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
-		enabledOptionalComponents: map[string]struct{}{},
-		trialNodesNumber:          f.config.TrialNodesNumber,
-		oidcDefaultValues:         f.oidcDefaultValues,
-		hyperscalerInputProvider:  provider,
-		config:                    cfg,
+		provisionRuntimeInput:    kymaInput,
+		upgradeRuntimeInput:      upgradeKymaInput,
+		trialNodesNumber:         f.config.TrialNodesNumber,
+		oidcDefaultValues:        f.oidcDefaultValues,
+		hyperscalerInputProvider: provider,
+		config:                   cfg,
 	}, nil
 }
 
-func (f *InputBuilderFactory) initUpgradeRuntimeInput(version internal.RuntimeVersionData, provider HyperscalerInputProvider, config *internal.ConfigForPlan) (gqlschema.UpgradeRuntimeInput, error) {
+func (f *InputBuilderFactory) initUpgradeRuntimeInput(version internal.RuntimeVersionData, provider HyperscalerInputProvider) (gqlschema.UpgradeRuntimeInput, error) {
 	if version.Version == "" {
 		return gqlschema.UpgradeRuntimeInput{}, fmt.Errorf("desired runtime version cannot be empty")
 	}
 
 	kymaProfile := provider.Profile()
-	components, err := f.provideComponentList(version, config)
-	if err != nil {
-		return gqlschema.UpgradeRuntimeInput{}, err
-	}
 
 	return gqlschema.UpgradeRuntimeInput{
 		KymaConfig: &gqlschema.KymaConfigInput{
-			Profile:    &kymaProfile,
-			Version:    version.Version,
-			Components: components.DeepCopy(),
+			Profile: &kymaProfile,
+			Version: version.Version,
 		},
 	}, nil
-}
-
-func mapToGQLComponentConfigurationInput(kymaComponents []internal.KymaComponent) internal.ComponentConfigurationInputList {
-	var input internal.ComponentConfigurationInputList
-	for _, component := range kymaComponents {
-		var sourceURL *string
-		if component.Source != nil {
-			sourceURL = &component.Source.URL
-		}
-
-		input = append(input, &gqlschema.ComponentConfigurationInput{
-			Component: component.Name,
-			Namespace: component.Namespace,
-			SourceURL: sourceURL,
-		})
-	}
-	return input
-}
-
-func mergeMaps(maps ...map[string]struct{}) map[string]struct{} {
-	res := map[string]struct{}{}
-	for _, m := range maps {
-		for k, v := range m {
-			res[k] = v
-		}
-	}
-	return res
 }
 
 func (f *InputBuilderFactory) CreateUpgradeShootInput(provisioningParameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {

@@ -25,19 +25,12 @@ type ProvisionerInputCreator interface {
 	SetProvisioningParameters(params ProvisioningParameters) ProvisionerInputCreator
 	SetShootName(string) ProvisionerInputCreator
 	SetLabel(key, value string) ProvisionerInputCreator
-	// Deprecated, use: AppendOverrides
-	SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
-	AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
-	AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
 	CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error)
 	CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error)
 	CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error)
-	EnableOptionalComponent(componentName string) ProvisionerInputCreator
-	DisableOptionalComponent(componentName string) ProvisionerInputCreator
 	Provider() CloudProvider
 	Configuration() *ConfigForPlan
 
-	CreateClusterConfiguration() (reconcilerApi.Cluster, error)
 	CreateProvisionClusterInput() (gqlschema.ProvisionRuntimeInput, error)
 	SetKubeconfig(kcfg string) ProvisionerInputCreator
 	SetRuntimeID(runtimeID string) ProvisionerInputCreator
@@ -692,57 +685,8 @@ func (o *Operation) SuccessMustBeSaved() bool {
 	return true
 }
 
-type ComponentConfigurationInputList []*gqlschema.ComponentConfigurationInput
-
-func (l ComponentConfigurationInputList) DeepCopy() []*gqlschema.ComponentConfigurationInput {
-	var copiedList []*gqlschema.ComponentConfigurationInput
-	for _, component := range l {
-		var cpyCfg []*gqlschema.ConfigEntryInput
-		for _, cfg := range component.Configuration {
-			mapped := &gqlschema.ConfigEntryInput{
-				Key:   cfg.Key,
-				Value: cfg.Value,
-			}
-			if cfg.Secret != nil {
-				mapped.Secret = ptr.Bool(*cfg.Secret)
-			}
-			cpyCfg = append(cpyCfg, mapped)
-		}
-
-		copiedList = append(copiedList, &gqlschema.ComponentConfigurationInput{
-			Component:     component.Component,
-			Namespace:     component.Namespace,
-			SourceURL:     component.SourceURL,
-			Configuration: cpyCfg,
-		})
-	}
-	return copiedList
-}
-
-// KymaComponent represents single Kyma component
-type KymaComponent struct {
-	Name        string           `json:"name"`
-	ReleaseName string           `json:"release"`
-	Namespace   string           `json:"namespace"`
-	Source      *ComponentSource `json:"source,omitempty"`
-}
-
-type ComponentSource struct {
-	URL string `json:"url"`
-}
-
 type ConfigForPlan struct {
-	AdditionalComponents []KymaComponent `json:"additional-components" yaml:"additional-components"`
-	KymaTemplate         string          `json:"kyma-template" yaml:"kyma-template"`
-}
-
-func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
-	for _, c := range c.AdditionalComponents {
-		if c.Name == componentName {
-			return true
-		}
-	}
-	return false
+	KymaTemplate string `json:"kyma-template" yaml:"kyma-template"`
 }
 
 type SubaccountState struct {

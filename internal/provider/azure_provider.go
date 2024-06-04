@@ -6,6 +6,8 @@ import (
 	"net/netip"
 	"strconv"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -85,7 +87,7 @@ func (p *AzureInput) Defaults() *gqlschema.ClusterConfigInput {
 }
 
 func (p *AzureInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
-	if internal.IsEuAccess(pp.PlatformRegion) {
+	if euaccess.IsEURestrictedAccess(pp.PlatformRegion) {
 		updateString(&input.GardenerConfig.Region, ptr.String(DefaultEuAccessAzureRegion))
 		return
 	}
@@ -158,7 +160,7 @@ func (p *AzureLiteInput) Defaults() *gqlschema.ClusterConfigInput {
 }
 
 func (p *AzureLiteInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
-	if internal.IsEuAccess(pp.PlatformRegion) {
+	if euaccess.IsEURestrictedAccess(pp.PlatformRegion) {
 		updateString(&input.GardenerConfig.Region, ptr.String(DefaultEuAccessAzureRegion))
 	}
 
@@ -224,7 +226,7 @@ func azureTrialDefaults(useSmallerMachineTypes bool) *gqlschema.ClusterConfigInp
 func (p *AzureTrialInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
 	params := pp.Parameters
 
-	if internal.IsEuAccess(pp.PlatformRegion) {
+	if euaccess.IsEURestrictedAccess(pp.PlatformRegion) {
 		updateString(&input.GardenerConfig.Region, ptr.String(DefaultEuAccessAzureRegion))
 		return
 	}

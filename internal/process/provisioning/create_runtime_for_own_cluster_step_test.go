@@ -11,11 +11,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	inputAutomock "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/stretchr/testify/mock"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
@@ -129,56 +126,19 @@ func fixProvisioningParametersWithPlanID(planID, region string, platformRegion s
 }
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
-	optComponentsSvc := &inputAutomock.OptionalComponentService{}
-
-	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return([]string{})
-	optComponentsSvc.On("ExecuteDisablers", internal.ComponentConfigurationInputList{
-		{
-			Component:     "to-remove-component",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}).Return(internal.ComponentConfigurationInputList{
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}, nil)
-
-	kymaComponentList := []internal.KymaComponent{
-		{
-			Name:      "to-remove-component",
-			Namespace: "kyma-system",
-		},
-		{
-			Name:      "keb",
-			Namespace: "kyma-system",
-		},
-	}
-	componentsProvider := &inputAutomock.ComponentListProvider{}
-	componentsProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return(kymaComponentList, nil)
-	defer componentsProvider.AssertExpectations(t)
-
 	cli := fake.NewClientBuilder().WithRuntimeObjects(fixConfigMap(kymaVersion)).Build()
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(context.TODO(), cli, logrus.New(), kymaVersion),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
-	ibf, err := input.NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(), componentsProvider,
-		configProvider, input.Config{
-			KubernetesVersion:             k8sVersion,
-			DefaultGardenerShootPurpose:   shootPurpose,
-			AutoUpdateKubernetesVersion:   autoUpdateKubernetesVersion,
-			AutoUpdateMachineImageVersion: autoUpdateMachineImageVersion,
-			MultiZoneCluster:              true,
-			ControlPlaneFailureTolerance:  "zone",
-		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
+	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		KubernetesVersion:             k8sVersion,
+		DefaultGardenerShootPurpose:   shootPurpose,
+		AutoUpdateKubernetesVersion:   autoUpdateKubernetesVersion,
+		AutoUpdateMachineImageVersion: autoUpdateMachineImageVersion,
+		MultiZoneCluster:              true,
+		ControlPlaneFailureTolerance:  "zone",
+	}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{
