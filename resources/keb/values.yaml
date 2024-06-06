@@ -120,6 +120,7 @@ broker:
     memory: false
   events:
     enabled: false
+  enableShootAndSeedSameRegion: "false"
 
 binding:
   enabled: false
@@ -175,6 +176,7 @@ provisioner:
     secretName: "gardener"
     # name of the gardener project
     projectName: "gopher"
+    enableShootAndSeedSameRegion: "false"
 
 director:
   scope: "runtime:read runtime:write"
@@ -234,6 +236,7 @@ useSmallerMachineTypes: "false"
 
 osbUpdateProcessingEnabled: "false"
 
+
 gardener:
   project: "kyma-dev" # Gardener project connected to SA for HAP credentials lookup
   shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
@@ -251,7 +254,6 @@ gardener:
   autoUpdateKubernetesVersion: "true"
   autoUpdateMachineImageVersion: "false"
   multiZoneCluster: "false"
-  EnableShootAndSeedSameRegion: "false"
 
 kubeconfig:
   issuerURL: "TBD"

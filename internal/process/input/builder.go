@@ -152,13 +152,14 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 	}
 
 	return &RuntimeInput{
-		provisionRuntimeInput:    initInput,
-		labels:                   make(map[string]string),
-		config:                   cfg,
-		hyperscalerInputProvider: provider,
-		provisioningParameters:   provisioningParameters,
-		oidcDefaultValues:        f.oidcDefaultValues,
-		trialNodesNumber:         f.config.TrialNodesNumber,
+		provisionRuntimeInput:        initInput,
+		labels:                       make(map[string]string),
+		config:                       cfg,
+		hyperscalerInputProvider:     provider,
+		provisioningParameters:       provisioningParameters,
+		oidcDefaultValues:            f.oidcDefaultValues,
+		trialNodesNumber:             f.config.TrialNodesNumber,
+		enableShootAndSeedSameRegion: f.config.EnableShootAndSeedSameRegion,
 	}, nil
 }
 
