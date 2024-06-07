@@ -6,7 +6,7 @@ import (
 
 type (
 	ConfigReader interface {
-		Read(kymaVersion, planName string) (string, error)
+		Read(planName string) (string, error)
 	}
 
 	ConfigValidator interface {
@@ -28,8 +28,8 @@ func NewConfigProvider(reader ConfigReader, validator ConfigValidator, converter
 	return &ConfigProvider{Reader: reader, Validator: validator, Converter: converter}
 }
 
-func (p *ConfigProvider) ProvideForGivenVersionAndPlan(kymaVersion, planName string) (*internal.ConfigForPlan, error) {
-	cfgString, err := p.Reader.Read(kymaVersion, planName)
+func (p *ConfigProvider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
+	cfgString, err := p.Reader.Read(planName)
 	if err != nil {
 		return nil, err
 	}

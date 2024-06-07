@@ -11,7 +11,7 @@ data:
   default: |-
     kyma-template: |-
       apiVersion: operator.kyma-project.io/v1beta2
-      Kind: Kyma
+      kind: Kyma
       metadata:
         name: tbd
         namespace: kyma-system

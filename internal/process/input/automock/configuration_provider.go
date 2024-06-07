@@ -13,12 +13,12 @@ type ConfigurationProvider struct {
 }
 
 // ProvideForGivenVersionAndPlan provides a mock function with given fields: kymaVersion, planName
-func (_m *ConfigurationProvider) ProvideForGivenVersionAndPlan(kymaVersion string, planName string) (*internal.ConfigForPlan, error) {
-	ret := _m.Called(kymaVersion, planName)
+func (_m *ConfigurationProvider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
+	ret := _m.Called(planName)
 
 	var r0 *internal.ConfigForPlan
-	if rf, ok := ret.Get(0).(func(string, string) *internal.ConfigForPlan); ok {
-		r0 = rf(kymaVersion, planName)
+	if rf, ok := ret.Get(0).(func(string) *internal.ConfigForPlan); ok {
+		r0 = rf(planName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*internal.ConfigForPlan)
@@ -26,8 +26,8 @@ func (_m *ConfigurationProvider) ProvideForGivenVersionAndPlan(kymaVersion strin
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(kymaVersion, planName)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(planName)
 	} else {
 		r1 = ret.Error(1)
 	}

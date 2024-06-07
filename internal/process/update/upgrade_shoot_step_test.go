@@ -81,7 +81,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	const kymaVersion = "1.20"
 
 	configProvider := &inputAutomock.ConfigurationProvider{}
-	configProvider.On("ProvideForGivenVersionAndPlan",
+	configProvider.On("ProvideForGivenPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
 		Return(&internal.ConfigForPlan{}, nil)

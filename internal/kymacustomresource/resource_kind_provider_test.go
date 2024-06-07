@@ -49,6 +49,6 @@ func TestResourceKindProvider(t *testing.T) {
 
 type fakeConfigProvider struct{}
 
-func (f fakeConfigProvider) ProvideForGivenVersionAndPlan(version, plan string) (*internal.ConfigForPlan, error) {
+func (f fakeConfigProvider) ProvideForGivenPlan(plan string) (*internal.ConfigForPlan, error) {
 	return &internal.ConfigForPlan{KymaTemplate: kymaTemplate}, nil
 }

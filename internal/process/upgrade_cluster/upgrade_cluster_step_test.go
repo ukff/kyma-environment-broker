@@ -121,7 +121,7 @@ func fixUpgradeClusterOperationWithInputCreator(t *testing.T) internal.UpgradeCl
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	configProvider := &automock.ConfigurationProvider{}
-	configProvider.On("ProvideForGivenVersionAndPlan",
+	configProvider.On("ProvideForGivenPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
 		Return(&internal.ConfigForPlan{}, nil)

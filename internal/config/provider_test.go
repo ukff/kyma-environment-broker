@@ -27,7 +27,7 @@ func TestConfigProvider(t *testing.T) {
 	fakeK8sClient := fake.NewClientBuilder().WithRuntimeObjects(cfgMap).Build()
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
-	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, logger, kymaVersion)
+	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, logger, "keb-config")
 	cfgValidator := config.NewConfigMapKeysValidator()
 	cfgConverter := config.NewConfigMapConverter()
 	cfgProvider := config.NewConfigProvider(cfgReader, cfgValidator, cfgConverter)
@@ -36,7 +36,7 @@ func TestConfigProvider(t *testing.T) {
 		// given
 		expectedCfg := fixAzureConfig()
 		// when
-		cfg, err := cfgProvider.ProvideForGivenVersionAndPlan(kymaVersion, broker.AzurePlanName)
+		cfg, err := cfgProvider.ProvideForGivenPlan(broker.AzurePlanName)
 
 		// then
 		require.NoError(t, err)
@@ -47,31 +47,7 @@ func TestConfigProvider(t *testing.T) {
 		// given
 		expectedCfg := fixDefault()
 		// when
-		cfg, err := cfgProvider.ProvideForGivenVersionAndPlan(kymaVersion, broker.AWSPlanName)
-
-		// then
-		require.NoError(t, err)
-		assert.ObjectsAreEqual(expectedCfg, cfg)
-	})
-
-	t.Run("should provide config for default Kyma version and azure plan when PR-* Kyma version is passed", func(t *testing.T) {
-		// given
-		expectedCfg := fixAzureConfig()
-		customKymaVer := "PR-1234"
-		// when
-		cfg, err := cfgProvider.ProvideForGivenVersionAndPlan(customKymaVer, broker.AzurePlanName)
-
-		// then
-		require.NoError(t, err)
-		assert.ObjectsAreEqual(expectedCfg, cfg)
-	})
-
-	t.Run("should provide config for default Kyma version and azure plan when main-* Kyma version is passed", func(t *testing.T) {
-		// given
-		expectedCfg := fixAzureConfig()
-		customKymaVer := "main-fffff"
-		// when
-		cfg, err := cfgProvider.ProvideForGivenVersionAndPlan(customKymaVer, broker.AzurePlanName)
+		cfg, err := cfgProvider.ProvideForGivenPlan(broker.AWSPlanName)
 
 		// then
 		require.NoError(t, err)
@@ -85,7 +61,7 @@ func TestConfigProvider(t *testing.T) {
 		}
 		expectedErrMsg := fmt.Sprintf("missing required configuration entires: %s", strings.Join(expectedMissingConfigKeys, ","))
 		// when
-		cfg, err := cfgProvider.ProvideForGivenVersionAndPlan(kymaVersion, wrongConfigPlan)
+		cfg, err := cfgProvider.ProvideForGivenPlan(wrongConfigPlan)
 
 		// then
 		require.Error(t, err)
@@ -99,11 +75,11 @@ func TestConfigProvider(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		cfg, err := cfgProvider.ProvideForGivenVersionAndPlan(kymaVersion, broker.AzurePlanName)
+		cfg, err := cfgProvider.ProvideForGivenPlan(broker.AzurePlanName)
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "configmap with configuration does not exist", errors.Unwrap(err).Error())
+		assert.Equal(t, "configmap keb-config with configuration does not exist", errors.Unwrap(err).Error())
 		assert.Nil(t, cfg)
 	})
 }

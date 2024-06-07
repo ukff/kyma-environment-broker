@@ -128,7 +128,7 @@ func fixProvisioningParametersWithPlanID(planID, region string, platformRegion s
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	cli := fake.NewClientBuilder().WithRuntimeObjects(fixConfigMap(kymaVersion)).Build()
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(context.TODO(), cli, logrus.New(), kymaVersion),
+		kebConfig.NewConfigMapReader(context.TODO(), cli, logrus.New(), "keb-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{

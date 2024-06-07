@@ -64,12 +64,12 @@ func main() {
 
 	// create config provider - provider still uses logrus logger
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.WithField("service", "storage"), cfg.KymaVersion),
+		kebConfig.NewConfigMapReader(ctx, cli, logrus.WithField("service", "storage"), cfg.RuntimeConfigurationConfigMapName),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
 	// create Kyma GVR
-	kymaGVR := getResourceKindProvider(cfg.KymaVersion, configProvider)
+	kymaGVR := getResourceKindProvider(cfg.RuntimeConfigurationConfigMapName, configProvider)
 
 	// create DB connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)

@@ -633,7 +633,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 
 func mockConfigProvider() ConfigurationProvider {
 	configProvider := &automock.ConfigurationProvider{}
-	configProvider.On("ProvideForGivenVersionAndPlan",
+	configProvider.On("ProvideForGivenPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
 		Return(&internal.ConfigForPlan{}, nil)

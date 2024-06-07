@@ -77,7 +77,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 type fakeConfigProvider struct {
 }
 
-func (fakeConfigProvider) ProvideForGivenVersionAndPlan(_, _ string) (*internal.ConfigForPlan, error) {
+func (fakeConfigProvider) ProvideForGivenPlan(_ string) (*internal.ConfigForPlan, error) {
 	return &internal.ConfigForPlan{
 		KymaTemplate: kymaTemplate,
 	}, nil

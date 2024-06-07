@@ -29,7 +29,7 @@ type (
 	}
 
 	ConfigurationProvider interface {
-		ProvideForGivenVersionAndPlan(kymaVersion, planName string) (*internal.ConfigForPlan, error)
+		ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
 	}
 )
 
@@ -138,7 +138,7 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 
 	planName := broker.PlanNamesMapping[provisioningParameters.PlanID]
 
-	cfg, err := f.configProvider.ProvideForGivenVersionAndPlan(version.Version, planName)
+	cfg, err := f.configProvider.ProvideForGivenPlan(planName)
 	if err != nil {
 		return nil, fmt.Errorf("while getting configuration for given version and plan: %w", err)
 	}
@@ -231,7 +231,7 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 
 	planName := broker.PlanNamesMapping[provisioningParameters.PlanID]
 
-	cfg, err := f.configProvider.ProvideForGivenVersionAndPlan(version.Version, planName)
+	cfg, err := f.configProvider.ProvideForGivenPlan(planName)
 	if err != nil {
 		return nil, fmt.Errorf("while getting configuration for given version and plan: %w", err)
 	}
@@ -283,7 +283,7 @@ func (f *InputBuilderFactory) CreateUpgradeShootInput(provisioningParameters int
 
 	planName := broker.PlanNamesMapping[provisioningParameters.PlanID]
 
-	cfg, err := f.configProvider.ProvideForGivenVersionAndPlan(version.Version, planName)
+	cfg, err := f.configProvider.ProvideForGivenPlan(planName)
 	if err != nil {
 		return nil, fmt.Errorf("while getting configuration for given version and plan: %w", err)
 	}

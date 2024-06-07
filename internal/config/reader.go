@@ -7,53 +7,41 @@ import (
 
 	"github.com/sirupsen/logrus"
 	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	namespace                 = "kcp-system"
 	runtimeVersionLabelPrefix = "runtime-version-"
-	kebConfigLabel            = "keb-config"
+	kebConfigLabel            = "keb-config-runtime-configuration"
 	defaultConfigKey          = "default"
 )
 
 type ConfigMapReader struct {
-	ctx                context.Context
-	k8sClient          client.Client
-	logger             logrus.FieldLogger
-	defaultKymaVersion string
+	ctx           context.Context
+	k8sClient     client.Client
+	logger        logrus.FieldLogger
+	configMapName string
 }
 
-func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger logrus.FieldLogger, defaultKymaVersion string) *ConfigMapReader {
-	return &ConfigMapReader{
-		ctx:                ctx,
-		k8sClient:          k8sClient,
-		logger:             logger,
-		defaultKymaVersion: defaultKymaVersion,
-	}
+func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger logrus.FieldLogger, cmName string) ConfigReader {
+	return &argoReader{target: &ConfigMapReader{
+		ctx:           ctx,
+		k8sClient:     k8sClient,
+		logger:        logger,
+		configMapName: cmName,
+	}}
 }
 
-func (r *ConfigMapReader) Read(kymaVersion, planName string) (string, error) {
-	r.logger.Infof("getting configuration for Kyma version %v and %v plan", kymaVersion, planName)
-	var cfgMapList *coreV1.ConfigMapList
-	cfgMapList, err := r.getConfigMapList(kymaVersion)
+func (r *ConfigMapReader) Read(planName string) (string, error) {
+	r.logger.Infof("getting configuration for %v plan", planName)
+
+	cfgMap, err := r.getConfigMap()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("while getting configuration configmap: %w", err)
 	}
-	if len(cfgMapList.Items) == 0 && isCustomVersion(kymaVersion) {
-		r.logger.Infof("configuration for Kyma version %v does not exist. Getting configuration for the latest official release version: %v", kymaVersion, r.defaultKymaVersion)
-		cfgMapList, err = r.getConfigMapList(r.defaultKymaVersion)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if err = r.verifyConfigMapExistence(cfgMapList); err != nil {
-		return "", fmt.Errorf("while verifying configuration configmap existence: %w", err)
-	}
-
-	cfgMap := cfgMapList.Items[0]
-	cfgString, err := r.getConfigStringForPlanOrDefaults(&cfgMap, planName)
+	cfgString, err := r.getConfigStringForPlanOrDefaults(cfgMap, planName)
 	if err != nil {
 		return "", fmt.Errorf("while getting configuration string: %w", err)
 	}
@@ -61,39 +49,13 @@ func (r *ConfigMapReader) Read(kymaVersion, planName string) (string, error) {
 	return cfgString, nil
 }
 
-func (r *ConfigMapReader) getConfigMapList(kymaVersion string) (*coreV1.ConfigMapList, error) {
-	cfgMapList := &coreV1.ConfigMapList{}
-	listOptions := configMapListOptions(kymaVersion)
-	if err := r.k8sClient.List(r.ctx, cfgMapList, listOptions...); err != nil {
-		return nil, fmt.Errorf("while fetching configmap with configuration for Kyma version %v: %w",
-			kymaVersion, err)
+func (r *ConfigMapReader) getConfigMap() (*coreV1.ConfigMap, error) {
+	cfgMap := &coreV1.ConfigMap{}
+	err := r.k8sClient.Get(r.ctx, client.ObjectKey{Namespace: namespace, Name: r.configMapName}, cfgMap)
+	if errors.IsNotFound(err) {
+		return nil, fmt.Errorf("configmap %s with configuration does not exist", r.configMapName)
 	}
-	return cfgMapList, nil
-}
-
-func configMapListOptions(version string) []client.ListOption {
-	versionLabel := runtimeVersionLabelPrefix + strings.ToLower(version)
-
-	labels := map[string]string{
-		versionLabel:   "true",
-		kebConfigLabel: "true",
-	}
-
-	return []client.ListOption{
-		client.InNamespace(namespace),
-		client.MatchingLabels(labels),
-	}
-}
-
-func (r *ConfigMapReader) verifyConfigMapExistence(cfgMapList *coreV1.ConfigMapList) error {
-	switch n := len(cfgMapList.Items); n {
-	case 1:
-		return nil
-	case 0:
-		return fmt.Errorf("configmap with configuration does not exist")
-	default:
-		return fmt.Errorf("allowed number of configuration configmaps: 1, found: %d", n)
-	}
+	return cfgMap, err
 }
 
 func (r *ConfigMapReader) getConfigStringForPlanOrDefaults(cfgMap *coreV1.ConfigMap, planName string) (string, error) {
@@ -108,6 +70,16 @@ func (r *ConfigMapReader) getConfigStringForPlanOrDefaults(cfgMap *coreV1.Config
 	return cfgString, nil
 }
 
-func isCustomVersion(version string) bool {
-	return strings.HasPrefix(version, "PR-") || strings.HasPrefix(version, "main-")
+type argoReader struct {
+	target ConfigReader
+}
+
+func (r *argoReader) Read(planName string) (string, error) {
+	content, err := r.target.Read(planName)
+	if err != nil {
+		return "", err
+	}
+	// a workaround for the issue with the Argo CD, see https://github.com/argoproj/argo-cd/pull/4729/files
+	content = strings.Replace(content, "Kind:", "kind:", -1)
+	return content, nil
 }
