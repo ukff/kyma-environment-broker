@@ -95,15 +95,12 @@ func (s *runtimeState) GetLatestWithKymaVersionByRuntimeID(runtimeID string) (in
 		if state.KymaVersion != "" {
 			return state, nil
 		}
-		if state.ClusterSetup != nil && state.ClusterSetup.KymaConfig.Version != "" {
-			return state, nil
-		}
 		if state.KymaConfig.Version != "" {
 			return state, nil
 		}
 	}
 
-	return internal.RuntimeState{}, dberr.NotFound("runtime state with Reconciler input for runtime with ID: %s not found", runtimeID)
+	return internal.RuntimeState{}, dberr.NotFound("failed to find RuntimeState with kyma version for runtime %s", runtimeID)
 }
 
 func (s *runtimeState) GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
