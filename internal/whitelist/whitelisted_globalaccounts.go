@@ -2,9 +2,8 @@ package whitelist
 
 import (
 	"fmt"
-	"os"
 
-	"gopkg.in/yaml.v2"
+	"github.com/kyma-project/kyma-environment-broker/internal/utils"
 )
 
 const (
@@ -20,15 +19,12 @@ func IsNotWhitelisted(globalAccountId string, whitelist Set) bool {
 
 func ReadWhitelistedGlobalAccountIdsFromFile(filename string) (Set, error) {
 	yamlData := make(map[string][]string)
+	err := utils.UnmarshalYamlFile(filename, &yamlData)
+	if err != nil {
+		return Set{}, fmt.Errorf("while unmarshalling a file with whitelisted GlobalAccountIds config: %w", err)
+	}
+
 	whitelistSet := Set{}
-	var whitelist, err = os.ReadFile(filename)
-	if err != nil {
-		return whitelistSet, fmt.Errorf("while reading %s file with whitelisted GlobalAccountIds config: %w", filename, err)
-	}
-	err = yaml.Unmarshal(whitelist, &yamlData)
-	if err != nil {
-		return whitelistSet, fmt.Errorf("while unmarshalling a file with whitelisted GlobalAccountIds config: %w", err)
-	}
 	for _, id := range yamlData[Key] {
 		whitelistSet[id] = struct{}{}
 	}

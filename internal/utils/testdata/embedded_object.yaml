@@ -1,0 +1,5 @@
+obj:
+  prop1: 
+    another_obj:
+      prop2: value2
+      prop3: value3
