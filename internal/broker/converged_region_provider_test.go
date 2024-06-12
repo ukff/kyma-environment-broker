@@ -12,7 +12,7 @@ func TestOneForAllConvergedCloudRegionsProvider_GetDefaultRegions(t *testing.T) 
 	c := &OneForAllConvergedCloudRegionsProvider{}
 
 	// when
-	result := c.GetRegions()
+	result := c.GetRegions("")
 
 	// then
 	assert.Equal(t, []string{"eu-de-1"}, result)

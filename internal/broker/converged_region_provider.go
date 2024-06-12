@@ -10,7 +10,7 @@ type RegionReader interface {
 }
 
 type ConvergedCloudRegionProvider interface {
-	GetRegions() []string
+	GetRegions(string) []string
 }
 
 type DefaultConvergedCloudRegionsProvider struct {
@@ -29,8 +29,8 @@ func NewPathBasedConvergedCloudRegionsProvider(regionConfigurationPath string, r
 	}, nil
 }
 
-func (c *DefaultConvergedCloudRegionsProvider) GetRegions(region string) []string {
-	item, found := c.regionConfiguration[region]
+func (c *DefaultConvergedCloudRegionsProvider) GetRegions(mappedRegion string) []string {
+	item, found := c.regionConfiguration[mappedRegion]
 
 	if !found {
 		return []string{}
@@ -42,6 +42,6 @@ func (c *DefaultConvergedCloudRegionsProvider) GetRegions(region string) []strin
 type OneForAllConvergedCloudRegionsProvider struct {
 }
 
-func (c *OneForAllConvergedCloudRegionsProvider) GetRegions() []string {
+func (c *OneForAllConvergedCloudRegionsProvider) GetRegions(mappedRegion string) []string {
 	return []string{"eu-de-1"}
 }

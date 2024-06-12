@@ -62,7 +62,7 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 		euaccess.IsEURestrictedAccess(platformRegion),
 		b.cfg.UseSmallerMachineTypes,
 		b.cfg.EnableShootAndSeedSameRegion,
-		b.convergedRegionsProvider.GetRegions(),
+		b.convergedRegionsProvider.GetRegions(platformRegion),
 	) {
 
 		// filter out not enabled plans
