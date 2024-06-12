@@ -330,6 +330,8 @@ spec:
               value: /config/trialRegionMapping.yaml
             - name: APP_EU_ACCESS_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: /config/euAccessWhitelistedGlobalAccountIds.yaml
+            - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
+              value: /config/sapConvergedCloudPlanRegionMappings.yaml
             - name: APP_EU_ACCESS_REJECTION_MESSAGE
               value: "{{ .Values.euAccessRejectionMessage }}"
             - name: APP_FREEMIUM_PROVIDERS

@@ -211,6 +211,15 @@ euAccessWhitelistedGlobalAccountIds: |-
   whitelist:
 euAccessRejectionMessage: "Due to limited availability, you need to open support ticket before attempting to provision Kyma clusters in EU Access only regions"
 
+# Following data serves just as a template
+sapConvergedCloudPlanRegionMappings: |-
+  cf-eu20-staging:
+    - eu-de-1
+    - eu-de-2
+  cf-eu21-staging:
+    - eu-de-3
+    - eu-de-4
+
 kymaVersion: "2.0"
 kymaVersionOnDemand: "false"
 
