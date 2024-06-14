@@ -50,7 +50,7 @@ type UpdateEndpoint struct {
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
 
-	convergedRegionsProvider ConvergedCloudRegionProvider
+	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 }
 
 func NewUpdate(cfg Config,
@@ -66,23 +66,23 @@ func NewUpdate(cfg Config,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
-	convergedRegionsProvider ConvergedCloudRegionProvider,
+	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
-		config:                    cfg,
-		log:                       log.WithField("service", "UpdateEndpoint"),
-		instanceStorage:           instanceStorage,
-		runtimeStates:             runtimeStates,
-		operationStorage:          operationStorage,
-		contextUpdateHandler:      ctxUpdateHandler,
-		processingEnabled:         processingEnabled,
-		subAccountMovementEnabled: subAccountMovementEnabled,
-		updatingQueue:             queue,
-		plansConfig:               plansConfig,
-		planDefaults:              planDefaults,
-		dashboardConfig:           dashboardConfig,
-		kcBuilder:                 kcBuilder,
-		convergedRegionsProvider:  convergedRegionsProvider,
+		config:                        cfg,
+		log:                           log.WithField("service", "UpdateEndpoint"),
+		instanceStorage:               instanceStorage,
+		runtimeStates:                 runtimeStates,
+		operationStorage:              operationStorage,
+		contextUpdateHandler:          ctxUpdateHandler,
+		processingEnabled:             processingEnabled,
+		subAccountMovementEnabled:     subAccountMovementEnabled,
+		updatingQueue:                 queue,
+		plansConfig:                   plansConfig,
+		planDefaults:                  planDefaults,
+		dashboardConfig:               dashboardConfig,
+		kcBuilder:                     kcBuilder,
+		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
 	}
 }
 
@@ -387,7 +387,7 @@ func (b *UpdateEndpoint) isKyma2(instance *internal.Instance) (bool, string, err
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedRegionsProvider.GetRegions(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 

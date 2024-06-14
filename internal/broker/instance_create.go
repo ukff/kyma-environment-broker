@@ -75,7 +75,7 @@ type ProvisionEndpoint struct {
 
 	freemiumWhiteList whitelist.Set
 
-	convergedRegionsProvider ConvergedCloudRegionProvider
+	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
 	log logrus.FieldLogger
 }
@@ -96,7 +96,7 @@ func NewProvision(cfg Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
-	convergedRegionsProvider ConvergedCloudRegionProvider,
+	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -105,26 +105,26 @@ func NewProvision(cfg Config,
 	}
 
 	return &ProvisionEndpoint{
-		config:                   cfg,
-		operationsStorage:        operationsStorage,
-		instanceStorage:          instanceStorage,
-		instanceArchivedStorage:  instanceArchivedStorage,
-		queue:                    queue,
-		builderFactory:           builderFactory,
-		log:                      log.WithField("service", "ProvisionEndpoint"),
-		enabledPlanIDs:           enabledPlanIDs,
-		plansConfig:              plansConfig,
-		kymaVerOnDemand:          kvod,
-		shootDomain:              gardenerConfig.ShootDomain,
-		shootProject:             gardenerConfig.Project,
-		shootDnsProviders:        gardenerConfig.DNSProviders,
-		planDefaults:             planDefaults,
-		euAccessWhitelist:        euAccessWhitelist,
-		euAccessRejectionMessage: euRejectMessage,
-		dashboardConfig:          dashboardConfig,
-		freemiumWhiteList:        freemiumWhitelist,
-		kcBuilder:                kcBuilder,
-		convergedRegionsProvider: convergedRegionsProvider,
+		config:                        cfg,
+		operationsStorage:             operationsStorage,
+		instanceStorage:               instanceStorage,
+		instanceArchivedStorage:       instanceArchivedStorage,
+		queue:                         queue,
+		builderFactory:                builderFactory,
+		log:                           log.WithField("service", "ProvisionEndpoint"),
+		enabledPlanIDs:                enabledPlanIDs,
+		plansConfig:                   plansConfig,
+		kymaVerOnDemand:               kvod,
+		shootDomain:                   gardenerConfig.ShootDomain,
+		shootProject:                  gardenerConfig.Project,
+		shootDnsProviders:             gardenerConfig.DNSProviders,
+		planDefaults:                  planDefaults,
+		euAccessWhitelist:             euAccessWhitelist,
+		euAccessRejectionMessage:      euRejectMessage,
+		dashboardConfig:               dashboardConfig,
+		freemiumWhiteList:             freemiumWhitelist,
+		kcBuilder:                     kcBuilder,
+		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
 	}
 }
 
@@ -477,7 +477,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedRegionsProvider.GetRegions(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
 	plan := plans[details.PlanID]
 	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
 

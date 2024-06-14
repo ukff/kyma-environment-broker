@@ -19,21 +19,41 @@ func TestOneForAllConvergedCloudRegionsProvider_GetDefaultRegions(t *testing.T) 
 }
 
 func TestPathBasedConvergedCloudRegionsProvider_FactoryMethod(t *testing.T) {
-	// given
-	configLocation := "path-to-config"
-	regions := map[string][]string{
-		"key": {"value"},
-	}
 
-	mockReader := automock.NewRegionReader(t)
-	mockReader.On("Read", configLocation).Return(regions, nil)
+	t.Run("should call config reader, forward configLocation and init own configuration with its results ", func(t *testing.T) {
+		// given
+		configLocation := "path-to-config"
+		regions := map[string][]string{
+			"key": {"value"},
+		}
 
-	// when
-	provider, err := NewPathBasedConvergedCloudRegionsProvider(configLocation, mockReader)
+		mockReader := automock.NewRegionReader(t)
+		mockReader.On("Read", configLocation).Return(regions, nil)
 
-	// then
-	assert.NoError(t, err)
-	assert.Equal(t, regions, provider.regionConfiguration)
+		// when
+		provider, err := NewDefaultConvergedCloudRegionsProvider(configLocation, mockReader)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, regions, provider.(*DefaultConvergedCloudRegionsProvider).regionConfiguration)
+	})
+
+	t.Run("should return error if called with incorrect configuration", func(t *testing.T) {
+		// when
+		provider, err := NewDefaultConvergedCloudRegionsProvider("test", nil)
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, provider)
+
+		// when
+		provider, err = NewDefaultConvergedCloudRegionsProvider("", automock.NewRegionReader(t))
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, provider)
+	})
+
 }
 
 func TestPathBasedConvergedCloudRegionsProvider_GetRegions(t *testing.T) {
@@ -105,4 +125,5 @@ func TestPathBasedConvergedCloudRegionsProvider_GetRegions(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result, 0)
 	})
+
 }
