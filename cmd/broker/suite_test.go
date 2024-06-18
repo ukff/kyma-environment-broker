@@ -999,8 +999,9 @@ func fixConfig() *Config {
 		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:         process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 
-		ArchiveEnabled:  true,
-		CleaningEnabled: true,
+		ArchiveEnabled:                          true,
+		CleaningEnabled:                         true,
+		SapConvergedCloudRegionMappingsFilePath: "testdata/old-sap-converged-cloud-region-mappings.yaml",
 	}
 }
 
