@@ -293,6 +293,42 @@ func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 }
 
+func TestProvisioning_AllNetworkingParametersForAWS(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+		
+				"context": {
+					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
+						"subaccount_id": "test",
+					"user_id": "piotr.miskiewicz@sap.com"
+					
+				},
+				"parameters": {
+					"name": "test",
+					"region": "eu-central-1",
+					"networking": {
+						"nodes": "192.168.48.0/20",
+						"pods": "10.104.0.0/24",
+						"services": "10.105.0.0/24"
+					}
+				}
+			}
+		}`)
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processProvisioningByOperationID(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+}
+
 func TestProvisioning_AWSWithEURestrictedAccessBadRequest(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
