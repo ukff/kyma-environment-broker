@@ -107,7 +107,6 @@ type Config struct {
 	Kubeconfig  kubeconfig.Config
 
 	KymaVersion                                                         string
-	EnableOnDemandVersion                                               bool `envconfig:"default=false"`
 	ManagedRuntimeComponentsYAMLFilePath                                string
 	NewAdditionalRuntimeComponentsYAMLFilePath                          string
 	SkrOidcDefaultValuesYAMLFilePath                                    string
@@ -126,11 +125,6 @@ type Config struct {
 	EDP edp.Config
 
 	Notification notification.Config
-
-	VersionConfig struct {
-		Namespace string
-		Name      string
-	}
 
 	KymaDashboardConfig dashboard.Config
 
@@ -355,8 +349,7 @@ func main() {
 	_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 
 	// define steps
-	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
-	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, db.RuntimeStates())
+	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, db.RuntimeStates())
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
@@ -491,7 +484,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
-			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
+			provisionQueue, planValidator, defaultPlansConfig,
 			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
