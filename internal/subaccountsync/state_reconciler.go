@@ -271,9 +271,8 @@ func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID suba
 
 	state, ok := reconciler.inMemoryState[subaccountID]
 	if !ok {
-		// we create new state, there is no state for this subaccount yet (no data form CIS to compare
-		//log
-		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state for updated Kyma CR", subaccountID))
+		// we create new state, there is no state for this subaccount yet (no data from CIS to compare)
+		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state - creating state", subaccountID))
 		reconciler.inMemoryState[subaccountID] = subaccountStateType{
 			resourcesState: subaccountRuntimesType{runtimeID: runtimeState},
 		}
@@ -323,17 +322,18 @@ func (reconciler *stateReconcilerType) deleteRuntimeFromState(subaccountID subac
 // There is no guarantee that G1 will finish before G2 and the final state will be "true". With the updater we are sure that the state will be updated in the correct order.
 
 func (reconciler *stateReconcilerType) enqueueSubaccountIfOutdated(subaccountID subaccountIDType, state subaccountStateType) {
-	if reconciler.isResourceOutdated(state) {
+	if reconciler.isResourceOutdated(subaccountID, state) {
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is outdated, enqueuing, setting betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
 		state := reconciler.inMemoryState[subaccountID]
 		element := syncqueues.QueueElement{SubaccountID: string(subaccountID), ModifiedAt: state.cisState.ModifiedDate, BetaEnabled: fmt.Sprintf("%t", state.cisState.BetaEnabled)}
 		reconciler.syncQueue.Insert(element)
+		reconciler.logger.Debug(fmt.Sprintf("Enqueued subaccount: %s betaEnabled: %t", subaccountID, state.cisState.BetaEnabled))
 	} else {
-		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is up to date with betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is not to be updated", subaccountID))
 	}
 }
 
-func (reconciler *stateReconcilerType) isResourceOutdated(state subaccountStateType) bool {
+func (reconciler *stateReconcilerType) isResourceOutdated(subaccountID subaccountIDType, state subaccountStateType) bool {
 	var outdated bool
 
 	if state.resourcesState != nil && state.cisState.ModifiedDate > 0 {
@@ -344,6 +344,9 @@ func (reconciler *stateReconcilerType) isResourceOutdated(state subaccountStateT
 			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled != "true")
 			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
 		}
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d runtimes, outdated: %t", subaccountID, len(runtimes), outdated))
+	} else {
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d resources, cis state modified: %t: not outdated", subaccountID, len(state.resourcesState), state.cisState.ModifiedDate > 0))
 	}
 	return outdated
 }
