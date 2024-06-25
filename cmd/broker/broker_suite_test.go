@@ -668,14 +668,19 @@ func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.
 	return r
 }
 
-func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
+func (s *BrokerSuiteTest) ReadResponse(resp *http.Response) []byte {
 	m, err := io.ReadAll(resp.Body)
 	s.Log(string(m))
 	require.NoError(s.t, err)
+	return m
+}
+
+func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
+	m := s.ReadResponse(resp)
 	var provisioningResp struct {
 		Operation string `json:"operation"`
 	}
-	err = json.Unmarshal(m, &provisioningResp)
+	err := json.Unmarshal(m, &provisioningResp)
 	require.NoError(s.t, err)
 
 	return provisioningResp.Operation
