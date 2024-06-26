@@ -81,6 +81,11 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 	if q.eventHandler != nil && q.eventHandler.OnInsert != nil {
 		q.eventHandler.OnInsert(q.size)
 	}
+
+	//integrity check
+	if q.size != len(q.idx) {
+		q.log.Warn(fmt.Sprintf("Queue size %d is different from index size %d", q.size, len(q.idx)))
+	}
 }
 
 func (q *SubaccountAwarePriorityQueueWithCallbacks) Extract() (QueueElement, bool) {
