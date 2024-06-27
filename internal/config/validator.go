@@ -9,7 +9,7 @@ import (
 )
 
 // comma separated list of required fields
-const requiredFields = "additional-components"
+const requiredFields = "kyma-template"
 
 type ConfigMapKeysValidator struct{}
 

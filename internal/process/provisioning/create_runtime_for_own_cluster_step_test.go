@@ -172,10 +172,7 @@ func fixConfigMap(defaultKymaVersion string) k8sruntime.Object {
 			},
 		},
 		Data: map[string]string{
-			"default": `additional-components:
-  - name: "additional-component1"
-    namespace: "kyma-system"`,
-		},
+			"default": `kyma-template: "---"`},
 	}
 
 	return kebCfg

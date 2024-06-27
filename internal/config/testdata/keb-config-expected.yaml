@@ -30,6 +30,17 @@ data:
         source:
           url: "https://test.local/artifacts/additional-component3-0.0.1.tgz"
   azure: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        name: tbd
+        namespace: kyma-system
+      spec:
+        sync:
+            strategy: secret
+        channel: stable
+        modules: []
     additional-components:
       - name: "additional-component1"
         namespace: "kyma-system"
@@ -41,6 +52,17 @@ data:
         source:
           url: "https://azure.domain/component/azure-component.git"
   gcp: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        name: tbd
+        namespace: kyma-system
+      spec:
+        sync:
+            strategy: secret
+        channel: stable
+        modules: []
     additional-components:
       - name: "additional-component1"
         namespace: "kyma-system"
@@ -54,6 +76,17 @@ data:
         source:
           url: "https://gcp.domain/component/gcp-component.git"
   trial: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        name: tbd
+        namespace: kyma-system
+      spec:
+        sync:
+            strategy: secret
+        channel: stable
+        modules: []
     additional-components:
       # no components
   wrong: |-

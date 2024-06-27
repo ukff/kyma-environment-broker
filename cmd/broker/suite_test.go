@@ -491,7 +491,6 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 			Namespace: "kcp-system",
 			Labels: map[string]string{
 				"keb-config": "true",
-				fmt.Sprintf("runtime-version-%s", defaultKymaVersion): "true",
 			},
 		},
 		Data: map[string]string{
@@ -511,12 +510,7 @@ kyma-template: |-
             customResourcePolicy: CreateAndDelete
           - name: keda
             channel: fast
-
-additional-components:
-  - name: "btp-operator"
-    namespace: "kyma-system"
-    source:
-      url: "https://btp-operator"`,
+`,
 		},
 	}
 

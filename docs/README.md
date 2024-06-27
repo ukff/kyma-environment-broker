@@ -43,3 +43,4 @@ For technical details of KEB, go to the `contributor` directory:
 
 You can also read about:  
 * [Event Data Platform Tools](https://github.com/kyma-project/kyma-environment-broker/blob/main/utils/edp-registrator/README.md)
+* [Install KEB in the CN Region](../resources/cn/cn.md)

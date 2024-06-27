@@ -21,6 +21,10 @@ spec:
       securityContext:
         {{ toYaml . | nindent 12 }}
       {{- end }}
+      {{- if ne .Values.imagePullSecret "" }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
       containers:
         - name: runtime-reconciler
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-runtime-reconciler:{{ .Values.global.images.kyma_environment_runtime_reconciler.version }}"

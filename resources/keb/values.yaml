@@ -9,7 +9,7 @@ global:
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:
-      dir: "control-plane"
+      dir: "control-plane/"
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
@@ -361,6 +361,7 @@ subaccountCleanup:
   schedule: "0 1 * * *"
 
 trialCleanup:
+  enabled: true
   schedule: "0,15,30,45 * * * *"
   dryRun: true
   expirationPeriod: 336h
@@ -368,6 +369,7 @@ trialCleanup:
   testSubaccountID: "prow-keb-trial-suspension"
 
 freeCleanup:
+  enabled: true
   schedule: "0,15,30,45 * * * *"
   dryRun: true
   expirationPeriod: 2160h # 90 days
@@ -377,6 +379,7 @@ freeCleanup:
 deprovisionRetrigger:
   schedule: "0 2 * * *"
   dryRun: true
+  enabled: true
 
 subaccountSync:
   enabled: true
@@ -460,4 +463,6 @@ runtimeConfiguration: |-
       spec:
         channel: fast
         modules: []
+    additional-components: []
 
+imagePullSecret: ""

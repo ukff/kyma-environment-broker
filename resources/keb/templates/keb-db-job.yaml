@@ -29,6 +29,10 @@ spec:
           securityContext:
             {{ toYaml . }}
           {{- end }}
+          {{- if ne .Values.imagePullSecret "" }}
+          imagePullSecrets:
+            - name: {{ .Values.imagePullSecret }}
+          {{- end }}
           restartPolicy: Never
           containers:
           - name: {{ $job.cronJobName }}

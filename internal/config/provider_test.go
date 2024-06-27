@@ -57,7 +57,7 @@ func TestConfigProvider(t *testing.T) {
 	t.Run("validator should return error indicating missing required fields", func(t *testing.T) {
 		// given
 		expectedMissingConfigKeys := []string{
-			"additional-components",
+			"kyma-template",
 		}
 		expectedErrMsg := fmt.Sprintf("missing required configuration entires: %s", strings.Join(expectedMissingConfigKeys, ","))
 		// when

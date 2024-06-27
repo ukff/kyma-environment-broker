@@ -1,3 +1,4 @@
+{{ if .Values.deprovisionRetrigger.enabled }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -16,6 +17,10 @@ spec:
             {{ toYaml . | nindent 12 }}
           {{- end }}
           restartPolicy: Never
+          {{- if ne .Values.imagePullSecret "" }}
+          imagePullSecrets:
+            - name: {{ .Values.imagePullSecret }}
+          {{- end }}
           containers:
             - image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_deprovision_retrigger_job.dir }}kyma-environment-deprovision-retrigger-job:{{ .Values.global.images.kyma_environment_deprovision_retrigger_job.version }}"
               name: deprovision-retrigger-job
@@ -118,3 +123,4 @@ spec:
                 optional: true
           {{- end}}
   schedule: "{{ .Values.deprovisionRetrigger.schedule }}"
+{{ end }}

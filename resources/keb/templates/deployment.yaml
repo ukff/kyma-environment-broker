@@ -20,6 +20,10 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app-config.yaml") . | sha256sum }}
     spec:
+      {{- if ne .Values.imagePullSecret "" }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
       {{ if .Values.global.isLocalEnv }}
       # HostAliases are used by Pod to resolve kyma.local domain
       hostAliases:

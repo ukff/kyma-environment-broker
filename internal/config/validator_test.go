@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	additionalComponentsConfigKey = "additional-components"
+	kymaTemplateConfigKey = "kyma-template"
 )
 
 func TestValidate(t *testing.T) {
@@ -18,10 +18,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("should validate whether config contains required fields", func(t *testing.T) {
 		// given
-		cfgString := `additional-components:
-  - name: "additional-component1"
-    namespace: "kyma-system"
-optional-field: "optional"`
+		cfgString := `kyma-template: ""`
 
 		// when
 		err := cfgValidator.Validate(cfgString)
@@ -39,6 +36,6 @@ optional-field: "optional"`
 
 		// then
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), additionalComponentsConfigKey)
+		assert.Contains(t, err.Error(), kymaTemplateConfigKey)
 	})
 }

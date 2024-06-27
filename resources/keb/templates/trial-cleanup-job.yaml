@@ -1,3 +1,4 @@
+{{- if .Values.trialCleanup.enabled }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -16,6 +17,10 @@ spec:
             {{ toYaml . | nindent 12 }}
           {{- end }}
           restartPolicy: Never
+          {{- if ne .Values.imagePullSecret "" }}
+          imagePullSecrets:
+            - name: {{ .Values.imagePullSecret }}
+          {{- end }}
           containers:
             - image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_expirator_job.dir }}kyma-environment-expirator-job:{{ .Values.global.images.kyma_environment_expirator_job.version }}"
               name: trial-cleanup-job
@@ -126,3 +131,4 @@ spec:
                 optional: true
           {{- end}}
   schedule: "{{ .Values.trialCleanup.schedule }}"
+  {{ end }}
