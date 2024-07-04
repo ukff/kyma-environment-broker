@@ -1,8 +1,5 @@
 # Check Orchestration Status
 
-> [!NOTE] 
-> This document has been deprecated.
-> 
 This tutorial shows how to check the orchestration status. Using this API, you can fetch data about:
 - A single orchestration
 - All orchestrations
@@ -156,7 +153,7 @@ A successful call returns the list of all orchestrations:
    curl --request GET "https://$BROKER_URL/orchestrations/$ORCHESTRATION_ID/operations/$OPERATION_ID --header "$AUTHORIZATION_HEADER""
    ```
 
-   A successful call returns the upgrade operation object with the **kymaConfig** and **clusterConfig** fields:
+   A successful call returns the upgrade operation object with the **clusterConfig** fields:
 
       ```json
    {
@@ -171,11 +168,6 @@ A successful call returns the list of all orchestrations:
        "shootName": "c-3a3e0af",
        "maintenanceWindowBegin": "0000-01-01T04:00:00Z",
        "maintenanceWindowEnd": "0000-01-01T08:00:00Z",
-       "kymaConfig": {
-           "version": "1.15.1",
-           "components": [],
-           "configuration": []
-       },
        "clusterConfig": {}
    }
       ```
