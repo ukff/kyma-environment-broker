@@ -80,6 +80,16 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),
 		},
 		{
+			condition: provisioning.SkipForOwnClusterPlan,
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.RuntimeStates(), db.Instances()),
+		},
+		{
+			condition: provisioning.SkipForOwnClusterPlan,
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.RuntimeStates(), db.Instances(), cfg.Broker.KimConfig),
+		},
+		{
 			condition: provisioning.DoForOwnClusterPlanOnly,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeForOwnClusterStep(db.Operations(), db.Instances()),
