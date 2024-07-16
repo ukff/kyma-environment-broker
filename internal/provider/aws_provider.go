@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"math/rand"
 	"net/netip"
-	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
@@ -42,6 +41,7 @@ type (
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
 	}
+
 	AWSTrialInput struct {
 		PlatformRegionMapping  map[string]string
 		UseSmallerMachineTypes bool
@@ -107,29 +107,6 @@ func ZoneForAWSRegion(region string) string {
 
 	zone := string(zones[rand.Intn(len(zones))])
 	return fmt.Sprintf("%s%s", region, zone)
-}
-
-func MultipleZonesForAWSRegion(region string, zonesCount int) []string {
-	zones, found := awsZones[region]
-	if !found {
-		zones = "a"
-		zonesCount = 1
-	}
-
-	availableZones := strings.Split(zones, "")
-	rand.Shuffle(len(availableZones), func(i, j int) { availableZones[i], availableZones[j] = availableZones[j], availableZones[i] })
-	if zonesCount > len(availableZones) {
-		// get maximum number of zones for region
-		zonesCount = len(availableZones)
-	}
-
-	availableZones = availableZones[:zonesCount]
-
-	var generatedZones []string
-	for _, zone := range availableZones {
-		generatedZones = append(generatedZones, fmt.Sprintf("%s%s", region, zone))
-	}
-	return generatedZones
 }
 
 /*

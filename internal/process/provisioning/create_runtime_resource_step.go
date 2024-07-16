@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"sigs.k8s.io/yaml"
 
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
@@ -25,14 +29,17 @@ type CreateRuntimeResourceStep struct {
 	instanceStorage     storage.Instances
 	runtimeStateStorage storage.RuntimeStates
 	kimConfig           kim.Config
+
+	config input.Config
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, kimConfig kim.Config) *CreateRuntimeResourceStep {
+func NewCreateRuntimeResourceStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, kimConfig kim.Config, cfg input.Config) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
 		operationManager:    process.NewOperationManager(os),
 		instanceStorage:     is,
 		runtimeStateStorage: runtimeStorage,
 		kimConfig:           kimConfig,
+		config:              cfg,
 	}
 }
 
@@ -95,17 +102,24 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 	runtime.ObjectMeta.Name = operation.RuntimeID
 	runtime.ObjectMeta.Namespace = kymaNamespace
 	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName)
-	runtime.Spec.Shoot.Provider = s.createShootProvider(operation)
-	runtime.Spec.Shoot.Provider.Workers = []gardener.Worker{}
-	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
+
+	// get plan specific values (like zones, default machine type etc.
+	values, err := s.providerValues(&operation)
+	if err != nil {
+		return nil, err
+	}
+
+	providerObj, err := s.createShootProvider(&operation, values)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime.Spec.Shoot.Provider = providerObj
+	runtime.Spec.Shoot.Region = values.Region
+	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
+
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	return &runtime, nil
-}
-
-func (s *CreateRuntimeResourceStep) createShootProvider(operation internal.Operation) imv1.Provider {
-	provider := imv1.Provider{}
-	logrus.Info("Creating Shoot Provider - TO BE IMPLEMENTED")
-	return provider
 }
 
 func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, kymaName string) map[string]string {
@@ -146,4 +160,90 @@ func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
 		return "", err
 	}
 	return string(result), nil
+}
+
+func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Operation, values provider.Values) (imv1.Provider, error) {
+
+	maxSurge := intstr.FromInt32(int32(DefaultIfParamNotSet(values.ZonesCount, operation.ProvisioningParameters.Parameters.MaxSurge)))
+	maxUnavailable := intstr.FromInt32(int32(DefaultIfParamNotSet(0, operation.ProvisioningParameters.Parameters.MaxUnavailable)))
+
+	max := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
+	min := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
+
+	providerObj := imv1.Provider{
+		Type: values.ProviderType,
+		Workers: []gardener.Worker{
+			{
+				Machine: gardener.Machine{
+					Type: DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType),
+					Image: &gardener.ShootMachineImage{
+						Name:    s.config.MachineImage,
+						Version: &s.config.MachineImageVersion,
+					},
+				},
+				Maximum:        max,
+				Minimum:        min,
+				MaxSurge:       &maxSurge,
+				MaxUnavailable: &maxUnavailable,
+				Zones:          values.Zones,
+			},
+		},
+	}
+	return providerObj, nil
+}
+
+type Provider interface {
+	Provide() provider.Values
+}
+
+func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation) (provider.Values, error) {
+	var p Provider
+	switch operation.ProvisioningParameters.PlanID {
+	// TODO: implement input provider for Azure
+	case broker.AWSPlanID:
+		p = &provider.AWSInputProvider{
+			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
+	case broker.AzurePlanID:
+		p = &provider.AzureInputProvider{
+			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
+	case broker.TrialPlanID:
+		var trialProvider internal.CloudProvider
+		if operation.ProvisioningParameters.Parameters.Provider == nil {
+			trialProvider = s.config.DefaultTrialProvider
+		} else {
+			trialProvider = *operation.ProvisioningParameters.Parameters.Provider
+		}
+		switch trialProvider {
+		case internal.GCP:
+			//return &cloudProvider.GcpTrialInput{
+			//	PlatformRegionMapping: f.trialPlatformRegionMapping,
+			//}
+		case internal.AWS:
+			//return &cloudProvider.AWSTrialInput{
+			//	PlatformRegionMapping:  f.trialPlatformRegionMapping,
+			//	UseSmallerMachineTypes: f.useSmallerMachineTypes,
+			//}
+		default:
+			//return &cloudProvider.AzureTrialInput{
+			//	PlatformRegionMapping:  f.trialPlatformRegionMapping,
+			//	UseSmallerMachineTypes: f.useSmallerMachineTypes,
+			//}
+		}
+
+		// todo: implement for all plans
+	default:
+		return provider.Values{}, fmt.Errorf("plan %s not supported", operation.ProvisioningParameters.PlanID)
+	}
+	return p.Provide(), nil
+}
+
+func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
+	if param == nil {
+		return d
+	}
+	return *param
 }

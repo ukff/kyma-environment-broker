@@ -928,6 +928,9 @@ func fixConfig() *Config {
 			ProvisioningTimeout:        2 * time.Minute,
 			DeprovisioningTimeout:      2 * time.Minute,
 			GardenerClusterStepTimeout: time.Second,
+			MachineImage:               "gardenlinux",
+			MachineImageVersion:        "12345.6",
+			MultiZoneCluster:           true,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,

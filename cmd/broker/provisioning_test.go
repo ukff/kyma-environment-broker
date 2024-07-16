@@ -105,7 +105,7 @@ func TestProvisioningWithKIM(t *testing.T) {
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
@@ -117,7 +117,9 @@ func TestProvisioningWithKIM(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
+						"autoScalerMax": 11,
+                        "autoScalerMin": 6
 					}
 		}`)
 

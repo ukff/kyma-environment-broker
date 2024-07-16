@@ -3,6 +3,8 @@ package provisioning
 import (
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
@@ -30,7 +32,8 @@ func TestCreateRuntimeResourceStep_HappyPath_YamlOnly(t *testing.T) {
 		DryRun:   true,
 	}
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), kimConfig)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(),
+		memoryStorage.RuntimeStates(), memoryStorage.Instances(), kimConfig, input.Config{})
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
