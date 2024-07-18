@@ -7,19 +7,19 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,35 +40,59 @@ const (
 
 var shootPurpose = "evaluation"
 
-func TestCreateRuntimeForOwnCluster_Run(t *testing.T) {
+func TestCreateKymaNameStep_HappyPath(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationCreateRuntime(t, broker.OwnClusterPlanID, "europe-west3")
-	operation.ShootDomain = "kyma.org"
-	err := memoryStorage.Operations().InsertOperation(operation)
+	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
+	err := memoryStorage.Operations().InsertOperation(preOperation)
 	assert.NoError(t, err)
 
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
-	step := NewCreateRuntimeForOwnClusterStep(memoryStorage.Operations(), memoryStorage.Instances())
+	step := NewCreateKymaNameStep(memoryStorage.Operations())
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, _, err = step.Run(operation, entry)
+	postOperation, backoff, err := step.Run(preOperation, entry)
 
 	// then
-
-	storedInstance, err := memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, storedInstance.RuntimeID)
-
-	storedOperation, err := memoryStorage.Operations().GetOperationByID(operationID)
+	assert.Zero(t, backoff)
+	assert.Equal(t, preOperation.RuntimeID, postOperation.RuntimeID)
+	assert.Equal(t, postOperation.KymaResourceName, preOperation.RuntimeID)
+	assert.Equal(t, postOperation.KymaResourceNamespace, "kyma-system")
+	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
-	assert.Empty(t, storedOperation.ProvisionerOperationID)
-	assert.Equal(t, storedInstance.RuntimeID, storedOperation.RuntimeID)
+
+}
+
+func TestCreateKymaNameStep_NoRuntimeID(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
+
+	preOperation.RuntimeID = ""
+
+	err := memoryStorage.Operations().InsertOperation(preOperation)
+	assert.NoError(t, err)
+
+	err = memoryStorage.Instances().Insert(fixInstance())
+	assert.NoError(t, err)
+
+	step := NewCreateKymaNameStep(memoryStorage.Operations())
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, backoff, err := step.Run(preOperation, entry)
+
+	// then
+	assert.ErrorContains(t, err, "RuntimeID not set, cannot create Kyma name")
+	assert.Zero(t, backoff)
 }
 
 func fixOperationCreateRuntime(t *testing.T, planID, region string) internal.Operation {
