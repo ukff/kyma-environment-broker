@@ -1,15 +1,16 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"sigs.k8s.io/yaml"
 
@@ -25,26 +26,26 @@ import (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager    *process.OperationManager
-	instanceStorage     storage.Instances
-	runtimeStateStorage storage.RuntimeStates
-	kimConfig           kim.Config
-
+	operationManager            *process.OperationManager
+	instanceStorage             storage.Instances
+	runtimeStateStorage         storage.RuntimeStates
+	k8sClient                   client.Client
+	kimConfig                   kim.Config
 	config                      input.Config
 	trialPlatformRegionMapping  map[string]string
 	useSmallerMachinesForTrials bool
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, kimConfig kim.Config,
-	cfg input.Config, trialPlatformRegionMapping map[string]string, useSmallerMachinesForTials bool) *CreateRuntimeResourceStep {
+func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig kim.Config, cfg input.Config,
+	trialPlatformRegionMapping map[string]string, useSmallerMachinesForTrials bool) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
 		operationManager:            process.NewOperationManager(os),
 		instanceStorage:             is,
-		runtimeStateStorage:         runtimeStorage,
 		kimConfig:                   kimConfig,
+		k8sClient:                   k8sClient,
 		config:                      cfg,
 		trialPlatformRegionMapping:  trialPlatformRegionMapping,
-		useSmallerMachinesForTrials: useSmallerMachinesForTials,
+		useSmallerMachinesForTrials: useSmallerMachinesForTrials,
 	}
 }
 
@@ -79,22 +80,14 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 			fmt.Println(yaml)
 		}
 	} else {
-		err := s.CreateResource(runtimeCR)
+		err := s.k8sClient.Create(context.Background(), runtimeCR)
 		if err != nil {
-			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR resource: %s", err), err, log)
+			log.Error("unable to create Runtime resource: %s", err)
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("unable to Runtime resource: %s", err), err, log)
 		}
-		log.Info("Runtime CR creation process finished successfully")
+		log.Infof("Runtime CR %s creation process finished successfully", operation.RuntimeID)
 	}
 	return operation, 0, nil
-}
-
-func getKymaNames(operation internal.Operation) (string, string) {
-	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
-	if err != nil {
-		//TODO remove fallback
-		return "", ""
-	}
-	return template.GetName(), template.GetNamespace()
 }
 
 func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
@@ -146,17 +139,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation internal.Operation) imv1.Security {
 	security := imv1.Security{}
 	security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
-	//TODO: Networking
-	//networking:
-	//filter:
-	//	# spec.security.networking.filter.egress.enabled is required
-	//egress:
-	//enabled: false
-	//	# spec.security.networking.filter.ingress.enabled is optional (default=false), not implemented in the first KIM release
-	//	ingress:
-	//	enabled: true
-
-	logrus.Info("Creating Security Configuration - UNDER CONSTRUCTION")
+	security.Networking.Filter.Egress.Enabled = false
+	// Ingress is not supported yet, nevertheless we set it for completeness
+	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
 	return security
 }
 
@@ -205,7 +190,6 @@ type Provider interface {
 func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation) (provider.Values, error) {
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
-	// TODO: implement input provider for Azure
 	case broker.AWSPlanID:
 		p = &provider.AWSInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
@@ -213,6 +197,11 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 		}
 	case broker.AzurePlanID:
 		p = &provider.AzureInputProvider{
+			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
+	case broker.GCPPlanID:
+		p = &provider.GCPInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
