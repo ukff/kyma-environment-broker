@@ -947,6 +947,7 @@ func fixConfig() *Config {
 				BindablePlans: []string{"aws", "azure"},
 			},
 		},
+		TrialRegionMappingFilePath: "testdata/trial-regions.yaml",
 
 		Avs: avs.Config{},
 		Notification: notification.Config{

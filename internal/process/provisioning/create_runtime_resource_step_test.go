@@ -33,7 +33,7 @@ func TestCreateRuntimeResourceStep_HappyPath_YamlOnly(t *testing.T) {
 	}
 
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(),
-		memoryStorage.RuntimeStates(), memoryStorage.Instances(), kimConfig, input.Config{})
+		memoryStorage.RuntimeStates(), memoryStorage.Instances(), kimConfig, input.Config{}, nil, false)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})

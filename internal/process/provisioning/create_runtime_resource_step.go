@@ -30,16 +30,21 @@ type CreateRuntimeResourceStep struct {
 	runtimeStateStorage storage.RuntimeStates
 	kimConfig           kim.Config
 
-	config input.Config
+	config                      input.Config
+	trialPlatformRegionMapping  map[string]string
+	useSmallerMachinesForTrials bool
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, kimConfig kim.Config, cfg input.Config) *CreateRuntimeResourceStep {
+func NewCreateRuntimeResourceStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, kimConfig kim.Config,
+	cfg input.Config, trialPlatformRegionMapping map[string]string, useSmallerMachinesForTials bool) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
-		operationManager:    process.NewOperationManager(os),
-		instanceStorage:     is,
-		runtimeStateStorage: runtimeStorage,
-		kimConfig:           kimConfig,
-		config:              cfg,
+		operationManager:            process.NewOperationManager(os),
+		instanceStorage:             is,
+		runtimeStateStorage:         runtimeStorage,
+		kimConfig:                   kimConfig,
+		config:                      cfg,
+		trialPlatformRegionMapping:  trialPlatformRegionMapping,
+		useSmallerMachinesForTrials: useSmallerMachinesForTials,
 	}
 }
 
@@ -219,20 +224,14 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			trialProvider = *operation.ProvisioningParameters.Parameters.Provider
 		}
 		switch trialProvider {
-		case internal.GCP:
-			//return &cloudProvider.GcpTrialInput{
-			//	PlatformRegionMapping: f.trialPlatformRegionMapping,
-			//}
 		case internal.AWS:
-			//return &cloudProvider.AWSTrialInput{
-			//	PlatformRegionMapping:  f.trialPlatformRegionMapping,
-			//	UseSmallerMachineTypes: f.useSmallerMachineTypes,
-			//}
+			p = &provider.AWSTrialInputProvider{
+				PlatformRegionMapping:  s.trialPlatformRegionMapping,
+				UseSmallerMachineTypes: s.useSmallerMachinesForTrials,
+				ProvisioningParameters: operation.ProvisioningParameters,
+			}
 		default:
-			//return &cloudProvider.AzureTrialInput{
-			//	PlatformRegionMapping:  f.trialPlatformRegionMapping,
-			//	UseSmallerMachineTypes: f.useSmallerMachineTypes,
-			//}
+			return provider.Values{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
 		}
 
 		// todo: implement for all plans

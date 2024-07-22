@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -20,6 +22,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
+
+	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
+	if err != nil {
+		fatalOnError(err, logs)
+	}
 
 	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
@@ -91,7 +98,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName is set
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.RuntimeStates(), db.Instances(), cfg.Broker.KimConfig, cfg.Provisioner),
+			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.RuntimeStates(), db.Instances(), cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
 		},
 		{
 			stage:     createRuntimeStageName,
