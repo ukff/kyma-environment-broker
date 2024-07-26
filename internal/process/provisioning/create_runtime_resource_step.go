@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -115,11 +117,13 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 
 	runtime.Spec.Shoot.Provider = providerObj
 	runtime.Spec.Shoot.Region = values.Region
+	runtime.Spec.Shoot.Name = operation.ShootName
 	runtime.Spec.Shoot.Purpose = gardener.ShootPurpose(values.Purpose)
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
-
+	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
+	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	return &runtime, nil
 }
 
@@ -145,14 +149,6 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 	// Ingress is not supported yet, nevertheless we set it for completeness
 	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
 	return security
-}
-
-func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
-	result, err := yaml.Marshal(runtime)
-	if err != nil {
-		return "", err
-	}
-	return string(result), nil
 }
 
 func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Operation, values provider.Values) (imv1.Provider, error) {
@@ -248,9 +244,50 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 	return p.Provide(), nil
 }
 
+func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
+
+	failureToleranceType := gardener.FailureToleranceTypeZone
+	if s.config.ControlPlaneFailureTolerance != string(gardener.FailureToleranceTypeZone) {
+		failureToleranceType = gardener.FailureToleranceTypeNode
+	}
+
+	return &gardener.HighAvailability{
+		FailureTolerance: gardener.FailureTolerance{
+			Type: failureToleranceType,
+		},
+	}
+}
+
+func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation internal.Operation) imv1.Networking {
+
+	networkingParams := operation.ProvisioningParameters.Parameters.Networking
+	if networkingParams == nil {
+		networkingParams = &internal.NetworkingDTO{}
+	}
+
+	nodes := networkingParams.NodesCidr
+	if nodes == "" {
+		nodes = networking.DefaultNodesCIDR
+	}
+
+	return imv1.Networking{
+		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
+		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
+		Nodes:    nodes,
+	}
+}
+
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 	if param == nil {
 		return d
 	}
 	return *param
+}
+
+func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
+	result, err := yaml.Marshal(runtime)
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
 }
