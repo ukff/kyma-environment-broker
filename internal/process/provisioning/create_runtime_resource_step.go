@@ -62,6 +62,10 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	}
 
 	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		if !s.kimConfig.Enabled {
+			log.Infof("KIM is not enabled, skipping")
+			return operation, 0, nil
+		}
 		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 		return operation, 0, nil
 	}
@@ -138,6 +142,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/shoot-name":         operation.ShootName,
 		"kyma-project.io/region":             *operation.ProvisioningParameters.Parameters.Region,
 		"operator.kyma-project.io/kyma-name": kymaName,
+	}
+	if s.kimConfig.ViewOnly {
+		labels["kyma-project.io/controlled-by-provisioner"] = "true"
 	}
 	return labels
 }
