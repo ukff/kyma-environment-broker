@@ -117,15 +117,14 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 
 func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Runtime, operation internal.Operation, runtimeName, kymaName, kymaNamespace string) error {
 
-	runtime.ObjectMeta.Name = runtimeName
-	runtime.ObjectMeta.Namespace = kymaNamespace
-	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName)
-
 	// get plan specific values (like zones, default machine type etc.
 	values, err := s.providerValues(&operation)
 	if err != nil {
 		return err
 	}
+	runtime.ObjectMeta.Name = runtimeName
+	runtime.ObjectMeta.Namespace = kymaNamespace
+	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName, values.Region)
 
 	providerObj, err := s.createShootProvider(&operation, values)
 	if err != nil {
@@ -144,7 +143,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	return nil
 }
 
-func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, kymaName string) map[string]string {
+func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, kymaName string, region string) map[string]string {
 	labels := map[string]string{
 		"kyma-project.io/instance-id":        operation.InstanceID,
 		"kyma-project.io/runtime-id":         operation.RuntimeID,
@@ -153,7 +152,7 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/global-account-id":  operation.ProvisioningParameters.ErsContext.GlobalAccountID,
 		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
 		"kyma-project.io/shoot-name":         operation.ShootName,
-		"kyma-project.io/region":             *operation.ProvisioningParameters.Parameters.Region,
+		"kyma-project.io/region":             region,
 		"operator.kyma-project.io/kyma-name": kymaName,
 	}
 	if s.kimConfig.ViewOnly {
@@ -229,19 +228,19 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.FreemiumPlanID:
-		var freemiumProvider internal.CloudProvider
-		if operation.ProvisioningParameters.Parameters.Provider == nil {
-			return provider.Values{}, fmt.Errorf("provider not defined for freemium plan")
-		}
-		freemiumProvider = *operation.ProvisioningParameters.Parameters.Provider
-		switch freemiumProvider {
+		switch operation.ProvisioningParameters.PlatformProvider {
 		case internal.AWS:
 			p = &provider.AWSFreemiumInputProvider{
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
+		case internal.Azure:
+			p = &provider.AzureFreemiumInputProvider{
+				UseSmallerMachineTypes: s.useSmallerMachineTypes,
+				ProvisioningParameters: operation.ProvisioningParameters,
+			}
 		default:
-			return provider.Values{}, fmt.Errorf("freemium provider for %s not yet implemented", freemiumProvider)
+			return provider.Values{}, fmt.Errorf("freemium provider for '%s' is not supported", operation.ProvisioningParameters.PlatformProvider)
 		}
 
 	case broker.TrialPlanID:

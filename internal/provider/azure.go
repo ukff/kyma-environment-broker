@@ -19,6 +19,10 @@ type (
 		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
+	AzureFreemiumInputProvider struct {
+		UseSmallerMachineTypes bool
+		ProvisioningParameters internal.ProvisioningParameters
+	}
 )
 
 func (p *AzureInputProvider) Provide() Values {
@@ -128,4 +132,30 @@ func (p *AzureLiteInputProvider) region() string {
 		return DefaultEuAccessAzureRegion
 	}
 	return DefaultAzureRegion
+}
+
+func (p *AzureFreemiumInputProvider) Provide() Values {
+	machineType := DefaultOldAzureTrialMachineType
+	if p.UseSmallerMachineTypes {
+		machineType = DefaultAzureMachineType
+	}
+	zones := p.zones()
+	region := DefaultAzureRegion
+	if p.ProvisioningParameters.Parameters.Region != nil {
+		region = *p.ProvisioningParameters.Parameters.Region
+	}
+	return Values{
+		DefaultAutoScalerMax: 1,
+		DefaultAutoScalerMin: 1,
+		ZonesCount:           1,
+		Zones:                zones,
+		ProviderType:         "azure",
+		DefaultMachineType:   machineType,
+		Region:               region,
+		Purpose:              PurposeEvaluation,
+	}
+}
+
+func (p *AzureFreemiumInputProvider) zones() []string {
+	return GenerateAzureZones(1)
 }

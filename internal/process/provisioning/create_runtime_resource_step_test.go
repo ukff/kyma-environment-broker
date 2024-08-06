@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -664,6 +666,57 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_ActualCreation(t *test
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
+}
+
+func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
+
+	for _, testCase := range []struct {
+		name                string
+		gotProvider         internal.CloudProvider
+		expectedProvider    string
+		expectedMachineType string
+		expectedRegion      string
+		possibleZones       []string
+	}{
+		{"azure", internal.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"1", "2", "3"}},
+		{"aws", internal.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			log := logrus.New()
+			memoryStorage := storage.NewMemoryStorage()
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+			instance, operation := fixInstanceAndOperation(broker.FreemiumPlanID, "", "platform-region")
+			operation.ProvisioningParameters.PlatformProvider = testCase.gotProvider
+			assertInsertions(t, memoryStorage, instance, operation)
+			kimConfig := fixKimConfig("free", false)
+
+			cli := getClientForTests(t)
+			inputConfig := input.Config{MultiZoneCluster: true}
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+
+			// when
+			entry := log.WithFields(logrus.Fields{"step": "TEST"})
+			gotOperation, repeat, err := step.Run(operation, entry)
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+			assert.Equal(t, domain.InProgress, gotOperation.State)
+
+			runtime := imv1.Runtime{}
+			err = cli.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      operation.RuntimeID,
+			}, &runtime)
+			assert.NoError(t, err)
+			assert.Equal(t, operation.RuntimeID, runtime.Name)
+			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+			assert.Equal(t, testCase.expectedProvider, runtime.Spec.Shoot.Provider.Type)
+			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.expectedMachineType, 1, 1, 1, 0, 1, testCase.possibleZones)
+
+		})
+	}
 
 }
 
@@ -772,13 +825,18 @@ func fixInstanceAndOperation(planID, region, platformRegion string) (internal.In
 }
 
 func fixOperationForCreateRuntimeResourceStep(operationID, instanceID, planID, region, platformRegion string) internal.Operation {
+	var regionToSet *string
+	if region != "" {
+		regionToSet = &region
+
+	}
 	provisioningParameters := internal.ProvisioningParameters{
 		PlanID:     planID,
 		ServiceID:  fixture.ServiceId,
 		ErsContext: fixture.FixERSContext(operationID),
 		Parameters: internal.ProvisioningParametersDTO{
 			Name:                  "cluster-test",
-			Region:                ptr.String(region),
+			Region:                regionToSet,
 			RuntimeAdministrators: runtimeAdministrators,
 			TargetSecret:          ptr.String(SecretBindingName),
 		},
@@ -786,6 +844,7 @@ func fixOperationForCreateRuntimeResourceStep(operationID, instanceID, planID, r
 	}
 
 	operation := fixture.FixProvisioningOperationWithProvisioningParameters(operationID, instanceID, provisioningParameters)
+	operation.State = domain.InProgress
 	operation.KymaTemplate = `
 apiVersion: operator.kyma-project.io/v1beta2
 kind: Kyma
