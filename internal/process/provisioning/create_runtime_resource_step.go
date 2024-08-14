@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -163,7 +164,7 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/region":             region,
 		"operator.kyma-project.io/kyma-name": kymaName,
 	}
-	if s.kimConfig.ViewOnly {
+	if s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		labels["kyma-project.io/controlled-by-provisioner"] = "true"
 	}
 	return labels
@@ -192,7 +193,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	max := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
 	min := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
 
-	volumeSize := int32(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
+	volumeSize := strconv.Itoa(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
 
 	providerObj := imv1.Provider{
 		Type: values.ProviderType,
@@ -213,7 +214,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 				Zones:          values.Zones,
 				Volume: &gardener.Volume{
 					Type:       ptr.String(values.DiskType),
-					VolumeSize: string(volumeSize),
+					VolumeSize: volumeSize,
 				},
 			},
 		},
