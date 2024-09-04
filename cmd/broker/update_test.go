@@ -2402,7 +2402,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, updateOperation2ID, &disabled)
 }
 
-func TestUpdateOnlyErsContext(t *testing.T) {
+func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
 	iid := uuid.New().String()
