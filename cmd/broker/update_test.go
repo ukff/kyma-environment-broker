@@ -2443,7 +2443,7 @@ func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
 
-func TestUpdateParams(t *testing.T) {
+func TestUpdateParamsForExpiredInstance(t *testing.T) {
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -2484,7 +2484,7 @@ func TestUpdateParams(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
 }
 
-func TestUpdateErsContextAndParams(t *testing.T) {
+func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
 	iid := uuid.New().String()
