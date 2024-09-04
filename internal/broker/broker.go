@@ -47,6 +47,7 @@ type Config struct {
 	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
 	TrialDocsURL                            string        `envconfig:"default="`
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
+	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
 	KimConfig              KimConfig
