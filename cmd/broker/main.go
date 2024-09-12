@@ -233,6 +233,8 @@ func main() {
 		logs.SetLevel(l)
 	}
 
+	cfg.SubAccountMovementEnabled = true
+
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
 
 	// create logger
