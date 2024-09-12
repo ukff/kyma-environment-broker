@@ -162,15 +162,27 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 
 	if b.processingEnabled {
+		Debugger(logger, "start processing context...", false)
 		instance, suspendStatusChange, err := b.processContext(instance, details, lastProvisioningOperation, logger)
 		if err != nil {
+			Debugger(logger, fmt.Sprintf("while processing context... %s", err.Error()), true)
 			return domain.UpdateServiceSpec{}, err
 		}
+		Debugger(logger, "end processing context...", false)
 
 		// NOTE: KEB currently can't process update parameters in one call along with context update
 		// this block makes it that KEB ignores any parameters updates if context update changed suspension state
 		if !suspendStatusChange && !instance.IsExpired() {
-			return b.processUpdateParameters(instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
+			Debugger(logger, "processUpdateParameters will happen", false)
+			spec, err := b.processUpdateParameters(instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
+			if err != nil {
+				Debugger(logger, fmt.Sprintf("processUpdateParameters failed: %s", err.Error()), false)
+			} else {
+				Debugger(logger, "processUpdateParameters success", false)
+			}
+			return spec, err
+		} else {
+			Debugger(logger, "processUpdateParameters didnt happen", false)
 		}
 	}
 	return domain.UpdateServiceSpec{
@@ -209,6 +221,7 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 
 func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger logrus.FieldLogger) (domain.UpdateServiceSpec, error) {
 	if !shouldUpdate(instance, details, ersContext) {
+		Debugger(logger, "shouldUpdate return false. ending", true)
 		logger.Debugf("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
 			IsAsync:       false,
@@ -221,16 +234,21 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 	// asyncAllowed needed, see https://github.com/openservicebrokerapi/servicebroker/blob/v2.16/spec.md#updating-a-service-instance
 	if !asyncAllowed {
+		Debugger(logger, "asyncAllowed return false. ending", true)
 		return domain.UpdateServiceSpec{}, apiresponses.ErrAsyncRequired
 	}
 	var params internal.UpdatingParametersDTO
+	Debugger(logger, "processing params started", false)
+
 	if len(details.RawParameters) != 0 {
 		err := json.Unmarshal(details.RawParameters, &params)
 		if err != nil {
+			Debugger(logger, "details unmarshal false", true)
 			logger.Errorf("unable to unmarshal parameters: %s", err.Error())
 			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
 		}
 		logger.Debugf("Updating with params: %+v", params)
+		Debugger(logger, "unmarshal OK", false)
 	}
 
 	if params.OIDC.IsProvided() {
