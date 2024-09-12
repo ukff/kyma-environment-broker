@@ -354,23 +354,38 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	}
 
 	if b.subAccountMovementEnabled {
+		Debugger(logger, fmt.Sprintf("subAccount movement enabled, and instance (%s) global account id will be updated from %s to %s", instance.InstanceID, instance.GlobalAccountID, ersContext.GlobalAccountID), false)
+		Debugger(logger, fmt.Sprintf("%v", ersContext), false)
+		Debugger(logger, fmt.Sprintf("%v", instance), false)
 		if instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "" {
 			if instance.SubscriptionGlobalAccountID == "" {
+				Debugger(logger, fmt.Sprintf("subAccount movement detected that SubscriptionGlobalAccountID is empty. Will be set to %s", instance.GlobalAccountID), false)
 				instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
+			} else {
+				Debugger(logger, fmt.Sprintf("subAccount movement detected that SubscriptionGlobalAccountID is not empty and is equal to %s", instance.SubscriptionGlobalAccountID), false)
 			}
+			Debugger(logger, fmt.Sprintf("setting instance.GlobalAccountID to %s", ersContext.GlobalAccountID), false)
 			instance.GlobalAccountID = ersContext.GlobalAccountID
+			Debugger(logger, fmt.Sprintf("GlobalAccounID changed and now is equal to: %s", instance.GlobalAccountID), false)
+		} else {
+			Debugger(logger, fmt.Sprintf("subAccount movement is enable, however there is nothing to update. Current GlobalAccountID is %s and new from ersContext is %s", instance.GlobalAccountID, ersContext.GlobalAccountID), false)
 		}
-
+	} else {
+		Debugger(logger, "subAccount movement is disabled", true)
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
+		Debugger(logger, fmt.Sprintf("error while update Instance in the storage: %s", err.Error()), true)
 		return nil, changed, fmt.Errorf("unable to process the update")
+	} else if newInstance == nil {
+		Debugger(logger, "newInstance are nil, however should not be", true)
 	} else {
-		logger.Infof("subAccount movement done for instance: %s", instance.InstanceID)
+		Debugger(logger, fmt.Sprintf("subAccount movement done, the values in newInstance are: %s %s", newInstance.GlobalAccountID, newInstance.SubscriptionGlobalAccountID), false)
 	}
 
+	Debugger(logger, fmt.Sprintf("is changed? %t", changed), false)
 	return newInstance, changed, nil
 }
 
@@ -396,4 +411,13 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 
 	return jsonschema.NewValidatorFromStringSchema(schema)
+}
+
+func Debugger(logger logrus.FieldLogger, log string, isErr bool) {
+	if isErr {
+		logger.Printf("{DEBBUG:ERROR} -> %s", log)
+		return
+	}
+
+	logger.Printf("{DEBBUG} -> %s", log)
 }
