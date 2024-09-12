@@ -180,6 +180,9 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 			} else {
 				Debugger(logger, "processUpdateParameters success", false)
 			}
+			a := *&instance.GlobalAccountID
+			b := *&instance.SubscriptionGlobalAccountID
+			Debugger(logger, fmt.Sprintf("end with GlobalAccountID: %s, SubscriptionGlobalAccountID: %s", a, b), false)
 			return spec, err
 		} else {
 			Debugger(logger, "processUpdateParameters didnt happen", false)
