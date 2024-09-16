@@ -40,7 +40,7 @@ type UpdateEndpoint struct {
 	contextUpdateHandler      ContextUpdateHandler
 	brokerURL                 string
 	processingEnabled         bool
-	subAccountMovementEnabled bool
+	SubaccountMovementEnabled bool
 
 	operationStorage storage.Operations
 
@@ -61,7 +61,7 @@ func NewUpdate(cfg Config,
 	operationStorage storage.Operations,
 	ctxUpdateHandler ContextUpdateHandler,
 	processingEnabled bool,
-	subAccountMovementEnabled bool,
+	SubaccountMovementEnabled bool,
 	queue Queue,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
@@ -78,7 +78,7 @@ func NewUpdate(cfg Config,
 		operationStorage:              operationStorage,
 		contextUpdateHandler:          ctxUpdateHandler,
 		processingEnabled:             processingEnabled,
-		subAccountMovementEnabled:     subAccountMovementEnabled,
+		SubaccountMovementEnabled:     SubaccountMovementEnabled,
 		updatingQueue:                 queue,
 		plansConfig:                   plansConfig,
 		planDefaults:                  planDefaults,
@@ -353,7 +353,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		instance.Parameters.ErsContext.Active = ersContext.Active
 	}
 
-	if b.subAccountMovementEnabled {
+	if b.SubaccountMovementEnabled {
 		if instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "" {
 			if instance.SubscriptionGlobalAccountID == "" {
 				instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
