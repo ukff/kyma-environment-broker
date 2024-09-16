@@ -240,7 +240,7 @@ broker:
   events:
     enabled: false
   enableShootAndSeedSameRegion: "false"
-  allowUpdateExpiredInstanceWithContext: "false"
+  allowUpdateExpiredInstanceWithContext: "true"
   subAccountMovementEnabled: "false"
 
 binding:
