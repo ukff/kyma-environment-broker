@@ -8,7 +8,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
@@ -420,7 +419,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 }
 
 func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error) {
-	broker.Debugger(nil, fmt.Sprintf("STORAGE update START instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID), false)
+	fmt.Println(fmt.Sprintf("STORAGE update START instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID))
 	sess := s.NewWriteSession()
 	dto, err := s.toInstanceDTO(instance)
 	if err != nil {
@@ -454,7 +453,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 		return nil, lastErr
 	}
 	instance.Version = instance.Version + 1
-	broker.Debugger(nil, fmt.Sprintf("STORAGE update END instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID), false)
+	fmt.Println(fmt.Sprintf("STORAGE update END instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID))
 	return &instance, nil
 }
 
