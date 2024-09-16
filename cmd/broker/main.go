@@ -234,6 +234,7 @@ func main() {
 	}
 
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
+	cfg.SubAccountMovementEnabled = true
 
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
