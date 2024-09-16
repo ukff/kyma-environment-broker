@@ -435,10 +435,22 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 }
 
 func Debugger(logger logrus.FieldLogger, log string, isErr bool) {
-	if isErr {
-		logger.Errorf("DEBBUGERROR [%s]", log)
+	if logger == nil {
+		if isErr {
+			fmt.Println(fmt.Sprintf("DEBBUGERROR [%s]", log))
+			return
+		}
+		fmt.Println(fmt.Sprintf("DEBBUG [%s]", log))
 		return
 	}
 
-	logger.Printf("DEBBUG [%s]", log)
+	if logger != nil {
+		if isErr {
+			logger.Errorf("DEBBUGERROR [%s]", log)
+			return
+		}
+
+		logger.Printf("DEBBUG [%s]", log)
+		return
+	}
 }

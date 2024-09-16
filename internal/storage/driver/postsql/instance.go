@@ -420,8 +420,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 }
 
 func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error) {
-	logger := log.New()
-	broker.Debugger(logger, fmt.Sprintf("STORAGE update START instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID), false)
+	broker.Debugger(nil, fmt.Sprintf("STORAGE update START instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID), false)
 	sess := s.NewWriteSession()
 	dto, err := s.toInstanceDTO(instance)
 	if err != nil {
@@ -455,7 +454,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 		return nil, lastErr
 	}
 	instance.Version = instance.Version + 1
-	broker.Debugger(logger, fmt.Sprintf("STORAGE update END instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID), false)
+	broker.Debugger(nil, fmt.Sprintf("STORAGE update END instance on version: %d to: GaID %s, Subscription %s", instance.Version, instance.GlobalAccountID, instance.SubscriptionGlobalAccountID), false)
 	return &instance, nil
 }
 
