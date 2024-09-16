@@ -241,7 +241,8 @@ broker:
     enabled: false
   enableShootAndSeedSameRegion: "false"
   allowUpdateExpiredInstanceWithContext: "false"
-  
+  subAccountMovementEnabled: "false"
+
 binding:
   enabled: false
 
@@ -337,7 +338,6 @@ sapConvergedCloudPlanRegionMappings: |-
     - eu-de-3
     - eu-de-4
 disableSapConvergedCloud: false
-subAccountMovementEnabled: "false"
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"
 onlySingleTrialPerGA: "true"
