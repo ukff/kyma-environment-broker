@@ -43,7 +43,7 @@ func TestUpdate(t *testing.T) {
 							"signingAlgs": ["PS512"],
                             "issuerURL": "https://issuer.url.com"
 						}
-					}
+			}
    }`)
 	opID := suite.DecodeOperationID(resp)
 	suite.processProvisioningByOperationID(opID)
