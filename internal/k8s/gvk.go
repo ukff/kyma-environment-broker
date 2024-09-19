@@ -8,6 +8,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const (
+	KymaCr            = "kyma"
+	GardenerClusterCr = "gardenercluster"
+	RuntimeCr         = "runtime"
+)
+
 func GvkByName(name string) (schema.GroupVersionKind, error) {
 	if name == "" {
 		return schema.GroupVersionKind{}, fmt.Errorf("name is empty")

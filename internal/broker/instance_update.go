@@ -15,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/mgechev/revive/config"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/google/uuid"
@@ -23,7 +22,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -32,6 +30,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	k8sCfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 type ContextUpdateHandler interface {
@@ -360,7 +359,6 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		instance.Parameters.ErsContext.Active = ersContext.Active
 	}
 
-	// TODO: Update labels
 	updateLabels := false
 	if b.subaccountMovementEnabled {
 		if instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "" {
@@ -377,13 +375,12 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
-	}
-
-	if updateLabels {
+	} else if updateLabels {
 		err = b.updateLabelsOnSubaccountMove(instance.RuntimeID, instance.GlobalAccountID)
 		if err != nil {
+			// dont return on pourpose
 			logger.Errorf("unable to update labels on subaccount move: %s", err.Error())
-			return nil, changed, fmt.Errorf("unable to process the update")
+			return newInstance, changed, nil
 		}
 	}
 
@@ -415,34 +412,69 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 }
 
 func (b *UpdateEndpoint) updateLabelsOnSubaccountMove(name, newGlobalAccountId string) error {
-	kcpK8sConfig, err := config.GetConfig()
+	if err := b.updateCrLabel(k8s.KymaCr, newGlobalAccountId); err != nil {
+		return err
+	}
+
+	if err := b.updateCrLabel(k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
+		return err
+	}
+
+	if err := b.updateCrLabel(k8s.RuntimeCr, newGlobalAccountId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *UpdateEndpoint) getKcpClient() (*client.Client, error) {
+	kcpK8sConfig, err := k8sCfg.GetConfig()
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to get KCP K8s config: %s", err.Error())
 		logger.Error(errMsg)
-		return fmt.Errorf("%s", errMsg)
+		return nil, fmt.Errorf("%s", errMsg)
 	}
 	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to create KCP K8s client: %s", err.Error())
 		logger.Error(errMsg)
+		return nil, fmt.Errorf("%s", errMsg)
+	}
+	return &kcpK8sClient, nil
+}
+
+func (b *UpdateEndpoint) updateCrLabel(name, newGlobalAccountId string) error {
+	kcpK8sClient, err := b.getKcpClient()
+	if err != nil {
+		return err
+	}
+	if kcpK8sClient == nil {
+		return fmt.Errorf("unable to get KCP K8s client")
+	}
+
+	var errMsg string
+	gvk, err := k8s.GvkByName(name)
+	if err != nil {
+		errMsg = fmt.Sprintf("unable to get GVK for %s: %s", name, err.Error())
+		logger.Error(errMsg)
 		return fmt.Errorf("%s", errMsg)
 	}
 
-	updateCr := func(gvk schema.GroupVersionKind) {
-		var k8sObject *unstructured.Unstructured
-		k8sObject.SetGroupVersionKind(gvk)
-		err = kcpK8sClient.Get(context.Background(), types.NamespacedName{Namespace: "kyma-system", Name: name}, k8sObject)
-		labels := k8sObject.GetLabels()
-		labels["kyma-project.io/global-account-id"] = newGlobalAccountId
-		err = k8s.ChangeOneLabelOrAnnotation(k8sObject, k8s.Labels, labels)
-		if err != nil {
-			logger.Errorf("unable to set labels: %s", err.Error())
-		}
+	var k8sObject *unstructured.Unstructured
+	k8sObject.SetGroupVersionKind(gvk)
+	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: "kyma-system", Name: name}, k8sObject)
+	if err != nil {
+		errMsg = fmt.Sprintf("unable to get %s: %s", name, err.Error())
+		logger.Error(errMsg)
+		return fmt.Errorf("%s", errMsg)
 	}
 
-	updateCr(k8s.GvkByName("kyma"))
-	updateCr(k8s.GvkByName("gardenercluster"))
-	updateCr(k8s.GvkByName("runtime"))
+	err = k8s.ChangeSingleMetadata(k8sObject, k8s.Labels, k8s.GlobalAccountIDLabel, newGlobalAccountId)
+	if err != nil {
+		errMsg = fmt.Sprintf("unable to set labels: %s", err.Error())
+		logger.Errorf(errMsg)
+		return fmt.Errorf("%s", errMsg)
+	}
 
 	return nil
 }

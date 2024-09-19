@@ -13,7 +13,7 @@ const (
 	Labels      MetadataType = 1
 )
 
-func OverrideLabelsOrAnnotations(k8sObject *unstructured.Unstructured, metadataType MetadataType, values map[string]string) error {
+func OverrideMetadata(k8sObject *unstructured.Unstructured, metadataType MetadataType, values map[string]string) error {
 	if k8sObject == nil {
 		return fmt.Errorf("object is nil")
 	}
@@ -38,7 +38,7 @@ func OverrideLabelsOrAnnotations(k8sObject *unstructured.Unstructured, metadataT
 	return nil
 }
 
-func ChangeOneLabelOrAnnotation(k8sObject *unstructured.Unstructured, metadataType MetadataType, key, value string) error {
+func ChangeSingleMetadata(k8sObject *unstructured.Unstructured, metadataType MetadataType, key, value string) error {
 	if k8sObject == nil {
 		return fmt.Errorf("object is nil")
 	}
@@ -56,9 +56,9 @@ func ChangeOneLabelOrAnnotation(k8sObject *unstructured.Unstructured, metadataTy
 		}
 	case Annotations:
 		{
-			labels := (*k8sObject).GetLabels()
-			labels[key] = value
-			(*k8sObject).SetAnnotations(map[string]string{key: value})
+			annotations := (*k8sObject).GetAnnotations()
+			annotations[key] = value
+			(*k8sObject).SetAnnotations(annotations)
 		}
 	default:
 		return fmt.Errorf("unknown metadata type")
@@ -67,7 +67,7 @@ func ChangeOneLabelOrAnnotation(k8sObject *unstructured.Unstructured, metadataTy
 	return nil
 }
 
-func ChangeManyLabelsOrAnnotations(k8sObject *unstructured.Unstructured, metadataType MetadataType, values map[string]string) error {
+func ChangeManyMetadata(k8sObject *unstructured.Unstructured, metadataType MetadataType, values map[string]string) error {
 	if k8sObject == nil {
 		return fmt.Errorf("object is nil")
 	}
@@ -76,23 +76,12 @@ func ChangeManyLabelsOrAnnotations(k8sObject *unstructured.Unstructured, metadat
 		return fmt.Errorf("unknown metadata type")
 	}
 
-	contains := func(slice []string, value string) bool {
-		for _, item := range slice {
-			if item == value {
-				return true
-			}
-		}
-		return false
-	}
-
 	switch metadataType {
 	case Labels:
 		{
 			labels := (*k8sObject).GetLabels()
 			for key, value := range values {
-				if contains(labels, key) {
-					labels[key] = value
-				}
+				labels[key] = value
 			}
 			(*k8sObject).SetLabels(labels)
 		}
