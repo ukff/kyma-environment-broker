@@ -805,6 +805,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		oldGlobalAccountId = "old-global-account-id"
 		newGlobalAccountId = "changed-global-account-id"
 	)
+
 	iid := uuid.New().String()
 
 	tFunc := func(t *testing.T, name, crName string) {
@@ -830,20 +831,21 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		err = k8s.AddOrOverrideMetadata(cr, k8s.Labels, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 		require.NoError(t, err)
 
-		assert.Len(t, cr.GetLabels(), 2)
-		assert.Equal(t, newGlobalAccountId, cr.GetLabels()[k8s.GlobalAccountIdLabel])
+		labels = cr.GetLabels()
+		assert.Len(t, labels, 2)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
 		assert.Equal(t, "bar", labels["foo"])
 	}
 
-	t.Run("kymaCr have correct, new global account id", func(t *testing.T) {
+	t.Run("KymaCr should have correct and new global account id", func(t *testing.T) {
 		tFunc(t, iid, k8s.KymaCr)
 	})
 
-	t.Run("kymaCr have correct, new global account id", func(t *testing.T) {
+	t.Run("GardenerClusterCr should have correct and new global account id", func(t *testing.T) {
 		tFunc(t, iid, k8s.GardenerClusterCr)
 	})
 
-	t.Run("kymaCr have correct, new global account id", func(t *testing.T) {
+	t.Run("RuntimeCrs hould have correct and new global account id", func(t *testing.T) {
 		tFunc(t, iid, k8s.RuntimeCr)
 	})
 }
