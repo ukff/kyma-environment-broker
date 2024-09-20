@@ -668,7 +668,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, queue, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
-	t.Run("should reject change GA - it is same as previous", func(t *testing.T) {
+	t.Run("should allow change GA", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
@@ -677,22 +677,22 @@ func TestUpdateExpiredInstance(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_init\"}"),
 			MaintenanceInfo: nil,
 		}, true)
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 
-	t.Run("should accept change GA", func(t *testing.T) {
+	t.Run("should accept change context", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
 			RawParameters:   nil,
 			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_new\"}"),
+			RawContext:      json.RawMessage("{\"origin\":\"egypt\"}"),
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
 	})
 
-	t.Run("should accept change GA, with params", func(t *testing.T) {
+	t.Run("should accept change context, event with params", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
@@ -704,12 +704,11 @@ func TestUpdateExpiredInstance(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("should fail as not global account passed", func(t *testing.T) {
+	t.Run("should fail as not context passed", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"x\":\"y\", \"active\":true}"),
 			RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
 			MaintenanceInfo: nil,
 		}, true)

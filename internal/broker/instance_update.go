@@ -120,8 +120,12 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 
 	if instance.IsExpired() {
 		if b.config.AllowUpdateExpiredInstanceWithContext {
-			newGlobalAccountId := ersContext.GlobalAccountID
-			if newGlobalAccountId != "" && (newGlobalAccountId != instance.GlobalAccountID) {
+			zeroContext := internal.ERSContext{}
+			if ersContext == zeroContext {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("for update expired instance the context must be set"), http.StatusBadRequest, "")
+			}
+
+			if ersContext != zeroContext {
 				return domain.UpdateServiceSpec{}, nil
 			}
 		}
