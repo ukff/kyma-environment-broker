@@ -8,8 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/stretchr/testify/mock"
 
@@ -786,5 +789,53 @@ func TestSubaccountMovement(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
 		assert.Equal(t, "newGlobalAccountID-v2", instance.GlobalAccountID)
+	})
+}
+
+func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
+	const (
+		oldGlobalAccountId = "old-global-account-id"
+		newGlobalAccountId = "changed-global-account-id"
+	)
+	iid := uuid.New().String()
+
+	tFunc := func(t *testing.T, name, crName string) {
+		gvk, err := k8s.GvkByName(crName)
+		require.NoError(t, err)
+
+		cr := &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		cr.SetName(name)
+		cr.SetNamespace(KymaNamespace)
+		labels := cr.GetLabels()
+		assert.Empty(t, labels)
+		existingLabels := make(map[string]string)
+		existingLabels[k8s.GlobalAccountIdLabel] = oldGlobalAccountId
+		existingLabels["foo"] = "bar"
+		cr.SetLabels(existingLabels)
+		labels = cr.GetLabels()
+		assert.Len(t, cr.GetLabels(), 2)
+		assert.Equal(t, oldGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+		assert.Equal(t, "bar", labels["foo"])
+
+		// update CR with new global account id
+		err = k8s.AddOrOverrideMetadata(cr, k8s.Labels, k8s.GlobalAccountIdLabel, newGlobalAccountId)
+		require.NoError(t, err)
+
+		assert.Len(t, cr.GetLabels(), 2)
+		assert.Equal(t, newGlobalAccountId, cr.GetLabels()[k8s.GlobalAccountIdLabel])
+		assert.Equal(t, "bar", labels["foo"])
+	}
+
+	t.Run("kymaCr have correct, new global account id", func(t *testing.T) {
+		tFunc(t, iid, k8s.KymaCr)
+	})
+
+	t.Run("kymaCr have correct, new global account id", func(t *testing.T) {
+		tFunc(t, iid, k8s.GardenerClusterCr)
+	})
+
+	t.Run("kymaCr have correct, new global account id", func(t *testing.T) {
+		tFunc(t, iid, k8s.RuntimeCr)
 	})
 }

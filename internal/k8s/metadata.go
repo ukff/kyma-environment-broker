@@ -13,7 +13,11 @@ const (
 	Labels      MetadataType = 1
 )
 
-func ChangeMetadata(k8sObject *unstructured.Unstructured, metadataType MetadataType, key, value string) error {
+const (
+	GlobalAccountIdLabel = "kyma-project.io/global-account-id"
+)
+
+func AddOrOverrideMetadata(k8sObject *unstructured.Unstructured, metadataType MetadataType, key, value string) error {
 	if k8sObject == nil {
 		return fmt.Errorf("object is nil")
 	}
@@ -26,14 +30,15 @@ func ChangeMetadata(k8sObject *unstructured.Unstructured, metadataType MetadataT
 	case Labels:
 		{
 			labels := (*k8sObject).GetLabels()
+			if labels == nil {
+				labels = make(map[string]string)
+			}
 			labels[key] = value
 			(*k8sObject).SetLabels(labels)
 		}
 	case Annotations:
 		{
-			annotations := (*k8sObject).GetAnnotations()
-			annotations[key] = value
-			(*k8sObject).SetAnnotations(annotations)
+			//TBA
 		}
 	default:
 		return fmt.Errorf("unknown metadata type")

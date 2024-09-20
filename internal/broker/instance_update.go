@@ -10,7 +10,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
-	"github.com/gardener/controller-manager-library/pkg/logger"
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
@@ -359,26 +358,25 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		instance.Parameters.ErsContext.Active = ersContext.Active
 	}
 
-	updateLabels := false
+	updateCustomResources := false
 	if b.subaccountMovementEnabled {
 		if instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "" {
 			if instance.SubscriptionGlobalAccountID == "" {
 				instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 			}
 			instance.GlobalAccountID = ersContext.GlobalAccountID
-			updateLabels = true
+			updateCustomResources = true
 		}
-
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
-	} else if updateLabels {
-		err = b.updateLabelsOnSubaccountMove(instance.RuntimeID, instance.GlobalAccountID)
+	} else if updateCustomResources {
+		err = b.updateLabels(instance.InstanceID, instance.GlobalAccountID)
 		if err != nil {
-			// dont return on pourpose
+			// sile return error on pourpose, and just log
 			logger.Errorf("unable to update labels on subaccount move: %s", err.Error())
 			return newInstance, changed, nil
 		}
@@ -411,69 +409,66 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 	return jsonschema.NewValidatorFromStringSchema(schema)
 }
 
-func (b *UpdateEndpoint) updateLabelsOnSubaccountMove(name, newGlobalAccountId string) error {
-	if err := b.updateCrLabel(k8s.KymaCr, newGlobalAccountId); err != nil {
-		return err
+func (b *UpdateEndpoint) updateLabels(instanceID, newGlobalAccountId string) error {
+	if err := b.updateCrLabel(instanceID, k8s.KymaCr, newGlobalAccountId); err != nil {
+		return fmt.Errorf("while update instance CR labels for Kyma CR : %s because : %s", instanceID, err.Error())
 	}
 
-	if err := b.updateCrLabel(k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
-		return err
+	if err := b.updateCrLabel(instanceID, k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
+		return fmt.Errorf("while update instance CR labels for GardenerCluster CR : %s because : %s", instanceID, err.Error())
 	}
 
-	if err := b.updateCrLabel(k8s.RuntimeCr, newGlobalAccountId); err != nil {
-		return err
+	if err := b.updateCrLabel(instanceID, k8s.RuntimeCr, newGlobalAccountId); err != nil {
+		return fmt.Errorf("while update instance CR labels for RuntimeCr CR : %s because : %s", instanceID, err.Error())
 	}
 
 	return nil
 }
 
-func (b *UpdateEndpoint) getKcpClient() (*client.Client, error) {
+func (b *UpdateEndpoint) kcpClient() (*client.Client, error) {
 	kcpK8sConfig, err := k8sCfg.GetConfig()
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to get KCP K8s config: %s", err.Error())
-		logger.Error(errMsg)
-		return nil, fmt.Errorf("%s", errMsg)
+		return nil, fmt.Errorf("while getting KCP k8s config due to error: %s", err.Error())
 	}
+	if kcpK8sConfig == nil {
+		return nil, fmt.Errorf("while getting KCP k8s config since it is nil")
+	}
+
 	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to create KCP K8s client: %s", err.Error())
-		logger.Error(errMsg)
-		return nil, fmt.Errorf("%s", errMsg)
+		return nil, fmt.Errorf("while getting creating KCP cluster from k8s config: %s", err.Error())
 	}
 	return &kcpK8sClient, nil
 }
 
-func (b *UpdateEndpoint) updateCrLabel(name, newGlobalAccountId string) error {
-	kcpK8sClient, err := b.getKcpClient()
+func (b *UpdateEndpoint) updateCrLabel(instanceID, crName, newGlobalAccountId string) error {
+	kcpK8sClient, err := b.kcpClient()
 	if err != nil {
-		return err
-	}
-	if kcpK8sClient == nil {
-		return fmt.Errorf("unable to get KCP K8s client")
+		return fmt.Errorf("while geting KCP k8s client, because: %s", err.Error())
 	}
 
-	var errMsg string
-	gvk, err := k8s.GvkByName(name)
+	if kcpK8sClient == nil {
+		return fmt.Errorf("while checking if KCP k8s client is set")
+	}
+
+	gvk, err := k8s.GvkByName(crName)
 	if err != nil {
-		errMsg = fmt.Sprintf("unable to get GVK for %s: %s", name, err.Error())
-		logger.Error(errMsg)
-		return fmt.Errorf("%s", errMsg)
+		return fmt.Errorf("while getting GVK for name: %s: %s", crName, err.Error())
 	}
 
 	var k8sObject *unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
-	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: "kyma-system", Name: name}, k8sObject)
+	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: instanceID}, k8sObject)
 	if err != nil {
-		errMsg = fmt.Sprintf("unable to get %s: %s", name, err.Error())
-		logger.Error(errMsg)
-		return fmt.Errorf("%s", errMsg)
+		return fmt.Errorf("while getting k8sObject of type %s from KCP cluster %s for instance, due to: %s", crName, instanceID, err.Error())
+	}
+	if k8sObject == nil {
+		return fmt.Errorf("while getting k8sObject of type %s from KCP cluster %s for instance, due to object being nil", crName, instanceID)
 	}
 
-	err = k8s.ChangeSingleMetadata(k8sObject, k8s.Labels, k8s.GlobalAccountIDLabel, newGlobalAccountId)
+	err = k8s.AddOrOverrideMetadata(k8sObject, k8s.Labels, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
-		errMsg = fmt.Sprintf("unable to set labels: %s", err.Error())
-		logger.Errorf(errMsg)
-		return fmt.Errorf("%s", errMsg)
+		return fmt.Errorf("while adding or overriding label (new=%s) for k8sObject %s %s, because: %s", newGlobalAccountId, instanceID, crName, err.Error())
 	}
 
 	return nil
