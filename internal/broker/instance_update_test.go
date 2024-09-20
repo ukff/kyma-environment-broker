@@ -669,7 +669,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 
-	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, queue, PlansConfig{},
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	t.Run("should reject change GA - it is same as previous", func(t *testing.T) {
