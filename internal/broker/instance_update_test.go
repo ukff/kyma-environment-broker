@@ -83,6 +83,7 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		handler,
 		true,
 		false,
+		true,
 		q,
 		PlansConfig{},
 		planDefaults,
@@ -145,7 +146,7 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -195,7 +196,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
@@ -289,7 +290,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -340,7 +341,7 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -372,7 +373,7 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -438,7 +439,7 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -482,7 +483,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
@@ -613,7 +614,7 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -661,7 +662,7 @@ func TestUpdateEndpoint_OnlyContextChanged(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
-	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -699,7 +700,7 @@ func TestUpdateEndpoint_ContextAndParamsChanged(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
-	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -742,7 +743,7 @@ func TestSubaccountMovement(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 
-	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, queue, PlansConfig{},
+	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	t.Run("no move performed so subscription should be empty", func(t *testing.T) {

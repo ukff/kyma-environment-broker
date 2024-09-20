@@ -40,12 +40,13 @@ type UpdateEndpoint struct {
 	config Config
 	log    logrus.FieldLogger
 
-	instanceStorage           storage.Instances
-	runtimeStates             storage.RuntimeStates
-	contextUpdateHandler      ContextUpdateHandler
-	brokerURL                 string
-	processingEnabled         bool
-	subaccountMovementEnabled bool
+	instanceStorage                            storage.Instances
+	runtimeStates                              storage.RuntimeStates
+	contextUpdateHandler                       ContextUpdateHandler
+	brokerURL                                  string
+	processingEnabled                          bool
+	subaccountMovementEnabled                  bool
+	updateCustomResouresLabelsOnSubaccountMove bool
 
 	operationStorage storage.Operations
 
@@ -67,6 +68,7 @@ func NewUpdate(cfg Config,
 	ctxUpdateHandler ContextUpdateHandler,
 	processingEnabled bool,
 	subaccountMovementEnabled bool,
+	updateCustomResouresLabelsOnSubaccountMove bool,
 	queue Queue,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
@@ -76,14 +78,15 @@ func NewUpdate(cfg Config,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
-		config:                        cfg,
-		log:                           log.WithField("service", "UpdateEndpoint"),
-		instanceStorage:               instanceStorage,
-		runtimeStates:                 runtimeStates,
-		operationStorage:              operationStorage,
-		contextUpdateHandler:          ctxUpdateHandler,
-		processingEnabled:             processingEnabled,
-		subaccountMovementEnabled:     subaccountMovementEnabled,
+		config:                    cfg,
+		log:                       log.WithField("service", "UpdateEndpoint"),
+		instanceStorage:           instanceStorage,
+		runtimeStates:             runtimeStates,
+		operationStorage:          operationStorage,
+		contextUpdateHandler:      ctxUpdateHandler,
+		processingEnabled:         processingEnabled,
+		subaccountMovementEnabled: subaccountMovementEnabled,
+		updateCustomResouresLabelsOnSubaccountMove: updateCustomResouresLabelsOnSubaccountMove,
 		updatingQueue:                 queue,
 		plansConfig:                   plansConfig,
 		planDefaults:                  planDefaults,
@@ -374,11 +377,14 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if updateCustomResources {
-		err = b.updateLabels(instance.InstanceID, instance.GlobalAccountID)
-		if err != nil {
-			// sile return error on pourpose, and just log
-			logger.Errorf("unable to update labels on subaccount move: %s", err.Error())
-			return newInstance, changed, nil
+		if b.updateCustomResouresLabelsOnSubaccountMove {
+			// update labels on related CRs, but only if subaccount movement was succefully persistent and kept in database
+			err = b.updateLabels(instance.InstanceID, instance.GlobalAccountID)
+			if err != nil {
+				// silent error by design for now
+				logger.Errorf("unable to update labels on CRs while doing subaccount move: %s", err.Error())
+				return newInstance, changed, nil
+			}
 		}
 	}
 

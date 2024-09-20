@@ -453,7 +453,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
-			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, updateQueue, defaultPlansConfig,
+			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResouresLabelsOnSubaccountMove, updateQueue, defaultPlansConfig,
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
