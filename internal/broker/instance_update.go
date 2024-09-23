@@ -355,14 +355,14 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		instance.Parameters.ErsContext.Active = ersContext.Active
 	}
 
-	updateCustomResources := false
+	needUpdateCustomResources := false
 	if b.subaccountMovementEnabled {
 		if instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "" {
 			if instance.SubscriptionGlobalAccountID == "" {
 				instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 			}
 			instance.GlobalAccountID = ersContext.GlobalAccountID
-			updateCustomResources = true
+			needUpdateCustomResources = true
 		}
 	}
 
@@ -370,15 +370,13 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
-	} else if updateCustomResources {
-		if b.updateCustomResouresLabelsOnAccountMove {
-			// update labels on related CRs, but only if subaccount movement was succefully persistent and kept in database
-			err = b.updateLabels(instance.InstanceID, newInstance.GlobalAccountID)
-			if err != nil {
-				// silent error by design for now
-				logger.Errorf("unable to update labels on CRs while doing subaccount move: %s", err.Error())
-				return newInstance, changed, nil
-			}
+	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
+		// update labels on related CRs, but only if account movement was succefully persistent and kept in database
+		err = b.updateLabels(newInstance.InstanceID, newInstance.GlobalAccountID)
+		if err != nil {
+			// silent error by design for now
+			logger.Errorf("unable to update labels on CRs while doing subaccount move: %s", err.Error())
+			return newInstance, changed, nil
 		}
 	}
 
@@ -411,15 +409,15 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 
 func (b *UpdateEndpoint) updateLabels(instanceID, newGlobalAccountId string) error {
 	if err := b.updateCrLabel(instanceID, k8s.KymaCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance CR labels for Kyma CR : %s because : %s", instanceID, err.Error())
+		return fmt.Errorf("while update instance CR label for Kyma CR : %s because : %s", instanceID, err.Error())
 	}
 
 	if err := b.updateCrLabel(instanceID, k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance CR labels for GardenerCluster CR : %s because : %s", instanceID, err.Error())
+		return fmt.Errorf("while update instance CR label for GardenerCluster CR : %s because : %s", instanceID, err.Error())
 	}
 
 	if err := b.updateCrLabel(instanceID, k8s.RuntimeCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance CR labels for RuntimeCr CR : %s because : %s", instanceID, err.Error())
+		return fmt.Errorf("while update instance CR label for Runtime CR : %s because : %s", instanceID, err.Error())
 	}
 
 	return nil
