@@ -816,12 +816,15 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		cr.SetGroupVersionKind(gvk)
 		cr.SetName(name)
 		cr.SetNamespace(KymaNamespace)
+
 		labels := cr.GetLabels()
 		assert.Empty(t, labels)
+
 		existingLabels := make(map[string]string)
 		existingLabels[k8s.GlobalAccountIdLabel] = oldGlobalAccountId
 		existingLabels["foo"] = "bar"
 		cr.SetLabels(existingLabels)
+
 		labels = cr.GetLabels()
 		assert.Len(t, cr.GetLabels(), 2)
 		assert.Equal(t, oldGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
@@ -845,7 +848,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		tFunc(t, iid, k8s.GardenerClusterCr)
 	})
 
-	t.Run("RuntimeCrs hould have correct and new global account id", func(t *testing.T) {
+	t.Run("RuntimeCr hould have correct and new global account id", func(t *testing.T) {
 		tFunc(t, iid, k8s.RuntimeCr)
 	})
 }
