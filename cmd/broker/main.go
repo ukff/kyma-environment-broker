@@ -420,6 +420,7 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 		cfg.Broker.KimConfig.Plans,
 		cfg.Broker.KimConfig.KimOnlyPlans)
 	logs.Infof("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled)
+	logs.Infof("Is UpdateCustomResouresLabelsOnSubaccountMove enabled: %t", cfg.Broker.UpdateCustomResouresLabelsOnSubaccountMove)
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider) {

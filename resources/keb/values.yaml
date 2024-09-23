@@ -242,7 +242,8 @@ broker:
   enableShootAndSeedSameRegion: "false"
   allowUpdateExpiredInstanceWithContext: "false"
   subaccountMovementEnabled: "false"
-
+  updateCustomResouresLabelsOnSubaccountMove: "false"
+  
 binding:
   enabled: false
 
