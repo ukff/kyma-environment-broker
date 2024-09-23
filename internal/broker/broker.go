@@ -56,8 +56,8 @@ type Config struct {
 
 	DisableSapConvergedCloud bool `envconfig:"default=false"`
 
-	SubaccountMovementEnabled                  bool `envconfig:"default=false"`
-	UpdateCustomResouresLabelsOnSubaccountMove bool `envconfig:"default=false"`
+	SubaccountMovementEnabled               bool `envconfig:"default=false"`
+	updateCustomResouresLabelsOnAccountMove bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

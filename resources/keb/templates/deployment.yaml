@@ -413,8 +413,8 @@ spec:
               value: "{{ .Values.allowUpdateExpiredInstanceWithContext }}"
             - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
               value: "{{ .Values.broker.subaccountMovementEnabled }}"
-            - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_SUBACCOUNT_MOVE
-              value: "{{ .Values.broker.updateCustomResouresLabelsOnSubaccountMove }}"
+            - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE
+              value: "{{ .Values.broker.updateCustomResouresLabelsOnAccountMove }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
