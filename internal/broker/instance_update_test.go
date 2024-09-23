@@ -828,7 +828,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		assert.Equal(t, "bar", labels["foo"])
 
 		// update CR with new global account id
-		err = k8s.AddOrOverrideMetadata(cr, k8s.Labels, k8s.GlobalAccountIdLabel, newGlobalAccountId)
+		err = k8s.AddOrOverrideMetadata(cr, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 		require.NoError(t, err)
 
 		labels = cr.GetLabels()
