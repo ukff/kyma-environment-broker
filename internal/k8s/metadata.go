@@ -6,10 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-const (
-	GlobalAccountIdLabel = "kyma-project.io/global-account-id"
-)
-
 func AddOrOverrideMetadata(k8sObject *unstructured.Unstructured, key, value string) error {
 	if k8sObject == nil {
 		return fmt.Errorf("object is nil")

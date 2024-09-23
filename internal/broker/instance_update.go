@@ -466,7 +466,7 @@ func (b *UpdateEndpoint) updateCrLabel(instanceID, crName, newGlobalAccountId st
 		return fmt.Errorf("while getting k8sObject of type %s from KCP cluster %s for instance, due to object being nil", crName, instanceID)
 	}
 
-	err = k8s.AddOrOverrideMetadata(k8sObject, k8s.Labels, k8s.GlobalAccountIdLabel, newGlobalAccountId)
+	err = k8s.AddOrOverrideMetadata(k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
 		return fmt.Errorf("while adding or overriding label (new=%s) for k8sObject %s %s, because: %s", newGlobalAccountId, instanceID, crName, err.Error())
 	}
