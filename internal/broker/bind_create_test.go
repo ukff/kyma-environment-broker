@@ -185,6 +185,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	t.Run("should create a new service binding without error", func(t *testing.T) {
 
 		// When
+<<<<<<< HEAD
 		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`
 		{
 			"service_id": "123",
@@ -193,6 +194,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 				"service_account": true
 			}
 		}`, fixture.PlanId), t)
+=======
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`{
+  "service_id": "123",
+  "plan_id": "%s",
+  "parameters": {
+    "token_request": true
+  }
+}`, fixture.PlanId), t)
+>>>>>>> 6572d226 (Extend binding create endpoint (#1180))
 
 		binding := verifyResponse(t, response)
 
@@ -215,6 +225,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
 		assert.NoError(t, err)
+<<<<<<< HEAD
 	})
 
 	t.Run("should create a new service binding with custom token expiration time", func(t *testing.T) {
@@ -271,6 +282,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 			}	
 		}`, fixture.PlanId, customExpirationSeconds), t)
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
+=======
+>>>>>>> 6572d226 (Extend binding create endpoint (#1180))
 	})
 }
 
