@@ -27,7 +27,7 @@ func GvkByName(name string) (schema.GroupVersionKind, error) {
 			return schema.GroupVersionKind{
 				Group:   "operator.kyma-project.io",
 				Version: "v1beta2",
-				Kind:    "kyma",
+				Kind:    "Kyma",
 			}, nil
 		}
 	case GardenerClusterCr:
@@ -35,7 +35,7 @@ func GvkByName(name string) (schema.GroupVersionKind, error) {
 			return schema.GroupVersionKind{
 				Group:   "infrastructuremanager.kyma-project.io",
 				Version: "v1",
-				Kind:    "gardenerCluster",
+				Kind:    "GardenerCluster",
 			}, nil
 		}
 	case RuntimeCr:
