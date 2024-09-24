@@ -14,6 +14,7 @@ global:
     kyma_environment_broker:
       dir:
 <<<<<<< HEAD
+<<<<<<< HEAD
       version: "1.10.22"
     kyma_environments_subaccount_cleanup_job:
       dir:
@@ -39,25 +40,32 @@ global:
 
 =======
       version: "1.10.6"
+=======
+      version: "1.10.7"
+>>>>>>> 3763d448 (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.7 (#1183))
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.10.6"
+      version: "1.10.7"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.10.6"
+      version: "1.10.7"
     kyma_environment_expirator_job:
       dir:
-      version: "1.10.6"
+      version: "1.10.7"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.10.6"
+      version: "1.10.7"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.10.6"
+      version: "1.10.7"
     kyma_environment_subaccount_sync:
       dir:
+<<<<<<< HEAD
       version: "1.10.6"
 >>>>>>> a32bde9c (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.6 (#1181))
+=======
+      version: "1.10.7"
+>>>>>>> 3763d448 (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.7 (#1183))
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
