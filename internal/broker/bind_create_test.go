@@ -23,8 +23,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -87,52 +85,12 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	skrClient, err := initClient(config)
 	require.NoError(t, err)
 
-	//// populate skr client with data
-	err = skrClient.Create(context.Background(), &corev1.ServiceAccount{
+	err = skrClient.Create(context.Background(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "default",
-			Namespace: "default",
+			Name: "kyma-system",
 		},
 	})
 	require.NoError(t, err)
-
-	//// create clusterrole
-	err = skrClient.Create(context.Background(), &rbacv1.ClusterRole{
-		// this is ok because we know exactly how we want to be serialized
-		TypeMeta: metav1.TypeMeta{APIVersion: rbacv1.SchemeGroupVersion.String(), Kind: "ClusterRole"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "default-all",
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				Verbs:     []string{"*"},
-				APIGroups: []string{"*"},
-				Resources: []string{"*"},
-			},
-		},
-	})
-	require.NoError(t, err)
-
-	//// create clusterrolebinding
-	err = skrClient.Create(context.Background(), &rbacv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{APIVersion: rbacv1.SchemeGroupVersion.String(), Kind: "ClusterRoleBinding"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "default-default-all",
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: rbacv1.GroupName,
-			Kind:     "ClusterRole",
-			Name:     "default-all",
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      rbacv1.ServiceAccountKind,
-				Namespace: "default",
-				Name:      "default",
-			},
-		},
-	})
-	assert.NoError(t, err)
 
 	//// secret check in assertions
 	err = skrClient.Create(context.Background(), &corev1.Secret{
@@ -160,7 +118,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		}...).
 		Build()
 
-		//// create fake kubernetes client - kcp
+	//// create fake kubernetes client - kcp
 	gardenerClient := fake.NewClientBuilder().
 		WithScheme(sch).
 		WithRuntimeObjects([]runtime.Object{}...).
@@ -206,7 +164,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	t.Run("should create a new service binding without error", func(t *testing.T) {
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding_id?accepts_incomplete=true", fmt.Sprintf(`{
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`{
   "service_id": "123",
   "plan_id": "%s",
   "parameters": {
@@ -235,6 +193,13 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		//// verify connectivity using kubeconfig from the generated binding
 		newClient := kubeconfigClient(t, binding.Credentials.(string))
 		_, err = newClient.CoreV1().Secrets("default").Get(context.Background(), "secret-to-check", v1.GetOptions{})
+		assert.NoError(t, err)
+
+		_, err = newClient.CoreV1().ServiceAccounts("kyma-system").Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
+		assert.NoError(t, err)
+		_, err = newClient.RbacV1().ClusterRoles().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
+		assert.NoError(t, err)
+		_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
 		assert.NoError(t, err)
 	})
 }
