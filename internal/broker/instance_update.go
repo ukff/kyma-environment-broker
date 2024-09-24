@@ -454,17 +454,14 @@ func (b *UpdateEndpoint) updateCrLabel(instanceID, crName, newGlobalAccountId st
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
 	}
 
-	var k8sObject *unstructured.Unstructured
+	var k8sObject unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
-	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: instanceID}, k8sObject)
+	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: instanceID}, &k8sObject)
 	if err != nil {
 		return fmt.Errorf("while getting k8s object of type %s from kcp cluster %s for instance, due to: %s", crName, instanceID, err.Error())
 	}
-	if k8sObject == nil {
-		return fmt.Errorf("while getting k8s object of type %s from kcp cluster %s for instance, due to object being nil", crName, instanceID)
-	}
 
-	err = k8s.AddOrOverrideMetadata(k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
+	err = k8s.AddOrOverrideMetadata(&k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
 		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, instanceID, crName, err.Error())
 	}
