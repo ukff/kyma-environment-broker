@@ -90,7 +90,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	//// populate skr client with data
 	err = skrClient.Create(context.Background(), &corev1.ServiceAccount{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "admin",
+			Name:      "default",
 			Namespace: "default",
 		},
 	})
@@ -101,7 +101,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// this is ok because we know exactly how we want to be serialized
 		TypeMeta: metav1.TypeMeta{APIVersion: rbacv1.SchemeGroupVersion.String(), Kind: "ClusterRole"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "admin-all",
+			Name: "default-all",
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -117,18 +117,18 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	err = skrClient.Create(context.Background(), &rbacv1.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{APIVersion: rbacv1.SchemeGroupVersion.String(), Kind: "ClusterRoleBinding"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "admin",
+			Name: "default-default-all",
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.GroupName,
 			Kind:     "ClusterRole",
-			Name:     "admin-all",
+			Name:     "default-all",
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      rbacv1.ServiceAccountKind,
 				Namespace: "default",
-				Name:      "admin",
+				Name:      "default",
 			},
 		},
 	})
@@ -160,6 +160,12 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		}...).
 		Build()
 
+		//// create fake kubernetes client - kcp
+	gardenerClient := fake.NewClientBuilder().
+		WithScheme(sch).
+		WithRuntimeObjects([]runtime.Object{}...).
+		Build()
+
 	//// database
 	db := storage.NewMemoryStorage()
 	err = db.Instances().Insert(fixture.FixInstance("1"))
@@ -176,7 +182,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, 10000)
+	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, 10000)
 	apiHandler := handlers.NewApiHandler(KymaEnvironmentBroker{
 		nil,
 		nil,
@@ -204,6 +210,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "service_id": "123",
   "plan_id": "%s",
   "parameters": {
+    "token_request": true
   }
 }`, fixture.PlanId), t)
 
