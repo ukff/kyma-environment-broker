@@ -372,7 +372,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
 		// update labels on related CRs, but only if account movement was succefully persistent and kept in database
-		err = b.updateLabels(newInstance.InstanceID, newInstance.GlobalAccountID)
+		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
 			// silent error by design for now
 			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())
@@ -407,17 +407,17 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 	return jsonschema.NewValidatorFromStringSchema(schema)
 }
 
-func (b *UpdateEndpoint) updateLabels(instanceID, newGlobalAccountId string) error {
-	if err := b.updateCrLabel(instanceID, k8s.KymaCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance label for Kyma CR : %s because : %s", instanceID, err.Error())
+func (b *UpdateEndpoint) updateLabels(id, newGlobalAccountId string) error {
+	if err := b.updateCrLabel(id, k8s.KymaCr, newGlobalAccountId); err != nil {
+		return fmt.Errorf("while update instance label for Kyma CR : %s because : %s", id, err.Error())
 	}
 
-	if err := b.updateCrLabel(instanceID, k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance label for GardenerCluster CR : %s because : %s", instanceID, err.Error())
+	if err := b.updateCrLabel(id, k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
+		return fmt.Errorf("while update instance label for GardenerCluster CR : %s because : %s", id, err.Error())
 	}
 
-	if err := b.updateCrLabel(instanceID, k8s.RuntimeCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance label for Runtime CR : %s because : %s", instanceID, err.Error())
+	if err := b.updateCrLabel(id, k8s.RuntimeCr, newGlobalAccountId); err != nil {
+		return fmt.Errorf("while update instance label for Runtime CR : %s because : %s", id, err.Error())
 	}
 
 	return nil
@@ -439,7 +439,7 @@ func (b *UpdateEndpoint) kcpClient() (*client.Client, error) {
 	return &kcpK8sClient, nil
 }
 
-func (b *UpdateEndpoint) updateCrLabel(instanceID, crName, newGlobalAccountId string) error {
+func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) error {
 	kcpK8sClient, err := b.kcpClient()
 	if err != nil {
 		return fmt.Errorf("while geting kcp k8s client, because: %s", err.Error())
