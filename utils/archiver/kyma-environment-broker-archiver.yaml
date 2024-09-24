@@ -74,4 +74,8 @@ spec:
       template:
         spec:
           containers:
+<<<<<<< HEAD
             - image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.10.22
+=======
+            - image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.10.6
+>>>>>>> a32bde9c (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.6 (#1181))

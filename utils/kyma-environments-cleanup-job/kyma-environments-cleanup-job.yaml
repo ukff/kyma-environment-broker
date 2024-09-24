@@ -28,7 +28,11 @@ spec:
           containers:
             - name: kyma-environments-cleanup
               command: ["/bin/main"]
+<<<<<<< HEAD
               image: europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.10.22
+=======
+              image: europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.10.6
+>>>>>>> a32bde9c (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.6 (#1181))
               imagePullPolicy: IfNotPresent
               env:
                 - name: DATABASE_EMBEDDED

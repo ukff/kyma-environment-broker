@@ -13,6 +13,7 @@ global:
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
+<<<<<<< HEAD
       version: "1.10.22"
     kyma_environments_subaccount_cleanup_job:
       dir:
@@ -36,6 +37,27 @@ global:
       dir:
       version: "1.10.22"
 
+=======
+      version: "1.10.6"
+    kyma_environments_subaccount_cleanup_job:
+      dir:
+      version: "1.10.6"
+    kyma_environment_trial_cleanup_job:
+      dir:
+      version: "1.10.6"
+    kyma_environment_expirator_job:
+      dir:
+      version: "1.10.6"
+    kyma_environment_deprovision_retrigger_job:
+      dir:
+      version: "1.10.6"
+    kyma_environment_runtime_reconciler:
+      dir:
+      version: "1.10.6"
+    kyma_environment_subaccount_sync:
+      dir:
+      version: "1.10.6"
+>>>>>>> a32bde9c (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.6 (#1181))
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"

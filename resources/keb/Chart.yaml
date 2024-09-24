@@ -1,7 +1,15 @@
 apiVersion: v2
+<<<<<<< HEAD
 appVersion: "1.10.22"
 name: keb
 description:
 description: Kyma Environment Broker Helm chart for Kubernetes
 version: 1.10.22
+=======
+appVersion: "1.10.6"
+name: keb
+description:
+description: Kyma Environment Broker Helm chart for Kubernetes
+version: 1.10.6
+>>>>>>> a32bde9c (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.6 (#1181))
 type: application
