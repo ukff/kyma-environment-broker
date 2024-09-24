@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -408,19 +409,11 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 }
 
 func (b *UpdateEndpoint) updateLabels(id, newGlobalAccountId string) error {
-	if err := b.updateCrLabel(id, k8s.KymaCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance label for Kyma CR : %s because : %s", id, err.Error())
-	}
-
-	if err := b.updateCrLabel(id, k8s.GardenerClusterCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance label for GardenerCluster CR : %s because : %s", id, err.Error())
-	}
-
-	if err := b.updateCrLabel(id, k8s.RuntimeCr, newGlobalAccountId); err != nil {
-		return fmt.Errorf("while update instance label for Runtime CR : %s because : %s", id, err.Error())
-	}
-
-	return nil
+	kymaErr := b.updateCrLabel(id, k8s.KymaCr, newGlobalAccountId)
+	gardenerClusterErr := b.updateCrLabel(id, k8s.GardenerClusterCr, newGlobalAccountId)
+	runtimeErr := b.updateCrLabel(id, k8s.RuntimeCr, newGlobalAccountId)
+	err := errors.Join(kymaErr, gardenerClusterErr, runtimeErr)
+	return err
 }
 
 func (b *UpdateEndpoint) kcpClient() (*client.Client, error) {
@@ -456,14 +449,14 @@ func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) er
 
 	var k8sObject unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
-	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: instanceID}, &k8sObject)
+	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: id}, &k8sObject)
 	if err != nil {
-		return fmt.Errorf("while getting k8s object of type %s from kcp cluster %s for instance, due to: %s", crName, instanceID, err.Error())
+		return fmt.Errorf("while getting k8s object of type %s from kcp cluster %s for instance, due to: %s", crName, id, err.Error())
 	}
 
 	err = k8s.AddOrOverrideMetadata(&k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
-		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, instanceID, crName, err.Error())
+		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, id, crName, err.Error())
 	}
 
 	return nil
