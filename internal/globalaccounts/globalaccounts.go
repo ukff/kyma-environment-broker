@@ -36,7 +36,7 @@ type svcConfig struct {
 func Run(ctx context.Context, cfg Config) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(fmt.Sprintf("Recovered: %s", r))
+			fmt.Printf("Recovered: %s\n", r)
 		}
 	}()
 
