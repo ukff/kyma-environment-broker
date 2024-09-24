@@ -236,7 +236,7 @@ func main() {
 	}
 
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
-
+	cfg.Broker.UpdateCustomResouresLabelsOnAccountMove = true //temp
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
 
