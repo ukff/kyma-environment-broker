@@ -20,10 +20,9 @@ func GvkByName(name string) (schema.GroupVersionKind, error) {
 	}
 
 	name = strings.ToLower(name)
-
 	switch name {
 	case KymaCr:
-		{/v1beta2"
+		{
 			return schema.GroupVersionKind{
 				Group:   "operator.kyma-project.io",
 				Version: "v1beta2",
@@ -44,5 +43,6 @@ func GvkByName(name string) (schema.GroupVersionKind, error) {
 			return runtime.GroupVersionKind(), nil
 		}
 	}
+
 	return schema.GroupVersionKind{}, fmt.Errorf("unknown name: %s", name)
 }

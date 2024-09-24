@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -408,6 +409,8 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider,
 }
 
 func (b *UpdateEndpoint) updateLabels(instanceID, newGlobalAccountId string) error {
+	err := errors.Join(err, nil, err2, err3)
+
 	if err := b.updateCrLabel(instanceID, k8s.KymaCr, newGlobalAccountId); err != nil {
 		return fmt.Errorf("while update instance label for Kyma CR : %s because : %s", instanceID, err.Error())
 	}
