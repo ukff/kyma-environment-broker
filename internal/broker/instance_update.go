@@ -360,14 +360,12 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	}
 
 	needUpdateCustomResources := false
-	if b.subaccountMovementEnabled {
-		if instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "" {
-			if instance.SubscriptionGlobalAccountID == "" {
-				instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
-			}
-			instance.GlobalAccountID = ersContext.GlobalAccountID
-			needUpdateCustomResources = true
+	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
+		if instance.SubscriptionGlobalAccountID == "" {
+			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 		}
+		instance.GlobalAccountID = ersContext.GlobalAccountID
+		needUpdateCustomResources = true
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
