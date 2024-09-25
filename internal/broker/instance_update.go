@@ -30,7 +30,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	k8sCfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 type ContextUpdateHandler interface {
@@ -60,6 +59,8 @@ type UpdateEndpoint struct {
 	kcBuilder       kubeconfig.KcBuilder
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
+
+	kcpClient client.Client
 }
 
 func NewUpdate(cfg Config,
@@ -77,6 +78,7 @@ func NewUpdate(cfg Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
+	kcpClient client.Client,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                  cfg,
@@ -94,6 +96,7 @@ func NewUpdate(cfg Config,
 		dashboardConfig:                         dashboardConfig,
 		kcBuilder:                               kcBuilder,
 		convergedCloudRegionsProvider:           convergedCloudRegionsProvider,
+		kcpClient:                               kcpClient,
 	}
 }
 
@@ -372,7 +375,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
-		// update labels on related CRs, but only if account movement was succefully persistent and kept in database
+		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
 			// silent error by design for now
@@ -416,32 +419,7 @@ func (b *UpdateEndpoint) updateLabels(id, newGlobalAccountId string) error {
 	return err
 }
 
-func (b *UpdateEndpoint) kcpClient() (*client.Client, error) {
-	kcpK8sConfig, err := k8sCfg.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("while getting kcp k8s config due to error: %s", err.Error())
-	}
-	if kcpK8sConfig == nil {
-		return nil, fmt.Errorf("while getting kcp k8s config since it is nil")
-	}
-
-	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
-	if err != nil {
-		return nil, fmt.Errorf("while getting creating kcp cluster from k8s config: %s", err.Error())
-	}
-	return &kcpK8sClient, nil
-}
-
 func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) error {
-	kcpK8sClient, err := b.kcpClient()
-	if err != nil {
-		return fmt.Errorf("while geting kcp k8s client, because: %s", err.Error())
-	}
-
-	if kcpK8sClient == nil {
-		return fmt.Errorf("while checking if kcp k8s client is set")
-	}
-
 	gvk, err := k8s.GvkByName(crName)
 	if err != nil {
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
@@ -449,14 +427,19 @@ func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) er
 
 	var k8sObject unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
-	err = (*kcpK8sClient).Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: id}, &k8sObject)
+	err = b.kcpClient.Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: id}, &k8sObject)
 	if err != nil {
-		return fmt.Errorf("while getting k8s object of type %s from kcp cluster %s for instance, due to: %s", crName, id, err.Error())
+		return fmt.Errorf("while getting k8s object of type %s from kcp cluster for instance %s, due to: %s", crName, id, err.Error())
 	}
 
 	err = k8s.AddOrOverrideMetadata(&k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
 		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, id, crName, err.Error())
+	}
+
+	err = b.kcpClient.Update(context.Background(), &k8sObject)
+	if err != nil {
+		return fmt.Errorf("while updating k8s object %s %s, because: %s", id, crName, err.Error())
 	}
 
 	return nil
