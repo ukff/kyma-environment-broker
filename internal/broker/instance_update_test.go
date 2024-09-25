@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
@@ -487,7 +488,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, true, q, PlansConfig{},
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
@@ -727,18 +728,21 @@ func TestUpdateExpiredInstance(t *testing.T) {
 }
 
 func TestSubaccountMovement(t *testing.T) {
+	runtimeId := createFakeCRs(t)
+	defer cleanFakeCRs(t, runtimeId)
+
 	instance := internal.Instance{
 		InstanceID:      instanceID,
-		RuntimeID:       "runtime-1",
+		RuntimeID:       runtimeId,
 		ServicePlanID:   TrialPlanID,
 		GlobalAccountID: "InitialGlobalAccountID",
 		Parameters: internal.ProvisioningParameters{
-			PlanID:     TrialPlanID,
-			ErsContext: internal.ERSContext{},
+			PlanID: TrialPlanID,
+			ErsContext: internal.ERSContext{
+				GlobalAccountID: "InitialGlobalAccountID",
+			},
 		},
 	}
-
-	createFakeCRs(t)
 
 	storage := storage.NewMemoryStorage()
 	err := storage.Instances().Insert(instance)
@@ -766,15 +770,15 @@ func TestSubaccountMovement(t *testing.T) {
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"InitialGlobalAccountID\", \"active\":true}"),
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"ChangedlGlobalAccountID\"}"),
 			RawParameters:   json.RawMessage("{\"name\":\"test\"}"),
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
 		instance, err := storage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
-		assert.Equal(t, "", instance.SubscriptionGlobalAccountID)
-		assert.Equal(t, "InitialGlobalAccountID", instance.GlobalAccountID)
+		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "ChangedlGlobalAccountID", instance.GlobalAccountID)
 	})
 
 	t.Run("move subaccount first time", func(t *testing.T) {
@@ -810,82 +814,140 @@ func TestSubaccountMovement(t *testing.T) {
 
 func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	const (
-		oldGlobalAccountId = "old-global-account-id"
+		oldGlobalAccountId = "first-global-account-id"
 		newGlobalAccountId = "changed-global-account-id"
 	)
 
-	createFakeCRs(t)
+	runtimeId := createFakeCRs(t)
+	defer cleanFakeCRs(t, runtimeId)
 
-	iid := uuid.New().String()
-
-	tFunc := func(t *testing.T, name, crName string) {
-		gvk, err := k8s.GvkByName(crName)
-		require.NoError(t, err)
-
-		cr := &unstructured.Unstructured{}
-		cr.SetGroupVersionKind(gvk)
-		cr.SetName(name)
-		cr.SetNamespace(KymaNamespace)
-
-		labels := cr.GetLabels()
-		assert.Empty(t, labels)
-
-		existingLabels := make(map[string]string)
-		existingLabels[k8s.GlobalAccountIdLabel] = oldGlobalAccountId
-		existingLabels["foo"] = "bar"
-		cr.SetLabels(existingLabels)
-
-		labels = cr.GetLabels()
-		assert.Len(t, cr.GetLabels(), 2)
-		assert.Equal(t, oldGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
-		assert.Equal(t, "bar", labels["foo"])
-
-		// update CR with new global account id
-		err = k8s.AddOrOverrideMetadata(cr, k8s.GlobalAccountIdLabel, newGlobalAccountId)
-		require.NoError(t, err)
-
-		labels = cr.GetLabels()
-		assert.Len(t, labels, 2)
-		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
-		assert.Equal(t, "bar", labels["foo"])
+	instance := internal.Instance{
+		InstanceID:      instanceID,
+		ServicePlanID:   TrialPlanID,
+		GlobalAccountID: oldGlobalAccountId,
+		RuntimeID:       runtimeId,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: TrialPlanID,
+			ErsContext: internal.ERSContext{
+				GlobalAccountID: newGlobalAccountId,
+			},
+		},
 	}
 
-	t.Run("KymaCr should have correct and new global account id", func(t *testing.T) {
-		tFunc(t, iid, k8s.KymaCr)
-	})
+	storage := storage.NewMemoryStorage()
+	err := storage.Instances().Insert(instance)
+	require.NoError(t, err)
 
-	t.Run("GardenerClusterCr should have correct and new global account id", func(t *testing.T) {
-		tFunc(t, iid, k8s.GardenerClusterCr)
-	})
+	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
 
-	t.Run("RuntimeCr hould have correct and new global account id", func(t *testing.T) {
-		tFunc(t, iid, k8s.RuntimeCr)
+	kcBuilder := &kcMock.KcBuilder{}
+
+	handler := &handler{}
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+
+	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
+		// initial state of instance - moving account was never donex
+		i, e := storage.Instances().GetByID(instanceID)
+		require.NoError(t, e)
+		assert.Equal(t, oldGlobalAccountId, i.GlobalAccountID)
+		assert.Empty(t, i.SubscriptionGlobalAccountID)
+		assert.Equal(t, runtimeId, i.RuntimeID)
+
+		// simulate moving account with new global account id - it means that we should update labels in CR
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"changed-global-account-id\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+
+		// after update instance should have new global account id and old global account id as subscription global account id, subsciprion global id is set only once.
+		i, err = storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, newGlobalAccountId, i.GlobalAccountID)
+		assert.Equal(t, oldGlobalAccountId, i.SubscriptionGlobalAccountID)
+		assert.Equal(t, runtimeId, i.RuntimeID)
+
+		// all CRs should have new global account id as label
+		gvk, err := k8s.GvkByName(k8s.KymaCr)
+		require.NoError(t, err)
+		cr := &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KymaNamespace}, cr)
+		require.NoError(t, err)
+		labels := cr.GetLabels()
+		assert.Len(t, labels, 1)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+
+		gvk, err = k8s.GvkByName(k8s.RuntimeCr)
+		require.NoError(t, err)
+		cr = &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KymaNamespace}, cr)
+		require.NoError(t, err)
+		labels = cr.GetLabels()
+		assert.Len(t, labels, 1)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+
+		gvk, err = k8s.GvkByName(k8s.GardenerClusterCr)
+		require.NoError(t, err)
+		cr = &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KymaNamespace}, cr)
+		require.NoError(t, err)
+		labels = cr.GetLabels()
+		assert.Len(t, labels, 1)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
 	})
 }
 
-func createFakeCRs(t *testing.T) {
-	id := uuid.New().String()
-	f := func(t *testing.T, id string, crName string, clean bool) {
+func createFakeCRs(t *testing.T) string {
+	runtimeID := uuid.New().String()
+	f := func(t *testing.T, runtimeID string, crName string) {
 		assert.NotNil(t, fakeKcpK8sClient)
 		gvk, err := k8s.GvkByName(crName)
 		require.NoError(t, err)
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
-		us.SetName(id)
+		us.SetName(runtimeID)
 		us.SetNamespace(KymaNamespace)
-		if clean {
-			err := fakeKcpK8sClient.Delete(context.Background(), &us)
-			require.NoError(t, err)
-			return
-		}
 		err = fakeKcpK8sClient.Create(context.Background(), &us)
 		require.NoError(t, err)
 	}
 
-	f(t, id, k8s.KymaCr, false)
-	defer f(t, id, k8s.KymaCr, true)
-	f(t, id, k8s.GardenerClusterCr, false)
-	defer f(t, id, k8s.GardenerClusterCr, true)
-	f(t, id, k8s.RuntimeCr, false)
-	defer f(t, id, k8s.RuntimeCr, true)
+	f(t, runtimeID, k8s.KymaCr)
+	f(t, runtimeID, k8s.GardenerClusterCr)
+	f(t, runtimeID, k8s.RuntimeCr)
+
+	return runtimeID
+}
+
+func cleanFakeCRs(t *testing.T, runtimeID string) {
+	f := func(t *testing.T, id string, crName string) {
+		assert.NotNil(t, fakeKcpK8sClient)
+		gvk, err := k8s.GvkByName(crName)
+		require.NoError(t, err)
+		us := unstructured.Unstructured{}
+		us.SetGroupVersionKind(gvk)
+		us.SetName(runtimeID)
+		us.SetNamespace(KymaNamespace)
+		err = fakeKcpK8sClient.Delete(context.Background(), &us)
+		require.NoError(t, err)
+	}
+
+	f(t, runtimeID, k8s.KymaCr)
+	f(t, runtimeID, k8s.GardenerClusterCr)
+	f(t, runtimeID, k8s.RuntimeCr)
 }

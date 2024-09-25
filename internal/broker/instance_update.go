@@ -380,7 +380,8 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		if err != nil {
 			// silent error by design for now
 			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())
-			return newInstance, changed, nil
+			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CR failed"), http.StatusInternalServerError, err.Error())
+			return newInstance, changed, response
 		}
 	}
 
