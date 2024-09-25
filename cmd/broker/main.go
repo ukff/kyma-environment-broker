@@ -27,7 +27,6 @@ import (
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
@@ -44,7 +43,6 @@ import (
 	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
@@ -113,7 +111,6 @@ type Config struct {
 	Broker                                                              broker.Config
 	CatalogFilePath                                                     string
 
-	Avs avs.Config
 	EDP edp.Config
 
 	Notification notification.Config
@@ -311,16 +308,6 @@ func main() {
 
 	edpClient := edp.NewClient(cfg.EDP)
 
-	panicOnError(cfg.Avs.ReadMaintenanceModeDuringUpgradeAlwaysDisabledGAIDsFromYaml(
-		cfg.AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath))
-	avsClient, err := avs.NewClient(ctx, cfg.Avs, logs)
-	fatalOnError(err, logs)
-	avsDel := avs.NewDelegator(avsClient, cfg.Avs, db.Operations())
-	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
-	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
-	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.ExternalTesterDisabled, externalEvalAssistant)
-	upgradeEvalManager := avs.NewEvaluationManager(avsDel, cfg.Avs)
-
 	// application event broker
 	eventBroker := event.NewPubSub(logs)
 
@@ -330,12 +317,10 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator,
 		edpClient, accountProvider, skrK8sClientProvider, cli, oidcDefaultValues, logs)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
-		avsDel, internalEvalAssistant, externalEvalAssistant, edpClient, accountProvider,
+	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
 		skrK8sClientProvider, cli, configProvider, logs)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
@@ -363,7 +348,7 @@ func main() {
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
-		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1)
+		nil, time.Minute, runtimeResolver, notificationBuilder, logs, cli, cfg, 1)
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
 	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, logs)
