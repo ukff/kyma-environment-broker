@@ -864,13 +864,14 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 }
 
 func createFakeCRs(t *testing.T) {
-	f := func(t *testing.T, crName string, clean bool) {
+	id := uuid.New().String()
+	f := func(t *testing.T, id string, crName string, clean bool) {
 		assert.NotNil(t, fakeKcpK8sClient)
 		gvk, err := k8s.GvkByName(crName)
 		require.NoError(t, err)
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
-		us.SetName("runtime-1")
+		us.SetName(id)
 		us.SetNamespace(KymaNamespace)
 		if clean {
 			err := fakeKcpK8sClient.Delete(context.Background(), &us)
@@ -881,10 +882,10 @@ func createFakeCRs(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	f(t, k8s.KymaCr, false)
-	defer f(t, k8s.KymaCr, true)
-	f(t, k8s.GardenerClusterCr, false)
-	defer f(t, k8s.GardenerClusterCr, true)
-	f(t, k8s.RuntimeCr, false)
-	defer f(t, k8s.RuntimeCr, true)
+	f(t, id, k8s.KymaCr, false)
+	defer f(t, id, k8s.KymaCr, true)
+	f(t, id, k8s.GardenerClusterCr, false)
+	defer f(t, id, k8s.GardenerClusterCr, true)
+	f(t, id, k8s.RuntimeCr, false)
+	defer f(t, id, k8s.RuntimeCr, true)
 }
