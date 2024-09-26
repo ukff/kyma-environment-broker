@@ -131,11 +131,8 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 
 	if instance.IsExpired() {
-		if b.config.AllowUpdateExpiredInstanceWithContext {
-			newGlobalAccountId := ersContext.GlobalAccountID
-			if newGlobalAccountId != "" && (newGlobalAccountId != instance.GlobalAccountID) {
-				return domain.UpdateServiceSpec{}, nil
-			}
+		if b.config.AllowUpdateExpiredInstanceWithContext && ersContext.GlobalAccountID != "" {
+			return domain.UpdateServiceSpec{}, nil
 		}
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 	}
@@ -373,6 +370,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
+		logger.Errorf("flag: %t", b.updateCustomResouresLabelsOnAccountMove)
 		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
