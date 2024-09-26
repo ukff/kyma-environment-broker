@@ -40,13 +40,13 @@ type UpdateEndpoint struct {
 	config Config
 	log    logrus.FieldLogger
 
-	instanceStorage                         storage.Instances
-	runtimeStates                           storage.RuntimeStates
-	contextUpdateHandler                    ContextUpdateHandler
-	brokerURL                               string
-	processingEnabled                       bool
-	subaccountMovementEnabled               bool
-	updateCustomResouresLabelsOnAccountMove bool
+	instanceStorage                          storage.Instances
+	runtimeStates                            storage.RuntimeStates
+	contextUpdateHandler                     ContextUpdateHandler
+	brokerURL                                string
+	processingEnabled                        bool
+	subaccountMovementEnabled                bool
+	UpdateCustomResourcesLabelsOnAccountMove bool
 
 	operationStorage storage.Operations
 
@@ -70,7 +70,7 @@ func NewUpdate(cfg Config,
 	ctxUpdateHandler ContextUpdateHandler,
 	processingEnabled bool,
 	subaccountMovementEnabled bool,
-	updateCustomResouresLabelsOnAccountMove bool,
+	UpdateCustomResourcesLabelsOnAccountMove bool,
 	queue Queue,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
@@ -81,22 +81,22 @@ func NewUpdate(cfg Config,
 	kcpClient client.Client,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
-		config:                                  cfg,
-		log:                                     log.WithField("service", "UpdateEndpoint"),
-		instanceStorage:                         instanceStorage,
-		runtimeStates:                           runtimeStates,
-		operationStorage:                        operationStorage,
-		contextUpdateHandler:                    ctxUpdateHandler,
-		processingEnabled:                       processingEnabled,
-		subaccountMovementEnabled:               subaccountMovementEnabled,
-		updateCustomResouresLabelsOnAccountMove: updateCustomResouresLabelsOnAccountMove,
-		updatingQueue:                           queue,
-		plansConfig:                             plansConfig,
-		planDefaults:                            planDefaults,
-		dashboardConfig:                         dashboardConfig,
-		kcBuilder:                               kcBuilder,
-		convergedCloudRegionsProvider:           convergedCloudRegionsProvider,
-		kcpClient:                               kcpClient,
+		config:                                   cfg,
+		log:                                      log.WithField("service", "UpdateEndpoint"),
+		instanceStorage:                          instanceStorage,
+		runtimeStates:                            runtimeStates,
+		operationStorage:                         operationStorage,
+		contextUpdateHandler:                     ctxUpdateHandler,
+		processingEnabled:                        processingEnabled,
+		subaccountMovementEnabled:                subaccountMovementEnabled,
+		UpdateCustomResourcesLabelsOnAccountMove: UpdateCustomResourcesLabelsOnAccountMove,
+		updatingQueue:                            queue,
+		plansConfig:                              plansConfig,
+		planDefaults:                             planDefaults,
+		dashboardConfig:                          dashboardConfig,
+		kcBuilder:                                kcBuilder,
+		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
+		kcpClient:                                kcpClient,
 	}
 }
 
@@ -370,7 +370,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
-	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
+	} else if b.UpdateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
 		logger.Info("updating labels on related CRs")
 		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
