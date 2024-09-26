@@ -678,7 +678,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
-	t.Run("should reject change GA - it is same as previous", func(t *testing.T) {
+	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
@@ -687,7 +687,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_init\"}"),
 			MaintenanceInfo: nil,
 		}, true)
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("should accept change GA", func(t *testing.T) {
