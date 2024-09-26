@@ -363,6 +363,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		}
 		instance.GlobalAccountID = ersContext.GlobalAccountID
 		needUpdateCustomResources = true
+		logger.Infof("Global account ID changed to: %s. need update labels", instance.GlobalAccountID)
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
@@ -370,14 +371,15 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
+		logger.Info("updating labels on related CRs")
 		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
-			// silent error by design for now
 			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())
 			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CR failed"), http.StatusInternalServerError, err.Error())
 			return newInstance, changed, response
 		}
+		logger.Info("labels updated")
 	}
 
 	return newInstance, changed, nil
@@ -416,6 +418,7 @@ func (b *UpdateEndpoint) updateLabels(id, newGlobalAccountId string) error {
 }
 
 func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) error {
+	b.log.Infof("update labels starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
 	gvk, err := k8s.GvkByName(crName)
 	if err != nil {
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
