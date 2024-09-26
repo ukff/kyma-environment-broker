@@ -370,7 +370,6 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
-		logger.Errorf("flag: %t", b.updateCustomResouresLabelsOnAccountMove)
 		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
