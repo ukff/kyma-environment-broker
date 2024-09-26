@@ -376,7 +376,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
 			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())
-			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CR failed"), http.StatusInternalServerError, err.Error())
+			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CRs label failed"), http.StatusInternalServerError, err.Error())
 			return newInstance, changed, response
 		}
 		logger.Info("labels updated")
@@ -426,7 +426,7 @@ func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) er
 
 	var k8sObject unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
-	err = b.kcpClient.Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: id}, &k8sObject)
+	err = b.kcpClient.Get(context.Background(), types.NamespacedName{Namespace: KcpNamespace, Name: id}, &k8sObject)
 	if err != nil {
 		return fmt.Errorf("while getting k8s object of type %s from kcp cluster for instance %s, due to: %s", crName, id, err.Error())
 	}
