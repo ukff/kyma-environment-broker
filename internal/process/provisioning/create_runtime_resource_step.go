@@ -148,6 +148,9 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	runtime.Spec.Shoot.Purpose = gardener.ShootPurpose(values.Purpose)
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
+	if runtime.Spec.Shoot.ControlPlane == nil {
+		runtime.Spec.Shoot.ControlPlane = &gardener.ControlPlane{}
+	}
 	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
 	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
