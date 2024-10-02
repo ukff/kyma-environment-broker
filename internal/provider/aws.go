@@ -86,11 +86,17 @@ func (p *AWSTrialInputProvider) region() string {
 	if p.ProvisioningParameters.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
 		if found {
-			return *toAWSSpecific[abstractRegion]
+			awsSpecific, ok := toAWSSpecific[abstractRegion]
+			if ok {
+				return *awsSpecific
+			}
 		}
 	}
 	if p.ProvisioningParameters.Parameters.Region != nil && *p.ProvisioningParameters.Parameters.Region != "" {
-		return *toAWSSpecific[*p.ProvisioningParameters.Parameters.Region]
+		awsSpecific, ok := toAWSSpecific[*p.ProvisioningParameters.Parameters.Region]
+		if ok {
+			return *awsSpecific
+		}
 	}
 	return DefaultAWSTrialRegion
 }
