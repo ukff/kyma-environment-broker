@@ -21,22 +21,8 @@ import (
 	k8scfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-const (
-	dbPort  = 5432
-	kebPort = 8080
-)
-
-type pair struct {
-	SubaccountID    string
-	GlobalAccountID string
-}
-
 type result struct {
 	GlobalAccountGUID string `json:"globalAccountGUID"`
-}
-
-func (p *pair) print() {
-	fmt.Printf("Global account id: %s, Subaccount id: %s\n", p.GlobalAccountID, p.SubaccountID)
 }
 
 type svcConfig struct {
@@ -49,6 +35,7 @@ type svcConfig struct {
 func Run(c Config) {
 	ctx := context.Background()
 	logs := logrus.New()
+	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
 
 	svcConfig := svcConfig{
 		ClientID:     c.AccountServiceID,     // cis-creds-accounts id -> secret
@@ -72,7 +59,7 @@ func Run(c Config) {
 	defer func() {
 		err = connection.Close()
 		if err != nil {
-			fmt.Println(err)
+			logs.Error(err)
 		}
 	}()
 
@@ -93,20 +80,20 @@ func Run(c Config) {
 	for _, kyma := range kymas.Items {
 		runtimeId := kyma.GetName() // name of kyma is runtime id
 		runtimeIDFilter := dbmodel.InstanceFilter{RuntimeIDs: []string{runtimeId}}
+
 		instances, _, _, err := db.Instances().List(runtimeIDFilter)
 		if err != nil {
-			logs.Println(err)
-			continue
-		}
-		if len(instances) > 1 {
-			logs.Errorf("more than one instance for runtime id %s", runtimeId)
+			logs.Error(err)
 			continue
 		}
 		if len(instances) == 0 {
 			logs.Errorf("no instance for runtime id %s", runtimeId)
 			continue
 		}
-
+		if len(instances) > 1 {
+			logs.Errorf("more than one instance for runtime id %s", runtimeId)
+			continue
+		}
 		instance := instances[0]
 		if instance.SubAccountID == "" {
 			logs.Errorf("instance have empty SA %s", instance.SubAccountID)
@@ -116,6 +103,7 @@ func Run(c Config) {
 			logs.Errorf("instance have empty GA %s", instance.GlobalAccountID)
 			continue
 		}
+
 		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(c.AccountServiceURL, instance.SubAccountID), nil)
 		if err != nil {
 			logs.Errorf("error creating request %s", err)
@@ -137,6 +125,7 @@ func Run(c Config) {
 			logs.Error(err.Error())
 			continue
 		}
+
 		log := ""
 		switch {
 		case svcResponse.GlobalAccountGUID == "":
@@ -146,10 +135,13 @@ func Run(c Config) {
 		default:
 			log = fmt.Sprintf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
 		}
+
 		data.WriteString(log)
 	}
 
-	logs.Info(data.String())
+	logs.Info("###RESULTS### \n")
+	logs.Infof("%s \n", data.String())
+	logs.Info("############# \n")
 }
 
 func getKcpClient() (client.Client, error) {
