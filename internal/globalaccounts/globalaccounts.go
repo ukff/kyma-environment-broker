@@ -133,8 +133,7 @@ func clusterOp(ctx context.Context, kcp client.Client, logs *logrus.Logger) (uns
 	return kymas, nil
 }
 
-func dbOp(us *unstructured.Unstructured, db storage.BrokerStorage, logs *logrus.Logger) (internal.Instance, error) {
-	runtimeId := us.GetName() // name of kyma is runtime id
+func dbOp(runtimeId string, db storage.BrokerStorage, logs *logrus.Logger) (internal.Instance, error) {
 	runtimeIDFilter := dbmodel.InstanceFilter{RuntimeIDs: []string{runtimeId}}
 
 	instances, _, _, err := db.Instances().List(runtimeIDFilter)
@@ -150,25 +149,28 @@ func dbOp(us *unstructured.Unstructured, db storage.BrokerStorage, logs *logrus.
 		logs.Errorf("more than one instance for runtime id %s", runtimeId)
 		return internal.Instance{}, fmt.Errorf("more than one instance for runtime")
 	}
-	instance := instances[0]
-	if instance.SubAccountID == "" {
-		logs.Errorf("instance have empty SA %s", instance.SubAccountID)
-		return internal.Instance{}, fmt.Errorf("instance have empty SA")
-	}
-	if instance.GlobalAccountID == "" {
-		logs.Errorf("instance have empty GA %s", instance.GlobalAccountID)
-		return internal.Instance{}, fmt.Errorf("instance have empty GA")
-	}
-	return instance, nil
+	return instances[0], nil
 }
 
 func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unstructured.UnstructuredList, logs *logrus.Logger) {
-	var correct, dbErrors, reqErrors, emptyGA, wrongGa int
+	var resOk, dbErrors, reqErrors, resEmptyGA, resWrongGa, dbEmptySA, dbEmptyGA int
 	for _, kyma := range kymas.Items {
-		dbOp, err := dbOp(&kyma, db, logs)
+		runtimeId := kyma.GetName() // name of kyma is runtime id
+		dbOp, err := dbOp(runtimeId, db, logs)
 		if err != nil {
 			logs.Errorf("error getting data from db %s", err)
 			dbErrors++
+			continue
+		}
+
+		if dbOp.SubAccountID == "" {
+			logs.Errorf("instance have empty SA %s", dbOp.SubAccountID)
+			dbEmptySA++
+			continue
+		}
+		if dbOp.GlobalAccountID == "" {
+			logs.Errorf("instance have empty GA %s", dbOp.GlobalAccountID)
+			dbEmptyGA++
 			continue
 		}
 
@@ -182,20 +184,22 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 		switch {
 		case svcResponse.GlobalAccountGUID == "":
 			fmt.Printf(" [EMPTY] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			emptyGA++
+			resEmptyGA++
 		case svcResponse.GlobalAccountGUID != dbOp.GlobalAccountID:
 			fmt.Printf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			wrongGa++
+			resWrongGa++
 		default:
 			fmt.Printf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			correct++
+			resOk++
 		}
 	}
-	fmt.Printf("correct: %d \n", correct)
+	fmt.Printf("ok: %d \n", resOk)
 	fmt.Printf("dbErrors: %d \n", dbErrors)
+	fmt.Printf("db emty SA: %d \n", dbEmptySA)
+	fmt.Printf("db emty GA: %d \n", dbEmptyGA)
 	fmt.Printf("reqErrors: %d \n", reqErrors)
-	fmt.Printf("emptyGA: %d \n", emptyGA)
-	fmt.Printf("wrongGa: %d \n", emptyGA)
+	fmt.Printf("emptyGA: %d \n", resEmptyGA)
+	fmt.Printf("wrongGa: %d \n", resWrongGa)
 }
 
 func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logrus.Logger) (result, error) {
