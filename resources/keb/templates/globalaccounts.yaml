@@ -66,17 +66,17 @@ spec:
             - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.globalaccounts.accounts.clientId | required "please specify .Values.globalaccounts.accounts.clientId" | quote }}
+                  name: {{ .Values.globalaccounts.svc.clientId | required "please specify .Values.globalaccounts.svc.clientId" | quote }}
                   key: id
             - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.globalaccounts.accounts.secretName | required "please specify .Values.globalaccounts.accounts.secretName" | quote }}
+                  name: {{ .Values.globalaccounts.svc.secretName | required "please specify .Values.globalaccounts.svc.secretName" | quote }}
                   key: secret
             - name: GLOBALACCOUNTS_ACCOUNTS_AUTH_URL
-              value: {{ .Values.globalaccounts.accounts.authURL | required "please specify .Values.globalaccounts.accounts.authURL" | quote }}
+              value: {{ .Values.globalaccounts.svc.authURL | required "please specify .Values.globalaccounts.svc.authURL" | quote }}
             - name: GLOBALACCOUNTS_ACCOUNTS_SERVICE_URL
-              value: {{ .Values.globalaccounts.accounts.serviceURL | required "please specify .Values.globalaccounts.accounts.serviceURL" | quote }}
+              value: {{ .Values.globalaccounts.svc.serviceURL | required "please specify .Values.globalaccounts.svc.serviceURL" | quote }}
             - name: GLOBALACCOUNTS_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:

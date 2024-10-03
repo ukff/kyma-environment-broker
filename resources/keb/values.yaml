@@ -610,7 +610,7 @@ globalaccounts:
   enabled: false
   dryRun: true
   name: "kyma-environment-globalaccounts"
-  accounts:
+  svc:
     secretName: ""
     clientId: ""
     authURL: ""
