@@ -32,20 +32,19 @@ type svcConfig struct {
 	SubaccountsURL string
 }
 
-func Run(c Config) {
-	ctx := context.Background()
+func Run(ctx context.Context, cfg Config) {
 	logs := logrus.New()
 	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
-	logs.Infof("is dry run?: %t ", c.DryRun)
+	logs.Infof("is dry run?: %t ", cfg.DryRun)
 
-	svc, db, kcp, err := initAll(ctx, c, logs)
+	svc, db, kcp, err := initAll(ctx, cfg, logs)
 	fatalOnError(err, logs)
 
 	clusterOp, err := clusterOp(ctx, kcp, logs)
 	fatalOnError(err, logs)
 	logs.Println(fmt.Sprintf("No. kymas: %d", len(clusterOp.Items)))
 
-	logic(c, svc, db, clusterOp, logs)
+	logic(cfg, svc, db, clusterOp, logs)
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
 }
 
