@@ -14,6 +14,3 @@ type Config struct {
 	AccountServiceAuth   string `envconfig:"default=url"`
 	AccountServiceURL    string `envconfig:"default=url"`
 }
-
-// Auth -> https://management-plane.authentication.stagingaws.hanavlab.ondemand.com/oauth/token
-// URL -> https://accounts-service.cfapps.stagingaws.hanavlab.ondemand.com/accounts/v1/technical/subaccounts/%s

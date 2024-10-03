@@ -38,8 +38,8 @@ func Run(c Config) {
 	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
 
 	svcConfig := svcConfig{
-		ClientID:     c.AccountServiceID,     // cis-creds-accounts id -> secret
-		ClientSecret: c.AccountServiceSecret, // cis-creds-accounts key -> secret
+		ClientID:     c.AccountServiceID,
+		ClientSecret: c.AccountServiceSecret,
 		AuthURL:      c.AccountServiceURL,
 	}
 
