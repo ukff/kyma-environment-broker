@@ -602,3 +602,5 @@ testConfig:
   kebDeployment:
     useAnnotations: false
     weight: "2"
+
+globalaccounts: false
