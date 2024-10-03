@@ -603,4 +603,5 @@ testConfig:
     useAnnotations: false
     weight: "2"
 
-globalaccounts: false
+globalaccounts:
+  enabled: false
