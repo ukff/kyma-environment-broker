@@ -58,7 +58,7 @@ spec:
                 secretKeyRef:
                   key: postgresql-broker-db-name
                   name: kcp-postgresql
-                      - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
+            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}
