@@ -144,20 +144,20 @@ func dbOp(us *unstructured.Unstructured, db storage.BrokerStorage, logs *logrus.
 	}
 	if len(instances) == 0 {
 		logs.Errorf("no instance for runtime id %s", runtimeId)
-		return internal.Instance{}, err
+		return internal.Instance{}, fmt.Errorf("no instance for runtime id")
 	}
 	if len(instances) > 1 {
 		logs.Errorf("more than one instance for runtime id %s", runtimeId)
-		return internal.Instance{}, err
+		return internal.Instance{}, fmt.Errorf("more than one instance for runtime")
 	}
 	instance := instances[0]
 	if instance.SubAccountID == "" {
 		logs.Errorf("instance have empty SA %s", instance.SubAccountID)
-		return internal.Instance{}, err
+		return internal.Instance{}, fmt.Errorf("instance have empty SA")
 	}
 	if instance.GlobalAccountID == "" {
 		logs.Errorf("instance have empty GA %s", instance.GlobalAccountID)
-		return internal.Instance{}, err
+		return internal.Instance{}, fmt.Errorf("instance have empty GA")
 	}
 	return instance, nil
 }
