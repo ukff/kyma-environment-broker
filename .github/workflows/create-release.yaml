@@ -140,13 +140,14 @@ jobs:
       tags: ${{ inputs.name }}
 
   build-globalaccounts-image:
+      needs: [validate-release]
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environment-globalaccounts
          dockerfile: Dockerfile.globalaccounts
          context: .
          build-args: BIN=globalaccounts
-          tags: ${{ inputs.name }}
+         tags: ${{ inputs.name }}
 
   run-keb-chart-install-tests:
     name: Validate KEB chart 
