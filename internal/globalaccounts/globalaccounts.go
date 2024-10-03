@@ -112,6 +112,10 @@ func Run(c Config) {
 		query := request.URL.Query()
 		request.URL.RawQuery = query.Encode()
 		response, err := svc.Do(request)
+		if err != nil {
+			logs.Error(err)
+			continue
+		}
 		defer func() {
 			err = response.Body.Close()
 			if err != nil {
