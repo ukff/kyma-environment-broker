@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
@@ -37,8 +38,14 @@ func Run(ctx context.Context, cfg Config) {
 	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
 	logs.Infof("is dry run?: %t ", cfg.DryRun)
 
-	svc, db, kcp, err := initAll(ctx, cfg, logs)
+	svc, db, connection, kcp, err := initAll(ctx, cfg, logs)
 	fatalOnError(err, logs)
+	defer func() {
+		err = connection.Close()
+		if err != nil {
+			logs.Error(err)
+		}
+	}()
 
 	clusterOp, err := clusterOp(ctx, kcp, logs)
 	fatalOnError(err, logs)
@@ -48,7 +55,7 @@ func Run(ctx context.Context, cfg Config) {
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
 }
 
-func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, client.Client, error) {
+func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, *dbr.Connection, client.Client, error) {
 	svcConfig := svcConfig{
 		ClientID:     cfg.AccountServiceID,
 		ClientSecret: cfg.AccountServiceSecret,
@@ -68,24 +75,17 @@ func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client
 		logs.WithField("service", "storage"))
 	if err != nil {
 		logs.Error(err.Error())
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-
-	defer func() {
-		err = connection.Close()
-		if err != nil {
-			logs.Error(err)
-		}
-	}()
 
 	kcpK8sClient, err := getKcpClient()
 	if err != nil {
 		logs.Error(err.Error())
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	svc := oauthConfig.Client(ctx)
-	return svc, db, kcpK8sClient, nil
+	return svc, db, connection, kcpK8sClient, nil
 }
 
 func fatalOnError(err error, log logrus.FieldLogger) {
