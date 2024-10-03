@@ -54,8 +54,8 @@ func Run(c Config) {
 		events.Config{},
 		storage.NewEncrypter(c.Database.SecretKey),
 		logs.WithField("service", "storage"))
+	fatalOnError(err, logs)
 
-	//time.Sleep(time.Second * 10)
 	defer func() {
 		err = connection.Close()
 		if err != nil {
