@@ -32,6 +32,9 @@ global:
     kyma_environment_subaccount_sync:
       dir:
       version: "1.10.12"
+    kyma_environment_globalaccounts:
+      dir:
+      version: "1.10.12"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -606,3 +609,9 @@ testConfig:
 globalaccounts:
   enabled: false
   dryRun: true
+  name: "kyma-environment-globalaccounts"
+  accounts:
+    secretName: ""
+    clientId: ""
+    authURL: ""
+    serviceURL: ""
