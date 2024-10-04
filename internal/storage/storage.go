@@ -69,6 +69,7 @@ func NewMemoryStorage() BrokerStorage {
 		events:            events.New(events.Config{}, NewInMemoryEvents()),
 		subaccountStates:  memory.NewSubaccountStates(),
 		instancesArchived: memory.NewInstanceArchivedInMemoryStorage(),
+		bindings:          memory.NewBinding(),
 	}
 }
 
