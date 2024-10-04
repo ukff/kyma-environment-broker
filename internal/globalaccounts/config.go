@@ -7,6 +7,7 @@ import (
 type Config struct {
 	Database             storage.Config
 	DryRun               bool   `envconfig:"default=true"`
+	Probe                bool   `envconfig:"default=3"`
 	AccountServiceID     string `envconfig:"default=account-service-id"`
 	AccountServiceSecret string `envconfig:"default=account-service-secret"`
 	AccountServiceAuth   string `envconfig:"default=url"`

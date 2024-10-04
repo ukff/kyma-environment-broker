@@ -5,7 +5,6 @@ metadata:
   name: "{{- .Values.globalaccounts.name -}}"
   namespace: kcp-system
   labels:
-  name: "{{- .Values.globalaccounts.name -}}"
 spec:
   replicas: 1
   selector:
