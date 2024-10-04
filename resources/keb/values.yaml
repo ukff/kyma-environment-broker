@@ -619,6 +619,6 @@ globalaccounts:
   name: "kyma-environment-globalaccounts"
   svc:
     secret: "cis-creds-accounts"
-    id: "TBD"
+    id: "example.com"
     authURL: "TBD"
     serviceURL: "TBD"
