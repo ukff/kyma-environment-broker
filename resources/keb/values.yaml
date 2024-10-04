@@ -618,7 +618,8 @@ globalaccounts:
   dryRun: true
   name: "kyma-environment-globalaccounts"
   svc:
-    secret: "cis-creds-accounts"
-    id: "example.com"
+    secret: "TBD"
+    id: "TBD"
     authURL: "TBD"
     serviceURL: "TBD"
+    secretName: "cis-creds-accounts"
