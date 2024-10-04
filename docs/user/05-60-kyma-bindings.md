@@ -3,7 +3,7 @@
 You can manage credentials for accessing a given service through a Broker API endpoint related to bindings. The Broker API endpoints include all subpaths of `v2/service_instances/<service_id>/service_bindings`. In the case of Kyma Environment Broker (KEB), the generated credentials are a kubeconfig for a managed Kyma cluster. To generate a kubeconfig for a given Kyma instance, send the following request to the Broker API:
 
 ```
-PUT http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}?accepts_incomplete=true&accepts_incomplete=true&service_id={{service_id}}&plan_id={{plan_id}}
+PUT http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}?accepts_incomplete=false&service_id={{service_id}}&plan_id={{plan_id}}
 Content-Type: application/json
 X-Broker-API-Version: 2.14
 
