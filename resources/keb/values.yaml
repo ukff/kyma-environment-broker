@@ -614,10 +614,10 @@ testConfig:
     weight: "2"
 
 globalaccounts:
-  enabled: true
+  enabled: false
   dryRun: true
   name: "kyma-environment-globalaccounts"
   svc:
-    authURL: "TBD"
     serviceURL: "TBD"
+    authURL: "TBD"
     secretName: "cis-creds-accounts"
