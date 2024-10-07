@@ -614,7 +614,7 @@ testConfig:
     weight: "2"
 
 globalaccounts:
-  enabled: false
+  enabled: true
   dryRun: true
   name: "kyma-environment-globalaccounts"
   svc:
