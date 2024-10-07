@@ -42,4 +42,4 @@ PATCH /oauth/v2/service_instances/"{INSTANCE_ID}"?accepts_incomplete=true
 }
 ```
 
-Requests that don't include **globalaccount_id** or it is empty, then **globalaccount_id** return the HTTP response `400`.
+Requests that don't include **globalaccount_id** or it is empty, then KEB return the HTTP response `400`.
