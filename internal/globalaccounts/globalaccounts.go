@@ -198,9 +198,8 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 }
 
 func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logrus.Logger) (result, error) {
-	urlReq := config.ServiceURL + subaccountId
-	fmt.Printf("Request link -> %s \n", urlReq)
-	request, err := http.NewRequest(http.MethodGet, urlReq, nil)
+	url := fmt.Sprintf("%s/%s", config.ServiceURL, subaccountId)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		logs.Errorf("error creating request %s", err)
 		return result{}, err
