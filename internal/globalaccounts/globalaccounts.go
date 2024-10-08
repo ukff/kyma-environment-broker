@@ -125,7 +125,7 @@ func clusterOp(ctx context.Context, kcp client.Client, logs *logrus.Logger) (uns
 
 	kymas := unstructured.UnstructuredList{}
 	kymas.SetGroupVersionKind(gvk)
-	err = kcp.List(ctx, &kymas)
+	err = kcp.List(ctx, &kymas, client.InNamespace("kcp-system"))
 	if err != nil {
 		logs.Errorf("error listing kyma %s", err)
 		return unstructured.UnstructuredList{}, err
