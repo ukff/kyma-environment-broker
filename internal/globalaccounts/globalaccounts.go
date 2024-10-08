@@ -57,9 +57,9 @@ func Run(ctx context.Context, cfg Config) {
 
 func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, *dbr.Connection, client.Client, error) {
 	svcConfig := svcConfig{
-		ClientID:     cfg.AccountServiceID,
-		ClientSecret: cfg.AccountServiceSecret,
-		AuthURL:      cfg.AccountServiceURL,
+		ClientID:     cfg.ServiceID,
+		ClientSecret: cfg.ServiceSecret,
+		AuthURL:      cfg.ServiceURL,
 	}
 
 	oauthConfig := clientcredentials.Config{
