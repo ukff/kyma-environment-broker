@@ -34,6 +34,12 @@ type svcConfig struct {
 }
 
 func Run(ctx context.Context, cfg Config) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+
 	logs := logrus.New()
 	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
 	logs.Infof("is dry run?: %t ", cfg.DryRun)
@@ -53,6 +59,7 @@ func Run(ctx context.Context, cfg Config) {
 
 	logic(cfg, svc, db, clusterOp, logs)
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
+	<-ctx.Done()
 }
 
 func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, *dbr.Connection, client.Client, error) {
