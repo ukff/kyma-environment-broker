@@ -284,10 +284,12 @@ class KEBClient {
     };
     const bindingID = Math.random().toString(36).substring(2, 18);
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=true`;
+    const config = await this.buildRequest(payload, endpoint, 'put');
+
     try {
-      return await this.callKEB(payload, endpoint, 'put');
+      return await axios.request(config);
     } catch (err) {
-      throw new Error(`error while creating binding: ${err.toString()}`);
+      throw err;
     }
   }
 

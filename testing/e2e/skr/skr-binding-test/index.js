@@ -30,14 +30,15 @@ describe('SKR Binding test', function() {
 
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true);
+      const resp = await keb.createBinding(options.instanceID, true);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
   it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
@@ -47,19 +48,54 @@ describe('SKR Binding test', function() {
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
-      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
+      const resp = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
+      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
   it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
+  });
+
+  it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
+    const expirationSeconds = 1;
+    try {
+      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(400);
+        expect(err.response.data.description).to.include('expiration_seconds cannot be less than');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Should not allow creation of SKR binding when expiration seconds value is over the max value', async function() {
+    const expirationSeconds = 999999999;
+    try {
+      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(400);
+        expect(err.response.data.description).to.include('expiration_seconds cannot be greater than');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
   });
 
   after('Cleanup the resources', async function() {
