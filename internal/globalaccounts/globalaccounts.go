@@ -201,27 +201,27 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 	url := fmt.Sprintf("%s/%s", config.ServiceURL, subaccountId)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		logs.Errorf("error creating request %s", err)
+		logs.Errorf("while creating request %s", err)
 		return result{}, err
 	}
 	query := request.URL.Query()
 	request.URL.RawQuery = query.Encode()
 	response, err := svc.Do(request)
 	if err != nil {
-		logs.Error(err)
+		logs.Errorf("svc response error: %s", err.Error())
 		return result{}, err
 	}
 	defer func() {
 		err = response.Body.Close()
 		if err != nil {
-			logs.Error(err)
+			logs.Errorf("while closing body: %s", err.Error())
 		}
 	}()
 
 	var svcResponse result
 	err = json.NewDecoder(response.Body).Decode(&svcResponse)
 	if err != nil {
-		logs.Error(err.Error())
+		logs.Errorf("while decoding response: %s", err.Error())
 		return result{}, err
 	}
 	return svcResponse, nil
