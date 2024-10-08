@@ -56,16 +56,11 @@ func Run(ctx context.Context, cfg Config) {
 }
 
 func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, *dbr.Connection, client.Client, error) {
-	svcConfig := svcConfig{
-		ClientID:     cfg.ServiceID,
-		ClientSecret: cfg.ServiceSecret,
-		AuthURL:      cfg.ServiceURL,
-	}
 
 	oauthConfig := clientcredentials.Config{
-		ClientID:     svcConfig.ClientID,
-		ClientSecret: svcConfig.ClientSecret,
-		TokenURL:     svcConfig.AuthURL,
+		ClientID:     cfg.ServiceID,
+		ClientSecret: cfg.ServiceSecret,
+		TokenURL:     cfg.ServiceAuth,
 	}
 
 	db, connection, err := storage.NewFromConfig(
