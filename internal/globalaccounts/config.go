@@ -9,6 +9,6 @@ type Config struct {
 	DryRun        bool   `envconfig:"default=true"`
 	ServiceID     string `envconfig:"default=account-service-id"`
 	ServiceSecret string `envconfig:"default=account-service-secret"`
-	ServiceAuth   string `envconfig:"default=url"`
+	AuthURL       string `envconfig:"default=url"`
 	ServiceURL    string `envconfig:"default=url"`
 }

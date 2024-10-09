@@ -67,7 +67,7 @@ func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client
 	oauthConfig := clientcredentials.Config{
 		ClientID:     cfg.ServiceID,
 		ClientSecret: cfg.ServiceSecret,
-		TokenURL:     cfg.ServiceAuth,
+		TokenURL:     cfg.AuthURL,
 	}
 
 	db, connection, err := storage.NewFromConfig(
