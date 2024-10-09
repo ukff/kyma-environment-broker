@@ -75,4 +75,3 @@ spec:
         spec:
           containers:
             - image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.10.23
-            
