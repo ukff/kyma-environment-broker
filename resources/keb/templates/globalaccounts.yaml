@@ -61,19 +61,19 @@ spec:
                 secretKeyRef:
                   key: postgresql-broker-db-name
                   name: kcp-postgresql
-            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
+            - name: GLOBALACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.globalaccounts.svc.secretName | required "please specify .Values.globalaccounts.svc.secretName" | quote }}
                   key: id
-            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_SECRET
+            - name: GLOBALACCOUNTS_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.globalaccounts.svc.secretName | required "please specify .Values.globalaccounts.svc.secretName" | quote }}
                   key: secret
-            - name: GLOBALACCOUNTS_ACCOUNTS_AUTH_URL
+            - name: GLOBALACCOUNTS_AUTH_URL
               value: {{ .Values.globalaccounts.svc.authURL | required "please specify .Values.globalaccounts.svc.authURL" | quote }}
-            - name: GLOBALACCOUNTS_ACCOUNTS_SERVICE_URL
+            - name: GLOBALACCOUNTS_SERVICE_URL
               value: {{ .Values.globalaccounts.svc.serviceURL | required "please specify .Values.globalaccounts.svc.serviceURL" | quote }}
             - name: GLOBALACCOUNTS_DATABASE_SSLMODE
               valueFrom:

@@ -34,6 +34,12 @@ type svcConfig struct {
 }
 
 func Run(ctx context.Context, cfg Config) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println(fmt.Sprintf("Recovered: %s", r))
+		}
+	}()
+
 	logs := logrus.New()
 	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
 	logs.Infof("is dry run?: %t ", cfg.DryRun)
@@ -53,19 +59,15 @@ func Run(ctx context.Context, cfg Config) {
 
 	logic(cfg, svc, db, clusterOp, logs)
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
+	<-ctx.Done()
 }
 
 func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, *dbr.Connection, client.Client, error) {
-	svcConfig := svcConfig{
-		ClientID:     cfg.AccountServiceID,
-		ClientSecret: cfg.AccountServiceSecret,
-		AuthURL:      cfg.AccountServiceURL,
-	}
 
 	oauthConfig := clientcredentials.Config{
-		ClientID:     svcConfig.ClientID,
-		ClientSecret: svcConfig.ClientSecret,
-		TokenURL:     svcConfig.AuthURL,
+		ClientID:     cfg.ServiceID,
+		ClientSecret: cfg.ServiceSecret,
+		TokenURL:     cfg.ServiceAuth,
 	}
 
 	db, connection, err := storage.NewFromConfig(
@@ -203,29 +205,30 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 }
 
 func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logrus.Logger) (result, error) {
-	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(config.AccountServiceURL, subaccountId), nil)
+	url := fmt.Sprintf("%s/%s", config.ServiceURL, subaccountId)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		logs.Errorf("error creating request %s", err)
+		logs.Errorf("while creating request %s", err)
 		return result{}, err
 	}
 	query := request.URL.Query()
 	request.URL.RawQuery = query.Encode()
 	response, err := svc.Do(request)
 	if err != nil {
-		logs.Error(err)
+		logs.Errorf("svc response error: %s", err.Error())
 		return result{}, err
 	}
 	defer func() {
 		err = response.Body.Close()
 		if err != nil {
-			logs.Error(err)
+			logs.Errorf("while closing body: %s", err.Error())
 		}
 	}()
 
 	var svcResponse result
 	err = json.NewDecoder(response.Body).Decode(&svcResponse)
 	if err != nil {
-		logs.Error(err.Error())
+		logs.Errorf("while decoding response: %s", err.Error())
 		return result{}, err
 	}
 	return svcResponse, nil
