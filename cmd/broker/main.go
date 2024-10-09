@@ -99,16 +99,17 @@ type Config struct {
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
 
-	ManagedRuntimeComponentsYAMLFilePath       string
-	NewAdditionalRuntimeComponentsYAMLFilePath string
-	SkrOidcDefaultValuesYAMLFilePath           string
-	SkrDnsProvidersValuesYAMLFilePath          string
-	DefaultRequestRegion                       string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                    bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled        bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled   bool   `envconfig:"default=true"`
-	Broker                                     broker.Config
-	CatalogFilePath                            string
+	ManagedRuntimeComponentsYAMLFilePath                                string
+	NewAdditionalRuntimeComponentsYAMLFilePath                          string
+	SkrOidcDefaultValuesYAMLFilePath                                    string
+	SkrDnsProvidersValuesYAMLFilePath                                   string
+	DefaultRequestRegion                                                string `envconfig:"default=cf-eu10"`
+	UpdateProcessingEnabled                                             bool   `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled                                 bool   `envconfig:"default=true"`
+	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
+	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
+	Broker                                                              broker.Config
+	CatalogFilePath                                                     string
 
 	EDP edp.Config
 
@@ -154,7 +155,8 @@ type Config struct {
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
-	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
+	UpdateRuntimeResourceDelay    time.Duration `envconfig:"default=4s"`
+	BindingTokenExpirationSeconds int           `envconfig:"default=600"`
 }
 
 type ProfilerConfig struct {
@@ -314,19 +316,11 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
-<<<<<<< HEAD
 		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, logs)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, logs)
-=======
-		edpClient, accountProvider, skrK8sClientProvider, cli, oidcDefaultValues, logs)
-
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
-		skrK8sClientProvider, cli, configProvider, logs)
->>>>>>> fba62476 (Remove avs (#1182))
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
@@ -340,7 +334,7 @@ func main() {
 
 	// create server
 	router := mux.NewRouter()
-	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient)
+	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, gardenerClient)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -353,11 +347,7 @@ func main() {
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
-<<<<<<< HEAD
 		nil, time.Minute, runtimeResolver, notificationBuilder, logs, kcpK8sClient, cfg, 1)
-=======
-		nil, time.Minute, runtimeResolver, notificationBuilder, logs, cli, cfg, 1)
->>>>>>> fba62476 (Remove avs (#1182))
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
 	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, logs)
@@ -457,7 +447,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient, cfg.BindingTokenExpirationSeconds),
 		UnbindEndpoint:               broker.NewUnbind(logs),
 		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),

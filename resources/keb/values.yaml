@@ -35,6 +35,7 @@ global:
     kyma_environment_globalaccounts:
       dir:
       version: "1.10.23"
+      
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
