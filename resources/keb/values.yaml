@@ -13,124 +13,29 @@ global:
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
-<<<<<<< HEAD
-<<<<<<< HEAD
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environment_expirator_job:
       dir:
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.10.22"
+      version: "1.10.23"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.10.22"
-
-=======
-      version: "1.10.6"
-=======
-      version: "1.10.7"
->>>>>>> 3763d448 (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.7 (#1183))
-    kyma_environments_subaccount_cleanup_job:
-      dir:
-      version: "1.10.7"
-    kyma_environment_trial_cleanup_job:
-      dir:
-      version: "1.10.7"
-    kyma_environment_expirator_job:
-      dir:
-      version: "1.10.7"
-    kyma_environment_deprovision_retrigger_job:
-      dir:
-      version: "1.10.7"
-    kyma_environment_runtime_reconciler:
-      dir:
-      version: "1.10.7"
-    kyma_environment_subaccount_sync:
-      dir:
-<<<<<<< HEAD
-      version: "1.10.6"
->>>>>>> a32bde9c (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.6 (#1181))
-=======
-      version: "1.10.7"
->>>>>>> 3763d448 (Bump sec-scanners-config.yaml, KEB images and Chart to 1.10.7 (#1183))
-  kyma_environment_broker:
-    enabled: false
-    serviceAccountName: "kcp-kyma-environment-broker"
-    secrets:
-      integrationSystemCredentials:
-        name: kcp-kyma-environment-broker-credentials
-    environmentsCleanup:
-      enabled: false
-  isLocalEnv: false
-  oauth2:
-    host: oauth2
-  compass:
-    registration:
-      enabled: true
-    tls:
-      host: compass-gateway
-      secure:
-        oauth:
-          host: compass-gateway-auth-oauth
-    mtls:
-      host: compass-gateway-mtls
-  istio:
-    gateway: "kyma-system/kyma-gateway"
-    proxy:
-      port: 15020
-  database:
-    manageSecrets: true
-    cloudsqlproxy:
-      enabled: false
-      workloadIdentity:
-        enabled: false
-    embedded:
-      enabled: true
-      provisioner:
-        name: "provisioner"
-      broker:
-        name: "broker"
-      reconciler:
-        name: "reconciler"
-      #TODO remove below after migration to separate user will be done
-      provisionerDBName: "provisioner"
-      brokerDBName: "broker"
-    # Values for GCP managed PostgreSQL database
-    managedGCP:
-      # secret with a secret key used to encrypt particular data
-      encryptionSecretName: "kcp-storage-client-secret"
-      instanceConnectionName: ""
-      broker:
-        name: ""
-      host: "localhost"
-      hostPort: "5432"
-      sslMode: ""
-      sslRootCert: ""
-      #TODO remove below after migration to separate user will be done
-      provisionerDBName: ""
-      brokerDBName: ""
-
-  secrets:
-    enabled: true
-    mechanism: vso
-    vso:
-      namespace: kyma
-      refreshAfter: 30s
-      mount: kcp-dev
-
+      version: "1.10.23"
+      
 # Please read the documentation at:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
 vsoSecrets:

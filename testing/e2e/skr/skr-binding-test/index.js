@@ -22,6 +22,7 @@ describe('SKR Binding test', function() {
 
   const options = gatherOptions(); // with default values
   let kubeconfigFromBinding;
+  let bindingID;
 
   before('Ensure SKR is provisioned', async function() {
     this.timeout(provisioningTimeout);
@@ -29,8 +30,9 @@ describe('SKR Binding test', function() {
   });
 
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
+    bindingID = Math.random().toString(36).substring(2, 18);
     try {
-      const resp = await keb.createBinding(options.instanceID, true);
+      const resp = await keb.createBinding(options.instanceID, bindingID, true);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
@@ -45,15 +47,48 @@ describe('SKR Binding test', function() {
     await getSecret(secretName, ns);
   });
 
+  it('Fetch SKR binding created using Kubernetes TokenRequest', async function() {
+    const resp = await keb.getBinding(options.instanceID, bindingID);
+    expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
+  });
+
+  it('Delete SKR binding created using Kubernetes TokenRequest', async function() {
+    const resp = await keb.deleteBinding(options.instanceID, bindingID);
+    expect(resp.status).equal(200);
+
+    try {
+      await keb.getBinding(options.instanceID, bindingID);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(404);
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Should not allow to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+    try {
+      await getSecret(secretName, ns);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      expect(err.message).to.include('You must be logged in to the server');
+    }
+  });
+
   it('Create SKR binding using Gardener', async function() {
+    bindingID = Math.random().toString(36).substring(2, 18);
     const expirationSeconds = 900;
     try {
-      const resp = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      const resp = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
-      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
     }
+    expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
@@ -64,10 +99,38 @@ describe('SKR Binding test', function() {
     await getSecret(secretName, ns);
   });
 
+  it('Fetch SKR binding created using Gardener', async function() {
+    const resp = await keb.getBinding(options.instanceID, bindingID);
+    expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
+  });
+
+  it('Delete SKR binding created using Gardener', async function() {
+    const resp = await keb.deleteBinding(options.instanceID, bindingID);
+    expect(resp.status).equal(200);
+
+    try {
+      await keb.getBinding(options.instanceID, bindingID);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(404);
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Try to fetch sap-btp-manager secret using binding from Gardener', async function() {
+    await getSecret(secretName, ns);
+  });
+
   it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
+    bindingID = Math.random().toString(36).substring(2, 18);
     const expirationSeconds = 1;
     try {
-      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
@@ -82,9 +145,10 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the max value', async function() {
+    bindingID = Math.random().toString(36).substring(2, 18);
     const expirationSeconds = 999999999;
     try {
-      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
