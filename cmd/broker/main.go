@@ -375,7 +375,7 @@ func main() {
 
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(),
-		db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage,
+		db.RuntimeStates(), db.InstancesArchived(), db.Bindings(), cfg.MaxPaginationPage,
 		cfg.DefaultRequestRegion, provisionerClient,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,
