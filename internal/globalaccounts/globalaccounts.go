@@ -65,8 +65,8 @@ func Run(ctx context.Context, cfg Config) {
 func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client, storage.BrokerStorage, *dbr.Connection, client.Client, error) {
 
 	oauthConfig := clientcredentials.Config{
-		ClientID:     cfg.ServiceID,
-		ClientSecret: cfg.ServiceSecret,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
 		TokenURL:     cfg.AuthURL,
 	}
 
