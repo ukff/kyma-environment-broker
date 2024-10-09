@@ -613,6 +613,7 @@ globalaccounts:
   enabled: false
   dryRun: true
   name: "kyma-environment-globalaccounts"
+  probe: -1
   svc:
     serviceURL: "TBD"
     authURL: "TBD"
