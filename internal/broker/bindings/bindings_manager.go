@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -59,7 +61,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 			},
 		}, mv1.CreateOptions{})
 
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return "", fmt.Errorf("while creating a service account: %v", err)
 	}
 
@@ -67,8 +69,9 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		&rbacv1.ClusterRole{
 			TypeMeta: mv1.TypeMeta{APIVersion: rbacv1.SchemeGroupVersion.String(), Kind: "ClusterRole"},
 			ObjectMeta: mv1.ObjectMeta{
-				Name:   serviceBindingName,
-				Labels: map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
+				Name:      serviceBindingName,
+				Labels:    map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
+				Namespace: "kyma-system",
 			},
 			Rules: []rbacv1.PolicyRule{
 				{
@@ -79,7 +82,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 			},
 		}, mv1.CreateOptions{})
 
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return "", fmt.Errorf("while creating a cluster role: %v", err)
 	}
 
@@ -103,7 +106,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		},
 	}, mv1.CreateOptions{})
 
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return "", fmt.Errorf("while creating a cluster role binding: %v", err)
 	}
 
@@ -121,7 +124,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 	tkn, err := clientset.CoreV1().ServiceAccounts("kyma-system").CreateToken(ctx, serviceBindingName, tokenRequest, mv1.CreateOptions{})
 
 	if err != nil {
-		return "", fmt.Errorf("while creating a token request: %v", err)
+		return "", fmt.Errorf("while creating a service account kubeconfig: %v", err)
 	}
 
 	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(instance.RuntimeID, tkn.Status.Token)
