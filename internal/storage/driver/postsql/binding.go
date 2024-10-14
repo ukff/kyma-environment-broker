@@ -91,6 +91,7 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		InstanceID:        binding.InstanceID,
 		CreatedAt:         binding.CreatedAt,
 		ExpirationSeconds: binding.ExpirationSeconds,
+		CreatedBy:         binding.CreatedBy,
 	}, nil
 }
 
@@ -106,5 +107,6 @@ func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 		InstanceID:        dto.InstanceID,
 		CreatedAt:         dto.CreatedAt,
 		ExpirationSeconds: dto.ExpirationSeconds,
+		CreatedBy:         dto.CreatedBy,
 	}, nil
 }
