@@ -5,6 +5,7 @@ const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
 const {provisionSKRInstance} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
+const uuid = require('uuid');
 const keb = new KEBClient(KEBConfig.fromEnv());
 
 const provisioningTimeout = 1000 * 60 * 30; // 30m
@@ -30,7 +31,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
-    bindingID = Math.random().toString(36).substring(2, 18);
+    bindingID = uuid.v4();
     try {
       const resp = await keb.createBinding(options.instanceID, bindingID, true);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
@@ -80,7 +81,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Create SKR binding using Gardener', async function() {
-    bindingID = Math.random().toString(36).substring(2, 18);
+    bindingID = uuid.v4();
     const expirationSeconds = 900;
     try {
       const resp = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
@@ -127,7 +128,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
-    bindingID = Math.random().toString(36).substring(2, 18);
+    bindingID = uuid.v4();
     const expirationSeconds = 1;
     try {
       await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
@@ -145,7 +146,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the max value', async function() {
-    bindingID = Math.random().toString(36).substring(2, 18);
+    bindingID = uuid.v4();
     const expirationSeconds = 999999999;
     try {
       await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
@@ -159,6 +160,33 @@ describe('SKR Binding test', function() {
       } else {
         throw err;
       }
+    }
+  });
+
+  it('Should not allow creation of more than 10 SKR bindings', async function() {
+    errorOccurred = false;
+    count = 0;
+    // We don't know how many bindings have been created in the previous test before we start this one.
+    while (!errorOccurred && count < 13) {
+      bindingID = uuid.v4();
+      try {
+        await keb.createBinding(options.instanceID, bindingID, true);
+      } catch (err) {
+        if (err.response) {
+          errorOccurred = true;
+          expect(err.response.status).equal(400);
+          expect(err.response.data.description).to.include('maximum number of bindings reached');
+          console.log('Got response:');
+          console.log(err.response.data);
+        } else {
+          throw err;
+        }
+      }
+      count++;
+    }
+
+    if (count >= 13) {
+      expect.fail('The call was expected to fail but it passed. Created more than 10 bindings');
     }
   });
 
