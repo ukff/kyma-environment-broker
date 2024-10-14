@@ -28,7 +28,8 @@ func TestBinding(t *testing.T) {
 		assert.NoError(t, err)
 
 		// when
-		createdBinding, err := brokerStorage.Bindings().Get("instance-"+testBindingId, testBindingId)
+		testInstanceID := "instance-" + testBindingId
+		createdBinding, err := brokerStorage.Bindings().Get(testInstanceID, testBindingId)
 
 		// then
 		assert.NoError(t, err)
@@ -43,7 +44,7 @@ func TestBinding(t *testing.T) {
 		assert.Equal(t, fixedBinding.CreatedBy, createdBinding.CreatedBy)
 
 		// when
-		err = brokerStorage.Bindings().DeleteByBindingID(testBindingId)
+		err = brokerStorage.Bindings().Delete(testInstanceID, testBindingId)
 
 		// then
 		nonExisting, err := brokerStorage.Bindings().Get("instance-"+testBindingId, testBindingId)
@@ -90,11 +91,11 @@ func TestBinding(t *testing.T) {
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		err = brokerStorage.Bindings().DeleteByBindingID(fixedBinding.ID)
+		err = brokerStorage.Bindings().Delete(fixedBinding.InstanceID, fixedBinding.ID)
 		assert.NoError(t, err)
 
 		// then
-		err = brokerStorage.Bindings().DeleteByBindingID(fixedBinding.ID)
+		err = brokerStorage.Bindings().Delete(fixedBinding.InstanceID, fixedBinding.ID)
 		assert.NoError(t, err)
 	})
 
