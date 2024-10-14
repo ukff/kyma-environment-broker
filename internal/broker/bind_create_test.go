@@ -54,6 +54,7 @@ type User struct {
 const expirationSeconds = 10000
 const maxExpirationSeconds = 7200
 const minExpirationSeconds = 600
+const maxBindingsCount = 10
 
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
@@ -131,6 +132,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 					"config": kbcfgSecond,
 				},
 			},
+			&corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "kubeconfig-runtime-max-bindings",
+					Namespace: "kcp-system",
+				},
+				Data: map[string][]byte{
+					"config": kbcfgSecond,
+				},
+			},
 		}...).
 		Build()
 
@@ -148,6 +158,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	err = db.Instances().Insert(fixture.FixInstance("2"))
 	require.NoError(t, err)
 
+	err = db.Instances().Insert(fixture.FixInstance("max-bindings"))
+	require.NoError(t, err)
+
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpClient)
 
 	//// binding configuration
@@ -159,6 +172,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		ExpirationSeconds:    expirationSeconds,
 		MaxExpirationSeconds: maxExpirationSeconds,
 		MinExpirationSeconds: minExpirationSeconds,
+		MaxBindingsCount:     maxBindingsCount,
 	}
 
 	//// api handler
@@ -381,6 +395,44 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Equal(t, firstInstanceSecondBinding, binding)
 		assert.Equal(t, firstInstanceSecondBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, response, "secret-to-check-first", binding)
+	})
+
+	t.Run("should return error when attempting to add a new binding when the maximum number of bindings has already been reached", func(t *testing.T) {
+		// given - create max number of bindings
+		instanceID := "max-bindings"
+		for i := 0; i < maxBindingsCount; i++ {
+			bindingID := uuid.New().String()
+			path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+			body := fmt.Sprintf(`
+			{
+				"service_id": "123",
+				"plan_id": "%s",
+				"parameters": {
+					"service_account": true
+				}
+			}`, fixture.PlanId)
+
+			response := CallAPI(httpServer, http.MethodPut, path, body, t)
+			defer response.Body.Close()
+			require.Equal(t, http.StatusCreated, response.StatusCode)
+		}
+
+		// when - create one more binding
+		bindingID := uuid.New().String()
+		path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+		body := fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true
+			}
+		}`, fixture.PlanId)
+
+		response := CallAPI(httpServer, http.MethodPut, path, body, t)
+		defer response.Body.Close()
+		//then
+		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 }
 

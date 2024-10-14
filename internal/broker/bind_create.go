@@ -26,6 +26,7 @@ type BindingConfig struct {
 	ExpirationSeconds    int         `envconfig:"default=600"`
 	MaxExpirationSeconds int         `envconfig:"default=7200"`
 	MinExpirationSeconds int         `envconfig:"default=600"`
+	MaxBindingsCount     int         `envconfig:"default=10"`
 }
 
 type BindEndpoint struct {
@@ -137,6 +138,26 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		if err != nil {
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+		}
+	}
+
+	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
+	if err != nil {
+		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
+
+	bindingCount := len(bindingList)
+	if bindingCount >= b.config.MaxBindingsCount {
+		expiredCount := 0
+		for _, binding := range bindingList {
+			if binding.ExpiresAt.Before(time.Now()) {
+				expiredCount++
+			}
+		}
+		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
+			message := fmt.Sprintf("maximum number of bindings reached: %d", b.config.MaxBindingsCount)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
 
