@@ -17,11 +17,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	BindingNameFormat = "kyma-binding-%s"
+	BindingNamespace  = "kyma-system"
+)
+
 type Credentials struct {
 }
 
 type BindingsManager interface {
 	Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, time.Time, error)
+	Delete(ctx context.Context, instance *internal.Instance, bindingID string) error
 }
 
 type ClientProvider interface {
@@ -51,13 +57,14 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		return "", time.Time{}, fmt.Errorf("while creating a runtime client for binding creation: %v", err)
 	}
 
-	serviceBindingName := fmt.Sprintf("kyma-binding-%s", bindingID)
+	serviceBindingName := BindingName(bindingID)
+	fmt.Printf("Creating a service account binding for runtime %s with name %s", instance.RuntimeID, serviceBindingName)
 
-	_, err = clientset.CoreV1().ServiceAccounts("kyma-system").Create(ctx,
+	_, err = clientset.CoreV1().ServiceAccounts(BindingNamespace).Create(ctx,
 		&v1.ServiceAccount{
 			ObjectMeta: mv1.ObjectMeta{
 				Name:      serviceBindingName,
-				Namespace: "kyma-system",
+				Namespace: BindingNamespace,
 				Labels:    map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
 			},
 		}, mv1.CreateOptions{})
@@ -72,7 +79,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 			ObjectMeta: mv1.ObjectMeta{
 				Name:      serviceBindingName,
 				Labels:    map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
-				Namespace: "kyma-system",
+				Namespace: BindingNamespace,
 			},
 			Rules: []rbacv1.PolicyRule{
 				{
@@ -136,4 +143,41 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 	}
 
 	return string(kubeconfigContent), expiresAt, nil
+}
+
+func (c *ServiceAccountBindingsManager) Delete(ctx context.Context, instance *internal.Instance, bindingID string) error {
+	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(instance.RuntimeID)
+
+	if err != nil {
+		return fmt.Errorf("while creating a runtime client for binding creation: %v", err)
+	}
+
+	serviceBindingName := BindingName(bindingID)
+
+	// remove a binding
+	err = clientset.RbacV1().ClusterRoleBindings().Delete(ctx, serviceBindingName, mv1.DeleteOptions{})
+
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("while removing a cluster role binding: %v", err)
+	}
+
+	// remove a role
+	err = clientset.RbacV1().ClusterRoles().Delete(ctx, serviceBindingName, mv1.DeleteOptions{})
+
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("while removing a cluster role: %v", err)
+	}
+
+	// remove an account
+	err = clientset.CoreV1().ServiceAccounts("kyma-system").Delete(ctx, serviceBindingName, mv1.DeleteOptions{})
+
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("while creating a service account: %v", err)
+	}
+
+	return nil
+}
+
+func BindingName(bindingID string) string {
+	return fmt.Sprintf(BindingNameFormat, bindingID)
 }

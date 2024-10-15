@@ -28,6 +28,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
@@ -446,7 +447,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), db.Bindings(), logs, clientProvider, kubeconfigProvider),
-		UnbindEndpoint:               broker.NewUnbind(logs, db.Bindings()),
+		UnbindEndpoint:               broker.NewUnbind(logs, db.Bindings(), db.Instances(), brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider)),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db.Bindings()),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
