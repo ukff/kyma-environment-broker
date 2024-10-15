@@ -1,7 +1,7 @@
 const {expect} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
-const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
+const {getSecret} = require('../utils');
 const {provisionSKRInstance} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
@@ -30,10 +30,10 @@ describe('SKR Binding test', function() {
     await provisionSKRInstance(options, provisioningTimeout);
   });
 
-  it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
+  it('Create SKR binding', async function() {
     bindingID = uuid.v4();
     try {
-      const resp = await keb.createBinding(options.instanceID, bindingID, true);
+      const resp = await keb.createBinding(options.instanceID, bindingID);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
@@ -44,22 +44,22 @@ describe('SKR Binding test', function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
-  it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
+  it('Get sap-btp-manager secret', async function() {
     await getSecret(secretName, ns);
   });
 
-  it('Fetch SKR binding created using Kubernetes TokenRequest', async function() {
+  it('Get SKR binding', async function() {
     const resp = await keb.getBinding(options.instanceID, bindingID);
     expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
   });
 
-  it('Delete SKR binding created using Kubernetes TokenRequest', async function() {
+  it('Delete SKR binding', async function() {
     const resp = await keb.deleteBinding(options.instanceID, bindingID);
     expect(resp.status).equal(200);
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('The call was expected to fail but it passed');
+      expect.fail('The call was expected to fail but it passed. Binding was retrieved after deletion');
     } catch (err) {
       if (err.response) {
         expect(err.response.status).equal(404);
@@ -71,67 +71,26 @@ describe('SKR Binding test', function() {
     }
   });
 
-  it('Should not allow to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+  it('Should not allow to get sap-btp-manager secret', async function() {
     try {
       await getSecret(secretName, ns);
-      expect.fail('The call was expected to fail but it passed');
-    } catch (err) {
-      expect(err.message).to.include('You must be logged in to the server');
-    }
-  });
-
-  it('Create SKR binding using Gardener', async function() {
-    bindingID = uuid.v4();
-    const expirationSeconds = 900;
-    try {
-      const resp = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
-      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
-    } catch (err) {
-      console.log(err);
-    }
-    expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
-  });
-
-  it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
-  });
-
-  it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
-    await getSecret(secretName, ns);
-  });
-
-  it('Fetch SKR binding created using Gardener', async function() {
-    const resp = await keb.getBinding(options.instanceID, bindingID);
-    expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
-  });
-
-  it('Delete SKR binding created using Gardener', async function() {
-    const resp = await keb.deleteBinding(options.instanceID, bindingID);
-    expect(resp.status).equal(200);
-
-    try {
-      await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('The call was expected to fail but it passed');
+      expect.fail('The call was expected to fail but it passed. Got the secret');
     } catch (err) {
       if (err.response) {
-        expect(err.response.status).equal(404);
+        expect(err.message).to.include('You must be logged in to the server');
         console.log('Got response:');
         console.log(err.response.data);
       } else {
         throw err;
       }
     }
-  });
-
-  it('Try to fetch sap-btp-manager secret using binding from Gardener', async function() {
-    await getSecret(secretName, ns);
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
     bindingID = uuid.v4();
     const expirationSeconds = 1;
     try {
-      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
@@ -149,7 +108,7 @@ describe('SKR Binding test', function() {
     bindingID = uuid.v4();
     const expirationSeconds = 999999999;
     try {
-      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
@@ -164,13 +123,13 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of more than 10 SKR bindings', async function() {
-    errorOccurred = false;
-    count = 0;
+    let errorOccurred = false;
+    let count = 0;
     // We don't know how many bindings have been created in the previous test before we start this one.
     while (!errorOccurred && count < 13) {
       bindingID = uuid.v4();
       try {
-        await keb.createBinding(options.instanceID, bindingID, true);
+        await keb.createBinding(options.instanceID, bindingID);
       } catch (err) {
         if (err.response) {
           errorOccurred = true;
