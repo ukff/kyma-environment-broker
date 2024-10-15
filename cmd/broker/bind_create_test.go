@@ -368,6 +368,36 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Nil(t, createdBindingIDDB)
 	})
 
+	t.Run("should delete created binding and fail after the second call", func(t *testing.T) {
+		// given
+		createdBindingID, createdBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
+		createdBindingIDDB, err := db.Bindings().Get(instanceID1, createdBindingID)
+		assert.NoError(t, err)
+		assert.Equal(t, createdBinding.Credentials.(map[string]interface{})["kubeconfig"], createdBindingIDDB.Kubeconfig)
+
+		// when
+		path := fmt.Sprintf(bindingsPath+deleteParams, instanceID1, createdBindingID, "123", fixture.PlanId)
+		response := CallAPI(httpServer, http.MethodDelete, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		createdBindingIDDB, err = db.Bindings().Get(instanceID1, createdBindingID)
+		assert.Error(t, err)
+		assert.Nil(t, createdBindingIDDB)
+
+		// when
+		path = fmt.Sprintf(bindingsPath+deleteParams, instanceID1, createdBindingID, "123", fixture.PlanId)
+		response = CallAPI(httpServer, http.MethodDelete, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusGone, response.StatusCode)
+		createdBindingIDDB, err = db.Bindings().Get(instanceID1, createdBindingID)
+		assert.Error(t, err)
+		assert.Nil(t, createdBindingIDDB)
+	})
+
 	t.Run("should selectively delete created binding and its service account resources", func(t *testing.T) {
 		// given
 		instanceFirst := "1"
