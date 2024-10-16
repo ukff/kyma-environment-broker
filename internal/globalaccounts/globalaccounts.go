@@ -174,7 +174,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 			kebInstanceMissingGACount++
 			continue
 		}
-		svcResponse, err := svcRequest(config, svc, instance.InstanceID, logs)
+		svcResponse, err := svcRequest(config, svc, instance.SubAccountID, logs)
 		if err != nil {
 			logs.Error(err.Error())
 			requestErrorCount++
@@ -196,7 +196,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 		}
 
 		if config.DryRun {
-			logs.Infof("dry run: update instance in db %s with new %s", instance.RuntimeID, svcGlobalAccountId)
+			logs.Infof("dry run: update instance in db %s with new %s", instance.InstanceID, svcGlobalAccountId)
 			continue
 		}
 
