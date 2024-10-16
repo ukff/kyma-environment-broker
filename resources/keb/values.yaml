@@ -376,6 +376,7 @@ cis:
     id: "TBD"
     secret: "TBD"
     secretName: "cis-creds-accounts"
+    probe: -1
 
 notification:
   url: "TBD"
