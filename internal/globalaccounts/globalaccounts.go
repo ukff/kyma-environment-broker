@@ -42,7 +42,6 @@ func Run(ctx context.Context, cfg Config) {
 		}
 	}()
 
-	cfg.DryRun = true // temporary set until program while analyze
 	logs := logrus.New()
 	logs.Infof("*** Start at: %s ***", time.Now().Format(time.RFC3339))
 	logs.Infof("is dry run?: %t ", cfg.DryRun)
@@ -187,7 +186,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 			svcGlobalAccountMissing++
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
-			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
+			info := fmt.Sprintf("(INSTANCE %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
 			out.WriteString(info)
 			out.WriteString("\n")
 			mismatch++
