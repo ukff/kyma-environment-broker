@@ -186,8 +186,9 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 			svcGlobalAccountMissing++
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
-			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s \n", instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
+			info := fmt.Sprintf("(INSTANCE %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
 			out.WriteString(info)
+			out.WriteString("\n")
 			mismatch++
 		} else {
 			okCount++
