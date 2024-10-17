@@ -12,3 +12,5 @@ type Config struct {
 	AuthURL      string `envconfig:"default=url"`
 	ServiceURL   string `envconfig:"default=url"`
 }
+
+//test
