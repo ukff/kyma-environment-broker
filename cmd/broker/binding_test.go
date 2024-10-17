@@ -34,6 +34,7 @@ func TestBinding(t *testing.T) {
 	suite.processProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
+	// when
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 		`{
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -44,7 +45,7 @@ func TestBinding(t *testing.T) {
 	suite.Log(string(b))
 	suite.Log(resp.Status)
 
-	respRuntimes := suite.CallAPI("GET", "/info/runtimes?bindings=true", "")
+	respRuntimes := suite.CallAPI("GET", "/runtimes?bindings=true", "")
 	b, _ = io.ReadAll(respRuntimes.Body)
 	suite.Log(string(b))
 	suite.Log(resp.Status)
