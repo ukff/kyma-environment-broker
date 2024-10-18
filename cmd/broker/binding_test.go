@@ -63,4 +63,5 @@ func TestBinding(t *testing.T) {
                }`)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
+
 }
