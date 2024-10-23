@@ -5,18 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/stretchr/testify/mock"
 
@@ -731,14 +732,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 }
 
 func TestSubaccountMovement(t *testing.T) {
-	var customResourceDefinition apiextensionsv1.CustomResourceDefinition
-	customResourceDefinition.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "apiextensions.k8s.io",
-		Version: "v1",
-		Kind:    "CustomResourceDefinition",
-	})
-	fakeKcpK8sClient.Scheme().AddKnownTypeWithName(customResourceDefinition.GroupVersionKind(), &customResourceDefinition)
-
+	registerCRD()
 	runtimeId := createFakeCRs(t)
 	defer cleanFakeCRs(t, runtimeId)
 
@@ -828,7 +822,8 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		oldGlobalAccountId = "first-global-account-id"
 		newGlobalAccountId = "changed-global-account-id"
 	)
-
+	registerCRD()
+	registerCRDs(t)
 	runtimeId := createFakeCRs(t)
 	defer cleanFakeCRs(t, runtimeId)
 
@@ -922,6 +917,30 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		assert.Len(t, labels, 1)
 		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
 	})
+}
+
+func registerCRD() {
+	var customResourceDefinition apiextensionsv1.CustomResourceDefinition
+	customResourceDefinition.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "apiextensions.k8s.io",
+		Version: "v1",
+		Kind:    "CustomResourceDefinition",
+	})
+	fakeKcpK8sClient.Scheme().AddKnownTypeWithName(customResourceDefinition.GroupVersionKind(), &customResourceDefinition)
+}
+
+func registerCRDs(t *testing.T) {
+	f := func(gvkName string) {
+		var customResourceDefinition apiextensionsv1.CustomResourceDefinition
+		gvk, err := k8s.GvkByName(gvkName)
+		require.NoError(t, err)
+		crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
+		customResourceDefinition.SetName(crdName)
+		fakeKcpK8sClient.Create(context.Background(), &customResourceDefinition)
+	}
+	f(k8s.KymaCr)
+	f(k8s.GardenerClusterCr)
+	f(k8s.RuntimeCr)
 }
 
 func createFakeCRs(t *testing.T) string {

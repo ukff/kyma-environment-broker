@@ -93,7 +93,7 @@ func (l *Labeler) checkCRDExistence(gvk schema.GroupVersionKind) (bool, error) {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
 	if err := l.kcpClient.Get(context.Background(), client.ObjectKey{Name: crdName}, crd); err != nil {
 		if k8serrors.IsNotFound(err) || metaerrors.IsNoMatchError(err) {
-			l.log.Error("CustomResourceDefinition does not exist")
+			l.log.Errorf("CustomResourceDefinition does not exist %s", err.Error())
 			return false, nil
 		} else {
 			l.log.Errorf("while getting CRD %s: %s", crdName, err.Error())
