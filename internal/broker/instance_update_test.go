@@ -823,7 +823,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		newGlobalAccountId = "changed-global-account-id"
 	)
 	registerCRD()
-	registerCRDs(t)
+	createCRDs(t)
 	runtimeId := createFakeCRs(t)
 	defer cleanFakeCRs(t, runtimeId)
 
@@ -929,14 +929,15 @@ func registerCRD() {
 	fakeKcpK8sClient.Scheme().AddKnownTypeWithName(customResourceDefinition.GroupVersionKind(), &customResourceDefinition)
 }
 
-func registerCRDs(t *testing.T) {
+func createCRDs(t *testing.T) {
 	f := func(gvkName string) {
 		var customResourceDefinition apiextensionsv1.CustomResourceDefinition
 		gvk, err := k8s.GvkByName(gvkName)
 		require.NoError(t, err)
 		crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
 		customResourceDefinition.SetName(crdName)
-		fakeKcpK8sClient.Create(context.Background(), &customResourceDefinition)
+		err = fakeKcpK8sClient.Create(context.Background(), &customResourceDefinition)
+		require.NoError(t, err)
 	}
 	f(k8s.KymaCr)
 	f(k8s.GardenerClusterCr)
