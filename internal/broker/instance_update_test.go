@@ -8,12 +8,15 @@ import (
 	"testing"
 	"time"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/stretchr/testify/mock"
 
@@ -728,6 +731,14 @@ func TestUpdateExpiredInstance(t *testing.T) {
 }
 
 func TestSubaccountMovement(t *testing.T) {
+	var customResourceDefinition apiextensionsv1.CustomResourceDefinition
+	customResourceDefinition.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "apiextensions.k8s.io",
+		Version: "v1",
+		Kind:    "CustomResourceDefinition",
+	})
+	fakeKcpK8sClient.Scheme().AddKnownTypeWithName(customResourceDefinition.GroupVersionKind(), &customResourceDefinition)
+
 	runtimeId := createFakeCRs(t)
 	defer cleanFakeCRs(t, runtimeId)
 
