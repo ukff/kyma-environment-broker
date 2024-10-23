@@ -369,7 +369,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	} else if b.updateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
 		logger.Info("updating labels on related CRs")
 		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
-		labelsHelper := NewLabels(b.kcpClient)
+		labelsHelper := NewLabeler(b.kcpClient)
 		err = labelsHelper.UpdateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
 			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())

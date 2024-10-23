@@ -153,7 +153,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount, svcGlobalAccountMissing int
 	var instanceUpdateErrorCount, labelsUpdateErrorCount int
 	var mismatches []string
-	labelsHelper := broker.NewLabels(kcp)
+	labeler := broker.NewLabeler(kcp)
 
 	instances, instancesCount, _, err := db.Instances().List(dbmodel.InstanceFilter{})
 	if err != nil {
@@ -198,7 +198,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 			continue
 		}
 
-		instanceUpdateFail, labelsUpdateFail := updateData(&instance, svcGlobalAccountId, logs, *labelsHelper, db)
+		instanceUpdateFail, labelsUpdateFail := updateData(&instance, svcGlobalAccountId, logs, *labeler, db)
 		if instanceUpdateFail {
 			instanceUpdateErrorCount++
 		}
@@ -210,7 +210,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 	showReport(logs, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesCount, svcGlobalAccountMissing, mismatches)
 }
 
-func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *logrus.Logger, labelsHelper broker.Labels, db storage.BrokerStorage) (instanceUpdateFail bool, labelsUpdateFail bool) {
+func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *logrus.Logger, labeler broker.Labeler, db storage.BrokerStorage) (instanceUpdateFail bool, labelsUpdateFail bool) {
 	if instance.SubscriptionGlobalAccountID == "" {
 		instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 	}
@@ -228,7 +228,7 @@ func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *lo
 		return
 	}
 
-	err = labelsHelper.UpdateLabels(instance.RuntimeID, svcGlobalAccountId)
+	err = labeler.UpdateLabels(instance.RuntimeID, svcGlobalAccountId)
 	if err != nil {
 		logs.Errorf("while updating labels %s", err)
 		labelsUpdateFail = true

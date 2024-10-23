@@ -17,19 +17,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Labels struct {
+type Labeler struct {
 	kcpClient client.Client
 	log       logrus.FieldLogger
 }
 
-func NewLabels(kcpClient client.Client) *Labels {
-	return &Labels{
+func NewLabeler(kcpClient client.Client) *Labeler {
+	return &Labeler{
 		kcpClient: kcpClient,
 		log:       logrus.New(),
 	}
 }
 
-func (l *Labels) UpdateLabels(id, newGlobalAccountId string) error {
+func (l *Labeler) UpdateLabels(id, newGlobalAccountId string) error {
 	kymaErr := l.updateCrLabel(id, k8s.KymaCr, newGlobalAccountId)
 	gardenerClusterErr := l.updateCrLabel(id, k8s.GardenerClusterCr, newGlobalAccountId)
 	runtimeErr := l.updateCrLabel(id, k8s.RuntimeCr, newGlobalAccountId)
@@ -37,7 +37,7 @@ func (l *Labels) UpdateLabels(id, newGlobalAccountId string) error {
 	return err
 }
 
-func (l *Labels) updateCrLabel(id, crName, newGlobalAccountId string) error {
+func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 	l.log.Infof("update label starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
 	gvk, err := k8s.GvkByName(crName)
 	if err != nil {
@@ -88,7 +88,7 @@ func addOrOverrideLabel(k8sObject *unstructured.Unstructured, key, value string)
 	return nil
 }
 
-func (l *Labels) checkCRDExistence(gvk schema.GroupVersionKind) (bool, error) {
+func (l *Labeler) checkCRDExistence(gvk schema.GroupVersionKind) (bool, error) {
 	crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
 	crd := &apiextensionsv1.CustomResourceDefinition{}
 	if err := l.kcpClient.Get(context.Background(), client.ObjectKey{Name: crdName}, crd); err != nil {
