@@ -178,7 +178,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	var kubeconfig string
-	var expiresAt time.Time
 	binding := &internal.Binding{
 		ID:         bindingID,
 		InstanceID: instanceID,
@@ -187,17 +186,9 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
+		ExpiresAt:         time.Now().Add(time.Duration(expirationSeconds) * time.Second),
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
-	// get kubeconfig for the instance
-	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
-	if err != nil {
-		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-	}
-
-	binding.ExpiresAt = expiresAt
-	binding.Kubeconfig = kubeconfig
 
 	err = b.bindingsStorage.Insert(binding)
 	switch {
@@ -207,7 +198,23 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	case err != nil:
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
 
+	// create kubeconfig for the instance
+	var expiresAt time.Time
+	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
+	if err != nil {
+		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+	}
+
+	binding.ExpiresAt = expiresAt
+	binding.Kubeconfig = kubeconfig
+
+	err = b.bindingsStorage.Update(binding)
+	if err != nil {
+		message := fmt.Sprintf("failed to update Kyma binding in storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 
 	return domain.Binding{
