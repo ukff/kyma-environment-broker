@@ -24,12 +24,13 @@ const (
 )
 
 type BindingConfig struct {
-	Enabled              bool        `envconfig:"default=false"`
-	BindablePlans        EnablePlans `envconfig:"default=aws"`
-	ExpirationSeconds    int         `envconfig:"default=600"`
-	MaxExpirationSeconds int         `envconfig:"default=7200"`
-	MinExpirationSeconds int         `envconfig:"default=600"`
-	MaxBindingsCount     int         `envconfig:"default=10"`
+	Enabled              bool          `envconfig:"default=false"`
+	BindablePlans        EnablePlans   `envconfig:"default=aws"`
+	ExpirationSeconds    int           `envconfig:"default=600"`
+	MaxExpirationSeconds int           `envconfig:"default=7200"`
+	MinExpirationSeconds int           `envconfig:"default=600"`
+	MaxBindingsCount     int           `envconfig:"default=10"`
+	Timeout              time.Duration `envconfig:"default=15s"`
 }
 
 type BindEndpoint struct {
@@ -82,10 +83,44 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	b.log.Infof("Bind context: %s", string(details.RawContext))
 	b.log.Infof("Bind asyncAllowed: %v", asyncAllowed)
 
-	if !b.config.Enabled {
-		return domain.Binding{}, fmt.Errorf("not supported")
+	timer := time.NewTimer(b.config.Timeout)
+	defer timer.Stop()
+
+	execResult := make(chan domain.Binding)
+	execError := make(chan error)
+	go func() {
+		result, err := b.execute(ctx, instanceID, bindingID, details, asyncAllowed)
+		if err != nil {
+			execError <- err
+		}
+		execResult <- result
+	}()
+
+	select {
+	case <-timer.C:
+		return domain.Binding{}, fmt.Errorf("timeout")
+	case result := <-execResult:
+		return result, nil
+	case err := <-execError:
+		if err != nil {
+			return domain.Binding{}, err
+		}
 	}
 
+	return domain.Binding{}, nil
+}
+
+func (b *BindEndpoint) IsPlanBindable(planName string) bool {
+	planNameLowerCase := strings.ToLower(planName)
+	for _, p := range b.config.BindablePlans {
+		if strings.ToLower(p) == planNameLowerCase {
+			return true
+		}
+	}
+	return false
+}
+
+func (b *BindEndpoint) execute(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
 	case dberr.IsNotFound(err):
@@ -219,14 +254,4 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			ExpiresAt: binding.ExpiresAt.Format(expiresAtLayout),
 		},
 	}, nil
-}
-
-func (b *BindEndpoint) IsPlanBindable(planName string) bool {
-	planNameLowerCase := strings.ToLower(planName)
-	for _, p := range b.config.BindablePlans {
-		if strings.ToLower(p) == planNameLowerCase {
-			return true
-		}
-	}
-	return false
 }
