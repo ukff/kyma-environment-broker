@@ -82,13 +82,14 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	b.log.Infof("Bind parameters: %s", string(details.RawParameters))
 	b.log.Infof("Bind context: %s", string(details.RawContext))
 	b.log.Infof("Bind asyncAllowed: %v", asyncAllowed)
-
+	ctx, cancel := context.WithCancel(ctx)
 	timer := time.NewTimer(b.config.Timeout)
 	defer timer.Stop()
 
 	execResult := make(chan domain.Binding)
 	execError := make(chan error)
 	go func() {
+		defer cancel()
 		result, err := b.execute(ctx, instanceID, bindingID, details, asyncAllowed)
 		if err != nil {
 			execError <- err
@@ -111,6 +112,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 }
 
 func (b *BindEndpoint) execute(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
+	if !b.config.Enabled {
+		return domain.Binding{}, fmt.Errorf("not supported")
+	}
+
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
 	case dberr.IsNotFound(err):
