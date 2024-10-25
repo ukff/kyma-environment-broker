@@ -245,3 +245,13 @@ func (b *BindEndpoint) execute(ctx context.Context, instanceID, bindingID string
 		},
 	}, nil
 }
+
+func (b *BindEndpoint) IsPlanBindable(planName string) bool {
+	planNameLowerCase := strings.ToLower(planName)
+	for _, p := range b.config.BindablePlans {
+		if strings.ToLower(p) == planNameLowerCase {
+			return true
+		}
+	}
+	return false
+}
