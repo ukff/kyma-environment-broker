@@ -110,16 +110,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	return domain.Binding{}, nil
 }
 
-func (b *BindEndpoint) IsPlanBindable(planName string) bool {
-	planNameLowerCase := strings.ToLower(planName)
-	for _, p := range b.config.BindablePlans {
-		if strings.ToLower(p) == planNameLowerCase {
-			return true
-		}
-	}
-	return false
-}
-
 func (b *BindEndpoint) execute(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
