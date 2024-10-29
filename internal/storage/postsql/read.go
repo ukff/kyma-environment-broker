@@ -55,6 +55,22 @@ func (r readSession) ListBindings(instanceID string) ([]dbmodel.BindingDTO, erro
 	return bindings, err
 }
 
+func (r readSession) ListExpiredBindings() ([]dbmodel.BindingDTO, error) {
+	currentTime := time.Now().UTC()
+	var bindings []dbmodel.BindingDTO
+	_, err := r.session.
+		Select("id", "instance_id", "expires_at").
+		From(BindingsTableName).
+		Where(dbr.Lte("expires_at", currentTime)).
+		Load(&bindings)
+
+	if err != nil {
+		return nil, fmt.Errorf("while getting expired bindings: %w", err)
+	}
+
+	return bindings, nil
+}
+
 func (r readSession) ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error) {
 	var states []dbmodel.SubaccountStateDTO
 

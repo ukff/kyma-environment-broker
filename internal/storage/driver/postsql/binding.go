@@ -60,6 +60,22 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	return nil
 }
 
+func (s *Binding) Update(binding *internal.Binding) error {
+	dto, err := s.toBindingDTO(binding)
+	if err != nil {
+		return err
+	}
+
+	sess := s.NewWriteSession()
+	err = sess.UpdateBinding(dto)
+
+	if err != nil {
+		return fmt.Errorf("while updating binding with ID %s: %w", binding.ID, err)
+	}
+
+	return nil
+}
+
 func (s *Binding) Delete(instanceID, bindingID string) error {
 	sess := s.NewWriteSession()
 	return sess.DeleteBinding(instanceID, bindingID)
@@ -78,6 +94,23 @@ func (s *Binding) ListByInstanceID(instanceID string) ([]internal.Binding, error
 		}
 
 		bindings = append(bindings, instance)
+	}
+	return bindings, err
+}
+
+func (s *Binding) ListExpired() ([]internal.Binding, error) {
+	dtos, err := s.NewReadSession().ListExpiredBindings()
+	if err != nil {
+		return []internal.Binding{}, err
+	}
+	var bindings []internal.Binding
+	for _, dto := range dtos {
+		binding, err := s.toExpiredBinding(dto)
+		if err != nil {
+			return []internal.Binding{}, err
+		}
+
+		bindings = append(bindings, binding)
 	}
 	return bindings, err
 }
@@ -113,5 +146,13 @@ func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 		ExpirationSeconds: dto.ExpirationSeconds,
 		CreatedBy:         dto.CreatedBy,
 		ExpiresAt:         dto.ExpiresAt,
+	}, nil
+}
+
+func (s *Binding) toExpiredBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
+	return internal.Binding{
+		ID:         dto.ID,
+		InstanceID: dto.InstanceID,
+		ExpiresAt:  dto.ExpiresAt,
 	}, nil
 }

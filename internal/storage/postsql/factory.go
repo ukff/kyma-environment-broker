@@ -63,6 +63,7 @@ type ReadSession interface {
 	ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceArchivedDTO, int, int, error)
 	GetBinding(instanceID string, bindingID string) (dbmodel.BindingDTO, dberr.Error)
 	ListBindings(instanceID string) ([]dbmodel.BindingDTO, error)
+	ListExpiredBindings() ([]dbmodel.BindingDTO, error)
 }
 
 //go:generate mockery --name=WriteSession
@@ -83,6 +84,7 @@ type WriteSession interface {
 	DeleteOperationByID(operationID string) dberr.Error
 	InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error
 	InsertBinding(binding dbmodel.BindingDTO) dberr.Error
+	UpdateBinding(binding dbmodel.BindingDTO) dberr.Error
 	DeleteBinding(instanceID, bindingID string) dberr.Error
 }
 

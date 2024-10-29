@@ -2,6 +2,7 @@ package memory
 
 import (
 	"sync"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -32,8 +33,20 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, found := s.data[binding.ID]; found {
-		return dberr.AlreadyExists("binding with id %s already exist", binding.ID)
+	if foundBinding, found := s.data[binding.ID]; found && binding.InstanceID == foundBinding.InstanceID {
+		return dberr.AlreadyExists("binding with id %s already exists", binding.ID)
+	}
+	s.data[binding.ID] = *binding
+
+	return nil
+}
+
+func (s *Binding) Update(binding *internal.Binding) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if foundBinding, found := s.data[binding.ID]; !(found && binding.InstanceID == foundBinding.InstanceID) {
+		return dberr.AlreadyExists("binding with id %s does not exist", binding.ID)
 	}
 	s.data[binding.ID] = *binding
 
@@ -74,4 +87,19 @@ func (s *Binding) Get(instanceID string, bindingID string) (*internal.Binding, e
 	} else {
 		return nil, dberr.NotFound("binding with id %s does not exist for given instance ID", bindingID)
 	}
+}
+
+func (s *Binding) ListExpired() ([]internal.Binding, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	currentTime := time.Now().UTC()
+	var bindings []internal.Binding
+	for _, binding := range s.data {
+		if binding.ExpiresAt.Before(currentTime) {
+			bindings = append(bindings, binding)
+		}
+	}
+
+	return bindings, nil
 }
