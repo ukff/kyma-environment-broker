@@ -13,8 +13,8 @@ import (
 	broker "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 
-	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 )
@@ -24,13 +24,12 @@ const (
 )
 
 type BindingConfig struct {
-	Enabled              bool          `envconfig:"default=false"`
-	BindablePlans        EnablePlans   `envconfig:"default=aws"`
-	ExpirationSeconds    int           `envconfig:"default=600"`
-	MaxExpirationSeconds int           `envconfig:"default=7200"`
-	MinExpirationSeconds int           `envconfig:"default=600"`
-	MaxBindingsCount     int           `envconfig:"default=10"`
-	CreateBindTimeout    time.Duration `envconfig:"default=15s"`
+	Enabled              bool        `envconfig:"default=false"`
+	BindablePlans        EnablePlans `envconfig:"default=aws"`
+	ExpirationSeconds    int         `envconfig:"default=600"`
+	MaxExpirationSeconds int         `envconfig:"default=7200"`
+	MinExpirationSeconds int         `envconfig:"default=600"`
+	MaxBindingsCount     int         `envconfig:"default=10"`
 }
 
 type BindEndpoint struct {
@@ -65,10 +64,10 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStorage storage.Bindings, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
+func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
-		instancesStorage:             instanceStorage,
-		bindingsStorage:              bindingsStorage,
+		instancesStorage:             db.Instances(),
+		bindingsStorage:              db.Bindings(),
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
@@ -165,6 +164,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	bindingCount := len(bindingList)
+	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
+	if bindingCount == b.config.MaxBindingsCount-1 {
+		b.log.Infof(message)
+	}
 	if bindingCount >= b.config.MaxBindingsCount {
 		expiredCount := 0
 		for _, binding := range bindingList {
@@ -172,14 +175,17 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 				expiredCount++
 			}
 		}
+		if (bindingCount - expiredCount) == (b.config.MaxBindingsCount - 1) {
+			b.log.Infof(message)
+		}
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
 			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
+			b.log.Infof(message+" for instance %s", instanceID)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
 
 	var kubeconfig string
-	var expiresAt time.Time
 	binding := &internal.Binding{
 		ID:         bindingID,
 		InstanceID: instanceID,
@@ -188,17 +194,9 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
+		ExpiresAt:         time.Now().Add(time.Duration(expirationSeconds) * time.Second),
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
-	// get kubeconfig for the instance
-	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
-	if err != nil {
-		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-	}
-
-	binding.ExpiresAt = expiresAt
-	binding.Kubeconfig = kubeconfig
 
 	err = b.bindingsStorage.Insert(binding)
 	switch {
@@ -208,8 +206,26 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	case err != nil:
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
-
 	}
+
+	// create kubeconfig for the instance
+	var expiresAt time.Time
+	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
+	if err != nil {
+		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
+		b.log.Errorf("for instance %s %s", instanceID, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+	}
+
+	binding.ExpiresAt = expiresAt
+	binding.Kubeconfig = kubeconfig
+
+	err = b.bindingsStorage.Update(binding)
+	if err != nil {
+		message := fmt.Sprintf("failed to update Kyma binding in storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
+	b.log.Infof("Successfully created binding %s for instance %s", bindingID, instanceID)
 
 	return domain.Binding{
 		IsAsync: false,
@@ -220,8 +236,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			ExpiresAt: binding.ExpiresAt.Format(expiresAtLayout),
 		},
 	}, nil
-
-	return domain.Binding{}, nil
 }
 
 func (b *BindEndpoint) IsPlanBindable(planName string) bool {
