@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -36,7 +37,7 @@ func AttachRoutes(router *mux.Router, serviceBroker domain.ServiceBroker, logger
 	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Update).Methods("PATCH")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods("GET")
-	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(createBindApiHandler{}, createBindTimeout, "request timeout: time exceeded %s")).Methods("PUT")
+	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(createBindApiHandler{}, createBindTimeout, fmt.Sprintf("request timeout: time exceeded %s", createBindTimeout))).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods("DELETE")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation).Methods("GET")
