@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
@@ -11,8 +12,16 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 )
 
+type createBindApiHandler struct {
+	handler handlers.APIHandler
+}
+
+func (h createBindApiHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	h.handler.Bind(rw, r)
+}
+
 // copied from github.com/pivotal-cf/brokerapi/api.go
-func AttachRoutes(router *mux.Router, serviceBroker domain.ServiceBroker, logger lager.Logger) *mux.Router {
+func AttachRoutes(router *mux.Router, serviceBroker domain.ServiceBroker, logger lager.Logger, createBindTimeout time.Duration) *mux.Router {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	deprovision := func(w http.ResponseWriter, req *http.Request) {
 		req2 := req.WithContext(context.WithValue(req.Context(), "User-Agent", req.Header.Get("User-Agent")))
@@ -27,7 +36,7 @@ func AttachRoutes(router *mux.Router, serviceBroker domain.ServiceBroker, logger
 	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Update).Methods("PATCH")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods("PUT")
+	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(createBindApiHandler{}, createBindTimeout, "request timeout: time exceeded %s")).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods("DELETE")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation).Methods("GET")

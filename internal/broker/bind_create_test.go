@@ -231,7 +231,7 @@ func TestCreateBindingTimeoutHappen(t *testing.T) {
 		MaxExpirationSeconds: 7200,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
-		Timeout:              time.Duration(1 * time.Nanosecond),
+		CreateBindTimeout:    time.Duration(1 * time.Nanosecond),
 	}
 	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
 	result, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)
