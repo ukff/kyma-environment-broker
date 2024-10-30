@@ -14,11 +14,11 @@ import (
 )
 
 type CreateBindingHandler struct {
-	handler handlers.APIHandler
+	handler func(w http. ResponseWriter, req *http. Request)
 }
 
 func (h CreateBindingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	h.handler.Bind(rw, r)
+	h.handler(rw, r)
 }
 
 // copied from github.com/pivotal-cf/brokerapi/api.go
@@ -37,7 +37,7 @@ func AttachRoutes(router *mux.Router, serviceBroker domain.ServiceBroker, logger
 	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Update).Methods("PATCH")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods("GET")
-	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(CreateBindingHandler{}, createBindingTimeout, fmt.Sprintf("request timeout: time exceeded %s", createBindingTimeout))).Methods("PUT")
+	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(CreateBindingHandler{apiHandler.Bind}, createBindingTimeout, fmt.Sprintf("request timeout: time exceeded %s", createBindingTimeout))).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods("DELETE")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation).Methods("GET")
