@@ -64,7 +64,6 @@ const (
 	bindingsPath         = "v2/service_instances/%s/service_bindings/%s"
 	deleteParams         = "?accepts_incomplete=false&service_id=%s&plan_id=%s"
 	maxBindingsCount     = 10
-	createBindingTimeout = 15 * time.Second
 )
 
 var httpServer *httptest.Server
@@ -218,7 +217,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	//// attach bindings api
 	router := mux.NewRouter()
-	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(broker.CreateBindingHandler{}, createBindingTimeout, fmt.Sprintf("request timeout: time exceeded %s", createBindingTimeout))).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(http.MethodPut)
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods(http.MethodGet)
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods(http.MethodDelete)
 	httpServer = httptest.NewServer(router)
@@ -485,24 +484,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		//then
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
-	})
-}
-
-func TestCreateBidningEndpointWithTimeout(t *testing.T) {
-	//// attach bindings api
-	router := mux.NewRouter()
-	router.Handle("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", http.TimeoutHandler(broker.CreateBindingHandler{}, 1*time.Nanosecond, fmt.Sprintf("request timeout: time exceeded %s", createBindingTimeout))).Methods("PUT")
-	httpServer = httptest.NewServer(router)
-	defer httpServer.Close()
-
-	t.Run("should return 504 when timeout is reached", func(t *testing.T) {
-		// When
-		response := createBinding(instanceID1, "binding-id", t)
-		defer response.Body.Close()
-
-		binding := unmarshal(t, response)
-		require.Zero(t, binding)
-		require.Equal(t, http.StatusGatewayTimeout, response.StatusCode)
 	})
 }
 
