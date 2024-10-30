@@ -261,3 +261,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
+
+func TestBindingWithTimeoutHandler(t *testing.T) {
+
+}
