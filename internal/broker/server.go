@@ -14,7 +14,7 @@ import (
 )
 
 type CreateBindingHandler struct {
-	handler func(w http. ResponseWriter, req *http. Request)
+	handler func(w http.ResponseWriter, req *http.Request)
 }
 
 func (h CreateBindingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
