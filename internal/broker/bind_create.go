@@ -29,8 +29,8 @@ type BindingConfig struct {
 	ExpirationSeconds    int         `envconfig:"default=600"`
 	MaxExpirationSeconds int         `envconfig:"default=7200"`
 	MinExpirationSeconds int         `envconfig:"default=600"`
-	MaxBindingsCount     int         `envconfig:"default=10"`
-	CreateBindTimeout	time.Duration `envconfig:"default=15s"`
+	MaxBindingsCount     int           `envconfig:"default=10"`
+	CreateBindingTimeout time.Duration `envconfig:"default=15s"`
 }
 
 type BindEndpoint struct {
