@@ -87,7 +87,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 			fixture.PlanName,
 		},
 		MaxBindingsCount: maxBindingsCount,
-		CreateBindingTimeout: 1 * time.Nanosecond,
 	}
 
 	//// api handler
@@ -267,7 +266,6 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 		MaxExpirationSeconds: 7200,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
-		CreateBindingTimeout: 1 * time.Nanosecond,
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
 	brokerStorage := storage.NewMemoryStorage()

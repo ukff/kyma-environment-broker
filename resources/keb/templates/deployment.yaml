@@ -94,8 +94,8 @@ spec:
               value: "{{ .Values.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
               value: "{{ .Values.binding.maxBindingsCount}}"
-            - name: APP_BROKER_BINDING_TIMEOUT
-              value: "{{ .Values.binding.TIMEOUT}}"
+            - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
+              value: "{{ .Values.binding.createBindingTimeout}}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
               value: "{{ .Values.onlySingleTrialPerGA }}"
             - name: APP_BROKER_URL
