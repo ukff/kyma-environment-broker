@@ -84,7 +84,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 component", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManager(operations)
+		opManager := NewOperationManager(operations, kebErr.ErrProvisioner)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
