@@ -116,7 +116,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
 		assert.EqualValues(t, "provisioner,reconciler", op.LastError.Component())
-		assert.EqualValues(t, "err_msg_not_set", op.LastError.Error())
+		assert.EqualValues(t, "err_not_set", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
 	})
 
@@ -130,7 +130,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op, _, err = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
 		assert.EqualValues(t, "unknown", op.LastError.Component())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
-		assert.EqualValues(t, "err_not_set", op.LastError.Reason())
+		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
 	})
 
 	t.Run("5", func(t *testing.T) {
@@ -142,8 +142,8 @@ func Test_OperationManager_LastError(t *testing.T) {
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
 		assert.EqualValues(t, "unknown", op.LastError.Component())
-		assert.EqualValues(t, "err_msg_not_set", op.LastError.Error())
-		assert.EqualValues(t, "err_not_set", op.LastError.Reason())
+		assert.EqualValues(t, "err_not_set", op.LastError.Error())
+		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
 	})
 }
 

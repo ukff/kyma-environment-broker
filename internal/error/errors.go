@@ -50,13 +50,15 @@ const (
 type ErrComponent string
 
 const (
-	ErrUnknown     ErrComponent = "unknown"
-	ErrDB          ErrComponent = "db - keb"
-	ErrK8SClient   ErrComponent = "k8s client - keb"
-	ErrKEB         ErrComponent = "keb"
-	ErrEDP         ErrComponent = "edp"
-	ErrProvisioner ErrComponent = "provisioner"
-	ErrReconciler  ErrComponent = "reconciler"
+	ErrUnknown          ErrComponent = "unknown"
+	ErrDB               ErrComponent = "db - keb"
+	ErrK8SClient        ErrComponent = "k8s client - keb"
+	ErrKEB              ErrComponent = "keb"
+	ErrEDP              ErrComponent = "edp"
+	ErrProvisioner      ErrComponent = "provisioner"
+	ErrReconciler       ErrComponent = "reconciler"
+	ErrKim              ErrComponent = "kim"
+	ErrLifecycleManager ErrComponent = "lifecycle-manager"
 )
 
 func (err LastError) Reason() ErrReason {

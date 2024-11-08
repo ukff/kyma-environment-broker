@@ -34,6 +34,16 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	errMsg := ""
+	reason := kebErr.ErrReason(description)
+	if err == nil || err.Error() == "" {
+		errMsg = string(kebErr.ErrNotSet)
+	} else {
+		errMsg = err.Error()
+	}
+	if reason == "" {
+		reason = kebErr.ErrMsgNotSet
+	}
 	dependecies := om.dependecies
 	if len(om.dependecies) == 0 {
 		dependecies = []kebErr.ErrComponent{kebErr.ErrUnknown}
@@ -45,21 +55,10 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 			sb.WriteString(",")
 		}
 	}
-	errMsg := ""
-	reason := kebErr.ErrReason(description)
-	component := kebErr.ErrComponent(sb.String())
-	if err == nil || err.Error() == "" {
-		errMsg = string(kebErr.ErrMsgNotSet)
-	} else {
-		errMsg = err.Error()
-	}
-	if reason == "" {
-		reason = kebErr.ErrNotSet
-	}
 	lastErr := kebErr.LastErrorJSON{
 		Message:   errMsg,
 		Reason:    reason,
-		Component: component,
+		Component: kebErr.ErrComponent(sb.String()),
 	}
 	operation.LastError = lastErr.ToDTO()
 
