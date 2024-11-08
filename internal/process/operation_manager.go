@@ -34,23 +34,35 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if err != nil {
-		dependecies := om.dependecies
-		if len(om.dependecies) == 0 {
-			dependecies = []kebErr.ErrComponent{}
-		}
-		var sb strings.Builder
-		for _, dependency := range dependecies {
-			sb.WriteString(string(dependency))
+	dependecies := om.dependecies
+	if len(om.dependecies) == 0 {
+		dependecies = []kebErr.ErrComponent{kebErr.ErrUnknown}
+	}
+	var sb strings.Builder
+	for _, dependency := range dependecies {
+		sb.WriteString(string(dependency))
+		if len(dependecies) > 1 {
 			sb.WriteString(",")
 		}
-		lastErr := kebErr.LastErrorJSON{
-			Message:   err.Error(),
-			Reason:    kebErr.ErrReason(description),
-			Component: kebErr.ErrComponent(sb.String()),
-		}
-		operation.LastError = lastErr.ToDTO()
 	}
+	errMsg := ""
+	reason := kebErr.ErrReason(description)
+	component := kebErr.ErrComponent(sb.String())
+	if err == nil || err.Error() == "" {
+		errMsg = string(kebErr.ErrMsgNotSet)
+	} else {
+		errMsg = err.Error()
+	}
+	if reason == "" {
+		reason = kebErr.ErrNotSet
+	}
+	lastErr := kebErr.LastErrorJSON{
+		Message:   errMsg,
+		Reason:    reason,
+		Component: component,
+	}
+	operation.LastError = lastErr.ToDTO()
+
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if t != 0 {

@@ -34,6 +34,8 @@ type LastErrorJSON struct {
 type ErrReason string
 
 const (
+	ErrMsgNotSet                ErrReason = "err_msg_not_set"
+	ErrNotSet                   ErrReason = "err_not_set"
 	ErrKEBInternal              ErrReason = "err_keb_internal"
 	ErrKEBTimeOut               ErrReason = "err_keb_timeout"
 	ErrProvisionerNilLastError  ErrReason = "err_provisioner_nil_last_error"
@@ -48,6 +50,7 @@ const (
 type ErrComponent string
 
 const (
+	ErrUnknown     ErrComponent = "unknown"
 	ErrDB          ErrComponent = "db - keb"
 	ErrK8SClient   ErrComponent = "k8s client - keb"
 	ErrKEB         ErrComponent = "keb"

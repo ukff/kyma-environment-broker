@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
@@ -77,6 +78,73 @@ func Test_OperationManager_RetryOperation(t *testing.T) {
 	// when - second call => retry
 	assert.True(t, when > 0)
 	assert.Nil(t, err)
+}
+
+func Test_OperationManager_LastError(t *testing.T) {
+	t.Run("1", func(t *testing.T) {
+		memory := storage.NewMemoryStorage()
+		operations := memory.Operations()
+		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner)
+		op := internal.Operation{}
+		err := operations.InsertOperation(op)
+		require.NoError(t, err)
+		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
+		assert.EqualValues(t, "provisioner", op.LastError.Component())
+		assert.EqualValues(t, "technical err", op.LastError.Error())
+		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+	})
+
+	t.Run("2", func(t *testing.T) {
+		memory := storage.NewMemoryStorage()
+		operations := memory.Operations()
+		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler)
+		op := internal.Operation{}
+		err := operations.InsertOperation(op)
+		require.NoError(t, err)
+		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
+		assert.EqualValues(t, "provisioner,reconciler,", op.LastError.Component())
+		assert.EqualValues(t, "technical err", op.LastError.Error())
+		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+	})
+
+	t.Run("3", func(t *testing.T) {
+		memory := storage.NewMemoryStorage()
+		operations := memory.Operations()
+		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler)
+		op := internal.Operation{}
+		err := operations.InsertOperation(op)
+		require.NoError(t, err)
+		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
+		assert.EqualValues(t, "provisioner,reconciler,", op.LastError.Component())
+		assert.EqualValues(t, "err_msg_not_set", op.LastError.Error())
+		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+	})
+
+	t.Run("4", func(t *testing.T) {
+		memory := storage.NewMemoryStorage()
+		operations := memory.Operations()
+		opManager := NewOperationManagerExtended(operations)
+		op := internal.Operation{}
+		err := operations.InsertOperation(op)
+		require.NoError(t, err)
+		op, _, err = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
+		assert.EqualValues(t, "unknown", op.LastError.Component())
+		assert.EqualValues(t, "technical err", op.LastError.Error())
+		assert.EqualValues(t, "err_not_set", op.LastError.Reason())
+	})
+
+	t.Run("5", func(t *testing.T) {
+		memory := storage.NewMemoryStorage()
+		operations := memory.Operations()
+		opManager := NewOperationManagerExtended(operations)
+		op := internal.Operation{}
+		err := operations.InsertOperation(op)
+		require.NoError(t, err)
+		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
+		assert.EqualValues(t, "unknown", op.LastError.Component())
+		assert.EqualValues(t, "err_msg_not_set", op.LastError.Error())
+		assert.EqualValues(t, "err_not_set", op.LastError.Reason())
+	})
 }
 
 func fixLogger() logrus.FieldLogger {
