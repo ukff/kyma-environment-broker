@@ -84,7 +84,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 component", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner)
+		opManager := NewOperationManager(operations)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -97,7 +97,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB)
+		opManager := NewOperationManager(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -110,7 +110,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler)
+		opManager := NewOperationManager(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -123,7 +123,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtended(operations)
+		opManager := NewOperationManager(operations)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -136,7 +136,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description and no err passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtended(operations)
+		opManager := NewOperationManager(operations)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)

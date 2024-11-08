@@ -19,11 +19,7 @@ type OperationManager struct {
 	dependecies []kebErr.ErrComponent
 }
 
-func NewOperationManager(storage storage.Operations) *OperationManager {
-	return &OperationManager{storage: storage}
-}
-
-func NewOperationManagerExtended(storage storage.Operations, dependecies ...kebErr.ErrComponent) *OperationManager {
+func NewOperationManager(storage storage.Operations, dependecies ...kebErr.ErrComponent) *OperationManager {
 	return &OperationManager{storage: storage, dependecies: dependecies}
 }
 
@@ -34,34 +30,8 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	errMsg := ""
-	reason := kebErr.ErrReason(description)
-	if err == nil || err.Error() == "" {
-		errMsg = string(kebErr.ErrNotSet)
-	} else {
-		errMsg = err.Error()
-	}
-	if reason == "" {
-		reason = kebErr.ErrMsgNotSet
-	}
-	dependecies := om.dependecies
-	if len(om.dependecies) == 0 {
-		dependecies = []kebErr.ErrComponent{kebErr.ErrUnknown}
-	}
-	var sb strings.Builder
-	for idx, dependency := range dependecies {
-		sb.WriteString(string(dependency))
-		if len(dependecies) > 1 && idx != len(dependecies)-1 {
-			sb.WriteString(",")
-		}
-	}
-	lastErr := kebErr.LastErrorJSON{
-		Message:   errMsg,
-		Reason:    reason,
-		Component: kebErr.ErrComponent(sb.String()),
-	}
-	operation.LastError = lastErr.ToDTO()
 
+	operation.LastError = om.setLastError(err, description)
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if t != 0 {
@@ -186,4 +156,36 @@ func (om *OperationManager) update(operation internal.Operation, state domain.La
 		operation.State = state
 		operation.Description = description
 	}, log)
+}
+
+func (om *OperationManager) setLastError(err error, description string) kebErr.LastError {
+	toPersist := kebErr.LastErrorJSON{}
+
+	if err == nil || err.Error() == "" {
+		toPersist.Message = string(kebErr.ErrNotSet)
+	} else {
+		toPersist.Message = err.Error()
+	}
+
+	if description == "" {
+		toPersist.Reason = kebErr.ErrMsgNotSet
+	} else {
+		toPersist.Reason = kebErr.ErrReason(description)
+	}
+
+	dependecies := om.dependecies
+	if len(om.dependecies) == 0 {
+		toPersist.Component = kebErr.ErrComponent(kebErr.ErrUnknown)
+	} else {
+		var sb strings.Builder
+		for idx, dependency := range dependecies {
+			sb.WriteString(string(dependency))
+			if len(dependecies) > 1 && idx != len(dependecies)-1 {
+				sb.WriteString(",")
+			}
+		}
+		toPersist.Component = kebErr.ErrComponent(sb.String())
+	}
+
+	return toPersist.ToDTO()
 }
