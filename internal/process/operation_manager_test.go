@@ -81,7 +81,7 @@ func Test_OperationManager_RetryOperation(t *testing.T) {
 }
 
 func Test_OperationManager_LastError(t *testing.T) {
-	t.Run("1", func(t *testing.T) {
+	t.Run("when all last error field set with 1 component", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner)
@@ -94,7 +94,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
 	})
 
-	t.Run("2", func(t *testing.T) {
+	t.Run("when all last error field set with 3 components", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB)
@@ -107,7 +107,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
 	})
 
-	t.Run("3", func(t *testing.T) {
+	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler)
@@ -120,7 +120,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
 	})
 
-	t.Run("4", func(t *testing.T) {
+	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerExtended(operations)
@@ -133,7 +133,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
 	})
 
-	t.Run("5", func(t *testing.T) {
+	t.Run("when no description and no err passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerExtended(operations)
