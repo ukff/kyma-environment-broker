@@ -2,10 +2,12 @@ package process
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -13,11 +15,16 @@ import (
 )
 
 type OperationManager struct {
-	storage storage.Operations
+	storage     storage.Operations
+	dependecies []kebErr.ErrComponent
 }
 
 func NewOperationManager(storage storage.Operations) *OperationManager {
 	return &OperationManager{storage: storage}
+}
+
+func NewOperationManagerExtended(storage storage.Operations, dependecies ...kebErr.ErrComponent) *OperationManager {
+	return &OperationManager{storage: storage, dependecies: dependecies}
 }
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
@@ -27,6 +34,23 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if err != nil {
+		dependecies := om.dependecies
+		if len(om.dependecies) == 0 {
+			dependecies = []kebErr.ErrComponent{}
+		}
+		var sb strings.Builder
+		for _, dependency := range dependecies {
+			sb.WriteString(string(dependency))
+			sb.WriteString(",")
+		}
+		lastErr := kebErr.LastErrorJSON{
+			Message:   err.Error(),
+			Reason:    kebErr.ErrReason(description),
+			Component: kebErr.ErrComponent(sb.String()),
+		}
+		operation.LastError = lastErr.ToDTO()
+	}
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if t != 0 {

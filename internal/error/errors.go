@@ -219,3 +219,11 @@ func (l *LastError) UnmarshalJSON(data []byte) error {
 	l.component = tmp.Component
 	return nil
 }
+
+func (ll LastErrorJSON) ToDTO() LastError {
+	return LastError{
+		message:   ll.Message,
+		reason:    ll.Reason,
+		component: ll.Component,
+	}
+}
