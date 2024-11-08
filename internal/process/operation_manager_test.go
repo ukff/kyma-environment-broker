@@ -97,12 +97,12 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("2", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler)
+		opManager := NewOperationManagerExtended(operations, kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
-		assert.EqualValues(t, "provisioner,reconciler,", op.LastError.Component())
+		assert.EqualValues(t, "provisioner,reconciler,db - keb", op.LastError.Component())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
 	})
@@ -115,7 +115,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
-		assert.EqualValues(t, "provisioner,reconciler,", op.LastError.Component())
+		assert.EqualValues(t, "provisioner,reconciler", op.LastError.Component())
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
 	})

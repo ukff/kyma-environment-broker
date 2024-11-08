@@ -39,9 +39,9 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 		dependecies = []kebErr.ErrComponent{kebErr.ErrUnknown}
 	}
 	var sb strings.Builder
-	for _, dependency := range dependecies {
+	for idx, dependency := range dependecies {
 		sb.WriteString(string(dependency))
-		if len(dependecies) > 1 {
+		if len(dependecies) > 1 && idx != len(dependecies)-1 {
 			sb.WriteString(",")
 		}
 	}
