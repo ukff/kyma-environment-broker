@@ -20,6 +20,7 @@ type ErrorReporter interface {
 
 // error reporter
 type LastError struct {
+	step      string
 	message   string
 	reason    ErrReason
 	component ErrComponent
