@@ -20,8 +20,8 @@ type OperationManager struct {
 	stepName	 string
 }
 
-func NewOperationManager(storage storage.Operations, dependencies ...kebErr.ErrComponent) *OperationManager {
-	return &OperationManager{storage: storage, dependencies: dependencies}
+func NewOperationManager(storage storage.Operations) *OperationManager {
+	return &OperationManager{storage: storage}
 }
 
 func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependencies ...kebErr.ErrComponent) *OperationManager {
