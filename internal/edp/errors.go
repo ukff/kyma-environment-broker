@@ -14,7 +14,7 @@ type edpError struct {
 }
 
 func (e edpError) Step() string {
-	return ""
+	return "edp"
 }
 
 type EDPErrReason = kebError.ErrReason
