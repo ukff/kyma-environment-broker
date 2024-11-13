@@ -84,7 +84,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 component", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.Dependency{kebErr.DependencyProvisioner})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -98,7 +98,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.Dependency{kebErr.DependencyProvisioner, kebErr.DependencyReconciler, kebErr.DependencyDB})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner, kebErr.ErrReconciler})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.Dependency{kebErr.DependencyProvisioner, kebErr.DependencyReconciler})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -126,7 +126,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrReconciler})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.Dependency{kebErr.DependencyReconciler})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -140,7 +140,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description and no err passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.Dependency{kebErr.DependencyProvisioner})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)

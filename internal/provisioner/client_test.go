@@ -300,7 +300,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		assert.Error(t, err)
 		assert.False(t, kebError.IsTemporaryError(err))
 		assert.Equal(t, kebError.ErrReason("Object not found"), lastErr.Reason())
-		assert.Equal(t, kebError.ErrComponent("compass director"), lastErr.Component())
+		assert.Equal(t, kebError.Dependency("compass director"), lastErr.Component())
 	})
 
 	t.Run("provisioner returns temporary code error", func(t *testing.T) {
@@ -334,7 +334,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		assert.Error(t, err)
 		assert.True(t, kebError.IsTemporaryError(err))
 		assert.Equal(t, kebError.ErrReason("whatever"), lastErr.Reason())
-		assert.Equal(t, kebError.ErrComponent("db - provisioner"), lastErr.Component())
+		assert.Equal(t, kebError.Dependency("db - provisioner"), lastErr.Component())
 	})
 
 	t.Run("network error", func(t *testing.T) {
@@ -405,7 +405,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		lastErr := OperationStatusLastError(response.LastError)
 
 		// Then
-		assert.Equal(t, kebError.ErrProvisioner, lastErr.Component())
+		assert.Equal(t, kebError.DependencyProvisioner, lastErr.Component())
 		assert.Equal(t, kebError.ErrProvisionerNilLastError, lastErr.Reason())
 		assert.Equal(t, "", lastErr.Error())
 	})
@@ -427,7 +427,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		lastErr := OperationStatusLastError(response.LastError)
 
 		// Then
-		assert.Equal(t, kebError.ErrComponent("provisioner-db"), lastErr.Component())
+		assert.Equal(t, kebError.Dependency("provisioner-db"), lastErr.Component())
 		assert.Equal(t, kebError.ErrReason("not found"), lastErr.Reason())
 		assert.Equal(t, "error msg", lastErr.Error())
 
@@ -435,7 +435,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		lastErr = kebError.ReasonForError(err)
 
 		// Then
-		assert.Equal(t, kebError.ErrComponent("provisioner-db"), lastErr.Component())
+		assert.Equal(t, kebError.Dependency("provisioner-db"), lastErr.Component())
 		assert.Equal(t, kebError.ErrReason("not found"), lastErr.Reason())
 		assert.Equal(t, "something: error msg", lastErr.Error())
 	})

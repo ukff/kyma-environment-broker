@@ -31,7 +31,7 @@ var _ process.Step = &ApplyKymaStep{}
 
 func NewApplyKymaStep(os storage.Operations, cli client.Client) *ApplyKymaStep {
 	obj := &ApplyKymaStep{k8sClient: cli}
-	obj.operationManager = process.NewOperationManagerExtendent(os, obj.Name(), []kebErr.ErrComponent{kebErr.ErrKEB})
+	obj.operationManager = process.NewOperationManagerExtendent(os, obj.Name(), []kebErr.Dependency{kebErr.DependencyKEB})
 	return obj
 }
 

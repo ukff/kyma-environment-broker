@@ -15,7 +15,7 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 type ErrorReporter interface {
 	error
 	Reason() ErrReason
-	Component() ErrComponent
+	Component() Dependency
 	Step() string
 }
 
@@ -24,14 +24,14 @@ type LastError struct {
 	step      string
 	message   string
 	reason    ErrReason
-	component ErrComponent
+	component Dependency
 }
 
 type LastErrorJSON struct {
 	Message   string       `json:"message"`
-	Reason    ErrReason    `json:"reason"`
-	Component ErrComponent `json:"component"`
-	Step      string       `json:"step"`
+	Reason    ErrReason  `json:"reason"`
+	Component Dependency `json:"component"`
+	Step      string     `json:"step"`
 }
 
 type ErrReason string
@@ -50,25 +50,25 @@ const (
 	ErrK8SAmbiguousError        ErrReason = "err_k8s_ambiguous_error"
 )
 
-type ErrComponent string
+type Dependency string
 
 const (
-	ErrUnknown          ErrComponent = "unknown"
-	ErrDB               ErrComponent = "db - keb"
-	ErrK8SClient        ErrComponent = "k8s client - keb"
-	ErrKEB              ErrComponent = "keb"
-	ErrEDP              ErrComponent = "edp"
-	ErrProvisioner      ErrComponent = "provisioner"
-	ErrReconciler       ErrComponent = "reconciler"
-	ErrKim              ErrComponent = "kim"
-	ErrLifecycleManager ErrComponent = "lifecycle-manager"
+	DependencyUnknown Dependency = "unknown"
+	DependencyDB        Dependency = "db - keb"
+	DependencyK8SClient Dependency = "k8s client - keb"
+	DependencyKEB  Dependency = "keb"
+	DependencyEDP         Dependency = "edp"
+	DependencyProvisioner Dependency = "provisioner"
+	DependencyReconciler Dependency = "reconciler"
+	DependencyKim Dependency = "kim"
+	DependencyLM  Dependency = "lifecycle-manager"
 )
 
 func (err LastError) Reason() ErrReason {
 	return err.reason
 }
 
-func (err LastError) Component() ErrComponent {
+func (err LastError) Component() Dependency {
 	return err.component
 }
 
@@ -80,7 +80,7 @@ func (err LastError) Step() string {
 	return err.step
 }
 
-func (err LastError) SetComponent(component ErrComponent) LastError {
+func (err LastError) SetComponent(component Dependency) LastError {
 	err.component = component
 	return err
 }
@@ -104,7 +104,7 @@ func TimeoutError(msg string) LastError {
 	return LastError{
 		message:   msg,
 		reason:    ErrKEBTimeOut,
-		component: ErrKEB,
+		component: DependencyKEB,
 	}
 }
 
@@ -116,7 +116,7 @@ func ReasonForError(err error) LastError {
 
 	cause := UnwrapAll(err)
 
-	if lastErr := checkK8SError(cause); lastErr.component == ErrK8SClient {
+	if lastErr := checkK8SError(cause); lastErr.component == DependencyK8SClient {
 		lastErr.message = err.Error()
 		return lastErr
 	}
@@ -131,7 +131,7 @@ func ReasonForError(err error) LastError {
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
 		var errReason ErrReason
-		var errComponent ErrComponent
+		var errComponent Dependency
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
@@ -142,7 +142,7 @@ func ReasonForError(err error) LastError {
 		component, found := ee.Extensions()["error_component"]
 		if found {
 			if c, ok := component.(string); ok {
-				errComponent = ErrComponent(c)
+				errComponent = Dependency(c)
 			}
 		}
 
@@ -160,7 +160,7 @@ func ReasonForError(err error) LastError {
 	return LastError{
 		message:   err.Error(),
 		reason:    ErrKEBInternal,
-		component: ErrKEB,
+		component: DependencyKEB,
 	}
 }
 
@@ -176,7 +176,7 @@ func checkK8SError(cause error) LastError {
 			// reason could be an empty unknown ""
 			lastErr.reason = ErrReason(apierr.ReasonForError(cause))
 		}
-		lastErr.component = ErrK8SClient
+		lastErr.component = DependencyK8SClient
 		return lastErr
 	case apierr.IsUnexpectedObjectError(cause):
 		lastErr.reason = ErrK8SUnexpectedObjectError
@@ -187,7 +187,7 @@ func checkK8SError(cause error) LastError {
 	}
 
 	if lastErr.reason != "" {
-		lastErr.component = ErrK8SClient
+		lastErr.component = DependencyK8SClient
 	}
 
 	return lastErr

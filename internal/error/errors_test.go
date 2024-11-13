@@ -36,20 +36,20 @@ func TestLastError(t *testing.T) {
 
 		// then
 		assert.Equal(t, edp.ErrEDPBadRequest, edpLastErr.Reason())
-		assert.Equal(t, kebError.ErrEDP, edpLastErr.Component())
+		assert.Equal(t, kebError.DependencyEDP, edpLastErr.Component())
 		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
 
 		assert.Equal(t, edp.ErrEDPConflict, edpConfLastErr.Reason())
-		assert.Equal(t, kebError.ErrEDP, edpConfLastErr.Component())
+		assert.Equal(t, kebError.DependencyEDP, edpConfLastErr.Component())
 		assert.Equal(t, expectEdpConfMsg, edpConfLastErr.Error())
 		assert.True(t, edp.IsConflictError(edpConfErr))
 
 		assert.Equal(t, dberr.ErrDBNotFound, dbLastErr.Reason())
-		assert.Equal(t, kebError.ErrDB, dbLastErr.Component())
+		assert.Equal(t, kebError.DependencyDB, dbLastErr.Component())
 		assert.Equal(t, expectDbErr, dbLastErr.Error())
 
 		assert.Equal(t, kebError.ErrKEBTimeOut, timeoutLastErr.Reason())
-		assert.Equal(t, kebError.ErrKEB, timeoutLastErr.Component())
+		assert.Equal(t, kebError.DependencyKEB, timeoutLastErr.Component())
 		assert.Equal(t, expectTimeoutMsg, timeoutLastErr.Error())
 	})
 }
@@ -60,7 +60,7 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		err := kebError.LastError{}.
 			SetMessage(fmt.Sprintf("Got status %d", 502)).
 			SetReason(kebError.ErrHttpStatusCode).
-			SetComponent(kebError.ErrReconciler)
+			SetComponent(kebError.DependencyReconciler)
 		tempErr := fmt.Errorf("something else: %w", kebError.WrapNewTemporaryError(fmt.Errorf("something: %w", err)))
 		expectMsg := fmt.Sprintf("something else: something: Got status %d", 502)
 
@@ -73,12 +73,12 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 
 		// then
 		assert.Equal(t, kebError.ErrHttpStatusCode, lastErr.Reason())
-		assert.Equal(t, kebError.ErrReconciler, lastErr.Component())
+		assert.Equal(t, kebError.DependencyReconciler, lastErr.Component())
 		assert.Equal(t, expectMsg, lastErr.Error())
 		assert.True(t, kebError.IsTemporaryError(tempErr))
 
 		assert.Equal(t, edp.ErrEDPTimeout, edpLastErr.Reason())
-		assert.Equal(t, kebError.ErrEDP, edpLastErr.Component())
+		assert.Equal(t, kebError.DependencyEDP, edpLastErr.Component())
 		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
 		assert.True(t, kebError.IsTemporaryError(edpTempErr))
 	})
@@ -93,7 +93,7 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 
 		// then
 		assert.Equal(t, kebError.ErrKEBInternal, lastErr.Reason())
-		assert.Equal(t, kebError.ErrKEB, lastErr.Component())
+		assert.Equal(t, kebError.DependencyKEB, lastErr.Component())
 		assert.Equal(t, expectMsg, lastErr.Error())
 		assert.True(t, kebError.IsTemporaryError(tempErr))
 	})
@@ -109,7 +109,7 @@ func TestNotFoundError(t *testing.T) {
 	// then
 	assert.EqualError(t, lastErr, "something: not found")
 	assert.Equal(t, kebError.ErrClusterNotFound, lastErr.Reason())
-	assert.Equal(t, kebError.ErrReconciler, lastErr.Component())
+	assert.Equal(t, kebError.DependencyReconciler, lastErr.Component())
 	assert.True(t, kebError.IsNotFoundError(err))
 }
 
@@ -129,17 +129,17 @@ func TestK8SLastError(t *testing.T) {
 	// then
 	assert.EqualError(t, lastErrBadReq, "something: bad request here")
 	assert.Equal(t, kebError.ErrReason("BadRequest"), lastErrBadReq.Reason())
-	assert.Equal(t, kebError.ErrK8SClient, lastErrBadReq.Component())
+	assert.Equal(t, kebError.DependencyK8SClient, lastErrBadReq.Component())
 
 	assert.ErrorContains(t, lastErrUnexpObj, "something: unexpected object: ")
 	assert.Equal(t, kebError.ErrK8SUnexpectedObjectError, lastErrUnexpObj.Reason())
-	assert.Equal(t, kebError.ErrK8SClient, lastErrUnexpObj.Component())
+	assert.Equal(t, kebError.DependencyK8SClient, lastErrUnexpObj.Component())
 
 	assert.ErrorContains(t, lastErrAmbi, "matches multiple resources or kinds")
 	assert.Equal(t, kebError.ErrK8SAmbiguousError, lastErrAmbi.Reason())
-	assert.Equal(t, kebError.ErrK8SClient, lastErrAmbi.Component())
+	assert.Equal(t, kebError.DependencyK8SClient, lastErrAmbi.Component())
 
 	assert.ErrorContains(t, lastErrNoMatch, "something: no matches for kind")
 	assert.Equal(t, kebError.ErrK8SNoMatchError, lastErrNoMatch.Reason())
-	assert.Equal(t, kebError.ErrK8SClient, lastErrNoMatch.Component())
+	assert.Equal(t, kebError.DependencyK8SClient, lastErrNoMatch.Component())
 }

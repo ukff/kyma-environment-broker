@@ -16,7 +16,7 @@ import (
 
 type OperationManager struct {
 	storage      storage.Operations
-	dependencies []kebErr.ErrComponent
+	dependencies []kebErr.Dependency
 	stepName     string
 }
 
@@ -24,7 +24,7 @@ func NewOperationManager(storage storage.Operations) *OperationManager {
 	return &OperationManager{storage: storage}
 }
 
-func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependencies []kebErr.ErrComponent) *OperationManager {
+func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependencies []kebErr.Dependency) *OperationManager {
 	return &OperationManager{storage: storage, dependencies: dependencies, stepName: stepName}
 }
 
@@ -189,7 +189,7 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 
 	dependecies := om.dependencies
 	if len(om.dependencies) == 0 {
-		toPersist.Component = kebErr.ErrUnknown
+		toPersist.Component = kebErr.DependencyUnknown
 	} else {
 		var sb strings.Builder
 		for idx, dependency := range dependecies {
@@ -198,7 +198,7 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 				sb.WriteString(",")
 			}
 		}
-		toPersist.Component = kebErr.ErrComponent(sb.String())
+		toPersist.Component = kebErr.Dependency(sb.String())
 	}
 
 	return toPersist.ToDTO()
