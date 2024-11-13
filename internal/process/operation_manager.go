@@ -15,12 +15,21 @@ import (
 )
 
 type OperationManager struct {
-	storage     storage.Operations
-	dependecies []kebErr.ErrComponent
+	storage      storage.Operations
+	dependencies []kebErr.ErrComponent
+	stepName	 string
 }
 
-func NewOperationManager(storage storage.Operations, dependecies ...kebErr.ErrComponent) *OperationManager {
-	return &OperationManager{storage: storage, dependecies: dependecies}
+func NewOperationManager(storage storage.Operations, dependencies ...kebErr.ErrComponent) *OperationManager {
+	return &OperationManager{storage: storage, dependencies: dependencies}
+}
+
+func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependencies ...kebErr.ErrComponent) *OperationManager {
+	return &OperationManager{storage: storage, dependencies: dependencies, stepName: stepName}
+}
+
+func (om* OperationManager) extendendConstructUsed() bool {
+	return om.stepName != "" && len(om.dependencies) > 0
 }
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
@@ -31,7 +40,9 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	//store last error data in db
-	operation.LastError = om.setLastError(err, description)
+	if om.extendendConstructUsed() {
+		operation.LastError = om.setLastError(err, description)
+	}
 
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
@@ -174,8 +185,8 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 		toPersist.Reason = kebErr.ErrReason(description)
 	}
 
-	dependecies := om.dependecies
-	if len(om.dependecies) == 0 {
+	dependecies := om.dependencies
+	if len(om.dependencies) == 0 {
 		toPersist.Component = kebErr.ErrComponent(kebErr.ErrUnknown)
 	} else {
 		var sb strings.Builder
