@@ -13,7 +13,7 @@ const (
 	CodeConflict      = 4
 )
 
-type DBErrReason = kebError.ErrReason
+type DBErrReason = kebError.Code
 
 const (
 	ErrDBInternal      DBErrReason = "err_db_internal"

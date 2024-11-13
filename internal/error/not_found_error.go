@@ -11,8 +11,8 @@ func (NotFoundError) IsNotFound() bool {
 	return true
 }
 
-func (NotFoundError) Reason() ErrReason {
-	return ErrClusterNotFound
+func (NotFoundError) Reason() Code {
+	return ClusterNotFoundCode
 }
 
 func (NotFoundError) Dependency() Dependency {

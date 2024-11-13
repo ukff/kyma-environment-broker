@@ -299,7 +299,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		// Then
 		assert.Error(t, err)
 		assert.False(t, kebError.IsTemporaryError(err))
-		assert.Equal(t, kebError.ErrReason("Object not found"), lastErr.Reason())
+		assert.Equal(t, kebError.Code("Object not found"), lastErr.Reason())
 		assert.Equal(t, kebError.Dependency("compass director"), lastErr.Dependency())
 	})
 
@@ -333,7 +333,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		// Then
 		assert.Error(t, err)
 		assert.True(t, kebError.IsTemporaryError(err))
-		assert.Equal(t, kebError.ErrReason("whatever"), lastErr.Reason())
+		assert.Equal(t, kebError.Code("whatever"), lastErr.Reason())
 		assert.Equal(t, kebError.Dependency("db - provisioner"), lastErr.Dependency())
 	})
 
@@ -406,7 +406,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 
 		// Then
 		assert.Equal(t, kebError.ProvisionerDependency, lastErr.Dependency())
-		assert.Equal(t, kebError.ErrProvisionerNilLastError, lastErr.Reason())
+		assert.Equal(t, kebError.ProvisionerCode, lastErr.Reason())
 		assert.Equal(t, "", lastErr.Error())
 	})
 
@@ -428,7 +428,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 
 		// Then
 		assert.Equal(t, kebError.Dependency("provisioner-db"), lastErr.Dependency())
-		assert.Equal(t, kebError.ErrReason("not found"), lastErr.Reason())
+		assert.Equal(t, kebError.Code("not found"), lastErr.Reason())
 		assert.Equal(t, "error msg", lastErr.Error())
 
 		err := fmt.Errorf("something: %w", lastErr)
@@ -436,7 +436,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 
 		// Then
 		assert.Equal(t, kebError.Dependency("provisioner-db"), lastErr.Dependency())
-		assert.Equal(t, kebError.ErrReason("not found"), lastErr.Reason())
+		assert.Equal(t, kebError.Code("not found"), lastErr.Reason())
 		assert.Equal(t, "something: error msg", lastErr.Error())
 	})
 }

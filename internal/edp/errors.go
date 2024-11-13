@@ -13,7 +13,7 @@ type edpError struct {
 	message string
 }
 
-type EDPErrReason = kebError.ErrReason
+type EDPErrReason = kebError.Code
 
 const (
 	ErrEDPConflict   EDPErrReason = "err_edp_internal"

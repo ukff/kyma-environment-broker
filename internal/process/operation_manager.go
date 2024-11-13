@@ -163,15 +163,15 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 	toPersist := kebErr.LastErrorJSON{}
 
 	if err == nil || err.Error() == "" {
-		toPersist.Message = string(kebErr.ErrNotSet)
+		toPersist.Message = string(kebErr.NotSetCode)
 	} else {
 		toPersist.Message = err.Error()
 	}
 
 	if description == "" {
-		toPersist.Reason = kebErr.ErrMsgNotSet
+		toPersist.Reason = kebErr.MsgNotSetCode
 	} else {
-		toPersist.Reason = kebErr.ErrReason(description)
+		toPersist.Reason = kebErr.Code(description)
 	}
 
 	dependecies := om.dependecies

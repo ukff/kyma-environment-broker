@@ -14,37 +14,37 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 
 type ErrorReporter interface {
 	error
-	Reason() ErrReason
+	Reason() Code
 	Dependency() Dependency
 }
 
 // error reporter
 type LastError struct {
 	message   string
-	reason    ErrReason
+	reason    Code
 	component Dependency
 }
 
 type LastErrorJSON struct {
 	Message   string     `json:"message"`
-	Reason    ErrReason  `json:"reason"`
+	Reason    Code       `json:"reason"`
 	Component Dependency `json:"component"`
 }
 
-type ErrReason string
+type Code string
 
 const (
-	ErrMsgNotSet                ErrReason = "err_msg_not_set"
-	ErrNotSet                   ErrReason = "err_not_set"
-	ErrKEBInternal              ErrReason = "err_keb_internal"
-	ErrKEBTimeOut               ErrReason = "err_keb_timeout"
-	ErrProvisionerNilLastError  ErrReason = "err_provisioner_nil_last_error"
-	ErrHttpStatusCode           ErrReason = "err_http_status_code"
-	ErrClusterNotFound          ErrReason = "err_cluster_not_found"
-	ErrK8SUnexpectedServerError ErrReason = "err_k8s_unexpected_server_error"
-	ErrK8SUnexpectedObjectError ErrReason = "err_k8s_unexpected_object_error"
-	ErrK8SNoMatchError          ErrReason = "err_k8s_no_match_error"
-	ErrK8SAmbiguousError        ErrReason = "err_k8s_ambiguous_error"
+	MsgNotSetCode           Code = "err_msg_not_set"
+	NotSetCode              Code = "err_not_set"
+	KEBInternalCode         Code = "err_keb_internal"
+	KEBTimeOutCode          Code = "err_keb_timeout"
+	ProvisionerCode         Code = "err_provisioner_nil_last_error"
+	HttpStatusCode          Code = "err_http_status_code"
+	ClusterNotFoundCode     Code = "err_cluster_not_found"
+	K8SUnexpectedServerCode Code = "err_k8s_unexpected_server_error"
+	K8SUnexpectedObjectCode Code = "err_k8s_unexpected_object_error"
+	K8SNoMatchCode          Code = "err_k8s_no_match_error"
+	K8SAmbiguousCode        Code = "err_k8s_ambiguous_error"
 )
 
 type Dependency string
@@ -61,7 +61,7 @@ const (
 	LMDepedency           Dependency = "lifecycle-manager"
 )
 
-func (err LastError) Reason() ErrReason {
+func (err LastError) Reason() Code {
 	return err.reason
 }
 
@@ -78,7 +78,7 @@ func (err LastError) SetComponent(component Dependency) LastError {
 	return err
 }
 
-func (err LastError) SetReason(reason ErrReason) LastError {
+func (err LastError) SetReason(reason Code) LastError {
 	err.reason = reason
 	return err
 }
@@ -91,7 +91,7 @@ func (err LastError) SetMessage(msg string) LastError {
 func TimeoutError(msg string) LastError {
 	return LastError{
 		message:   msg,
-		reason:    ErrKEBTimeOut,
+		reason:    KEBTimeOutCode,
 		component: KEBDependency,
 	}
 }
@@ -118,13 +118,13 @@ func ReasonForError(err error) LastError {
 	}
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
-		var errReason ErrReason
+		var errReason Code
 		var errComponent Dependency
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
 			if r, ok := reason.(string); ok {
-				errReason = ErrReason(r)
+				errReason = Code(r)
 			}
 		}
 		component, found := ee.Extensions()["error_component"]
@@ -147,7 +147,7 @@ func ReasonForError(err error) LastError {
 
 	return LastError{
 		message:   err.Error(),
-		reason:    ErrKEBInternal,
+		reason:    KEBInternalCode,
 		component: KEBDependency,
 	}
 }
@@ -159,19 +159,19 @@ func checkK8SError(cause error) LastError {
 	switch {
 	case errors.As(cause, &status):
 		if apierr.IsUnexpectedServerError(cause) {
-			lastErr.reason = ErrK8SUnexpectedServerError
+			lastErr.reason = K8SUnexpectedServerCode
 		} else {
 			// reason could be an empty unknown ""
-			lastErr.reason = ErrReason(apierr.ReasonForError(cause))
+			lastErr.reason = Code(apierr.ReasonForError(cause))
 		}
 		lastErr.component = K8sDependency
 		return lastErr
 	case apierr.IsUnexpectedObjectError(cause):
-		lastErr.reason = ErrK8SUnexpectedObjectError
+		lastErr.reason = K8SUnexpectedObjectCode
 	case apierr2.IsAmbiguousError(cause):
-		lastErr.reason = ErrK8SAmbiguousError
+		lastErr.reason = K8SAmbiguousCode
 	case apierr2.IsNoMatchError(cause):
-		lastErr.reason = ErrK8SNoMatchError
+		lastErr.reason = K8SNoMatchCode
 	}
 
 	if lastErr.reason != "" {
