@@ -176,7 +176,7 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 
 	dependecies := om.dependecies
 	if len(om.dependecies) == 0 {
-		toPersist.Component = kebErr.Dependency(kebErr.ErrUnknown)
+		toPersist.Component = kebErr.Dependency(kebErr.UnknownDependency)
 	} else {
 		var sb strings.Builder
 		for idx, dependency := range dependecies {

@@ -233,7 +233,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
 			processedOperation.LastError = kebError.ReasonForError(err)
-			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Dependency(), "error_reason": processedOperation.LastError.Reason()})
 			logOperation.Warnf("Last error from step: %s", processedOperation.LastError.Error())
 			// only save to storage, skip for alerting if error
 			_, err = m.operationStorage.UpdateOperation(processedOperation)
@@ -259,7 +259,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - the loop takes too much time (to not block the worker too long)
 		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
 			if err != nil {
-				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Dependency(), "error_reason": processedOperation.LastError.Reason()})
 				logOperation.Errorf("Last Error that terminated the step: %s", processedOperation.LastError.Error())
 			}
 			return processedOperation, backoff, err
@@ -270,7 +270,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 }
 
 func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
-	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
+	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Dependency(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
 
 	m.publishOperationFinishedEvent(*operation)

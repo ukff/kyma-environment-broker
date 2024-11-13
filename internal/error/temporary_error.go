@@ -21,8 +21,8 @@ func AsTemporaryError(err error, context string, args ...interface{}) *Temporary
 
 func (te TemporaryError) Error() string      { return te.message }
 func (TemporaryError) Temporary() bool       { return true }
-func (TemporaryError) Reason() ErrReason     { return ErrKEBInternal }
-func (TemporaryError) Component() Dependency { return ErrKEB }
+func (TemporaryError) Reason() ErrReason      { return ErrKEBInternal }
+func (TemporaryError) Dependency() Dependency { return KEBDependency }
 
 func IsTemporaryError(err error) bool {
 	cause := UnwrapAll(err)
@@ -55,6 +55,6 @@ func (wte WrapTemporaryError) Reason() ErrReason {
 	return ReasonForError(wte.err).Reason()
 }
 
-func (wte WrapTemporaryError) Component() Dependency {
-	return ReasonForError(wte.err).Component()
+func (wte WrapTemporaryError) Dependency() Dependency {
+	return ReasonForError(wte.err).Dependency()
 }

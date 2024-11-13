@@ -51,8 +51,8 @@ func (e edpError) Code() int {
 	return e.code
 }
 
-func (e edpError) Component() kebError.Dependency {
-	return kebError.ErrEDP
+func (e edpError) Dependency() kebError.Dependency {
+	return kebError.EDPDependency
 }
 
 func (e edpError) Reason() EDPErrReason {

@@ -15,7 +15,7 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 type ErrorReporter interface {
 	error
 	Reason() ErrReason
-	Component() Dependency
+	Dependency() Dependency
 }
 
 // error reporter
@@ -50,22 +50,22 @@ const (
 type Dependency string
 
 const (
-	ErrUnknown          Dependency = "unknown"
-	ErrDB               Dependency = "db - keb"
-	ErrK8SClient        Dependency = "k8s client - keb"
-	ErrKEB              Dependency = "keb"
-	ErrEDP              Dependency = "edp"
-	ErrProvisioner      Dependency = "provisioner"
-	ErrReconciler       Dependency = "reconciler"
-	ErrKim              Dependency = "kim"
-	ErrLifecycleManager Dependency = "lifecycle-manager"
+	UnknownDependency     Dependency = "unknown"
+	KebDbDependency       Dependency = "db - keb"
+	K8sDependency         Dependency = "k8s client - keb"
+	KEBDependency         Dependency = "keb"
+	EDPDependency         Dependency = "edp"
+	ProvisionerDependency Dependency = "provisioner"
+	ReconcileDependency   Dependency = "reconciler"
+	KIMDependency         Dependency = "kim"
+	LMDepedency           Dependency = "lifecycle-manager"
 )
 
 func (err LastError) Reason() ErrReason {
 	return err.reason
 }
 
-func (err LastError) Component() Dependency {
+func (err LastError) Dependency() Dependency {
 	return err.component
 }
 
@@ -92,7 +92,7 @@ func TimeoutError(msg string) LastError {
 	return LastError{
 		message:   msg,
 		reason:    ErrKEBTimeOut,
-		component: ErrKEB,
+		component: KEBDependency,
 	}
 }
 
@@ -104,7 +104,7 @@ func ReasonForError(err error) LastError {
 
 	cause := UnwrapAll(err)
 
-	if lastErr := checkK8SError(cause); lastErr.component == ErrK8SClient {
+	if lastErr := checkK8SError(cause); lastErr.component == K8sDependency {
 		lastErr.message = err.Error()
 		return lastErr
 	}
@@ -113,7 +113,7 @@ func ReasonForError(err error) LastError {
 		return LastError{
 			message:   err.Error(),
 			reason:    status.Reason(),
-			component: status.Component(),
+			component: status.Dependency(),
 		}
 	}
 
@@ -148,7 +148,7 @@ func ReasonForError(err error) LastError {
 	return LastError{
 		message:   err.Error(),
 		reason:    ErrKEBInternal,
-		component: ErrKEB,
+		component: KEBDependency,
 	}
 }
 
@@ -164,7 +164,7 @@ func checkK8SError(cause error) LastError {
 			// reason could be an empty unknown ""
 			lastErr.reason = ErrReason(apierr.ReasonForError(cause))
 		}
-		lastErr.component = ErrK8SClient
+		lastErr.component = K8sDependency
 		return lastErr
 	case apierr.IsUnexpectedObjectError(cause):
 		lastErr.reason = ErrK8SUnexpectedObjectError
@@ -175,7 +175,7 @@ func checkK8SError(cause error) LastError {
 	}
 
 	if lastErr.reason != "" {
-		lastErr.component = ErrK8SClient
+		lastErr.component = K8sDependency
 	}
 
 	return lastErr

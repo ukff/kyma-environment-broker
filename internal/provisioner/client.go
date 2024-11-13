@@ -212,7 +212,7 @@ func OperationStatusLastError(lastErr *schema.LastError) kebError.ErrorReporter 
 	var err kebError.LastError
 
 	if lastErr == nil {
-		return err.SetReason(kebError.ErrProvisionerNilLastError).SetComponent(kebError.ErrProvisioner)
+		return err.SetReason(kebError.ErrProvisionerNilLastError).SetComponent(kebError.ProvisionerDependency)
 	}
 
 	return err.SetMessage(lastErr.ErrMessage).SetReason(kebError.ErrReason(lastErr.Reason)).SetComponent(kebError.Dependency(lastErr.Component))
