@@ -3,9 +3,10 @@ package provisioning
 import (
 	"bytes"
 	"context"
-	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"reflect"
 	"time"
+
+	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
@@ -30,7 +31,7 @@ var _ process.Step = &ApplyKymaStep{}
 
 func NewApplyKymaStep(os storage.Operations, cli client.Client) *ApplyKymaStep {
 	obj := &ApplyKymaStep{k8sClient: cli}
-	obj.operationManager = process.NewOperationManagerExtendent(os, obj.Name(), kebErr.ErrKEB)
+	obj.operationManager = process.NewOperationManagerExtendent(os, obj.Name(), []kebErr.ErrComponent{kebErr.ErrKEB})
 	return obj
 }
 

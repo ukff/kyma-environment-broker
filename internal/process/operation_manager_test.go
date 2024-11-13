@@ -112,7 +112,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "s1",[]kebErr.ErrComponent{kebErr.ErrProvisioner, kebErr.ErrReconciler})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner, kebErr.ErrReconciler})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -126,7 +126,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations,"s1", []kebErr.ErrComponent{kebErr.ErrReconciler})
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrReconciler})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -152,6 +152,6 @@ func Test_OperationManager_LastError(t *testing.T) {
 	})
 }
 
-func fixLogger() logrus.FieldLogger{
+func fixLogger() logrus.FieldLogger {
 	return logrus.StandardLogger()
 }

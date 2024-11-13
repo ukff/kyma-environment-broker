@@ -13,6 +13,10 @@ type edpError struct {
 	message string
 }
 
+func (e edpError) Step() string {
+	return ""
+}
+
 type EDPErrReason = kebError.ErrReason
 
 const (
