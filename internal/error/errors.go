@@ -23,12 +23,14 @@ type LastError struct {
 	message   string
 	reason    Code
 	component Dependency
+	stepName  string
 }
 
 type LastErrorJSON struct {
 	Message   string     `json:"message"`
 	Reason    Code       `json:"reason"`
 	Component Dependency `json:"component"`
+	StepName	string	`json:"step_name"`
 }
 
 type Code string
@@ -85,6 +87,15 @@ func (err LastError) SetReason(reason Code) LastError {
 
 func (err LastError) SetMessage(msg string) LastError {
 	err.message = msg
+	return err
+}
+
+func (err LastError) StepName() string {
+	return err.stepName
+}
+
+func (err LastError) SetStepName(stepName string) LastError {
+	err.stepName = stepName
 	return err
 }
 
@@ -211,6 +222,7 @@ func (l LastError) MarshalJSON() ([]byte, error) {
 			Message:   l.message,
 			Reason:    l.reason,
 			Component: l.component,
+			StepName: l.stepName,
 		})
 }
 
@@ -222,6 +234,7 @@ func (l *LastError) UnmarshalJSON(data []byte) error {
 	l.message = tmp.Message
 	l.reason = tmp.Reason
 	l.component = tmp.Component
+	l.stepName = tmp.StepName
 	return nil
 }
 
@@ -230,5 +243,6 @@ func (ll LastErrorJSON) ToDTO() LastError {
 		message:   ll.Message,
 		reason:    ll.Reason,
 		component: ll.Component,
+		stepName:  ll.StepName,
 	}
 }

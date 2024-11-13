@@ -92,6 +92,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner", op.LastError.Dependency())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
@@ -105,6 +106,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner,reconciler,db - keb", op.LastError.Dependency())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 
 	t.Run("when no error passed", func(t *testing.T) {
@@ -118,6 +120,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner,reconciler", op.LastError.Dependency())
 		assert.EqualValues(t, "err_not_set", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 
 	t.Run("when no description passed", func(t *testing.T) {
@@ -131,6 +134,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner", op.LastError.Dependency())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
+		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 
 	t.Run("when no description and no err passed", func(t *testing.T) {
@@ -144,6 +148,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "reconciler", op.LastError.Dependency())
 		assert.EqualValues(t, "err_not_set", op.LastError.Error())
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
+		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 }
 
