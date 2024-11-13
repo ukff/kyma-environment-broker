@@ -231,7 +231,7 @@ func (g *Graphqlizer) KymaConfigToGraphQL(in gqlschema.KymaConfigInput) (string,
 		components: [
 			{{- range . }}
 			{
-				component: "{{ .Dependency }}",
+				component: "{{ .Component }}",
 				namespace: "{{ .Namespace }}",
 				{{- if .SourceURL }}
 				sourceURL: "{{ .SourceURL }}",
