@@ -84,7 +84,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 component", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "", kebErr.ErrProvisioner)
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -92,12 +92,13 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner", op.LastError.Component())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+		assert.EqualValues(t, "s1", op.LastError.Step())
 	})
 
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "", kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB)
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner, kebErr.ErrReconciler, kebErr.ErrDB})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -105,12 +106,13 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner,reconciler,db - keb", op.LastError.Component())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+		assert.EqualValues(t, "s1", op.LastError.Step())
 	})
 
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "", kebErr.ErrProvisioner, kebErr.ErrReconciler)
+		opManager := NewOperationManagerExtendent(operations, "s1",[]kebErr.ErrComponent{kebErr.ErrProvisioner, kebErr.ErrReconciler})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -118,35 +120,38 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner,reconciler", op.LastError.Component())
 		assert.EqualValues(t, "err_not_set", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.Reason())
+		assert.EqualValues(t, "s1", op.LastError.Step())
 	})
 
 	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations,"")
+		opManager := NewOperationManagerExtendent(operations,"s1", []kebErr.ErrComponent{kebErr.ErrReconciler})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
-		assert.EqualValues(t, "unknown", op.LastError.Component())
+		assert.EqualValues(t, "reconciler", op.LastError.Component())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
+		assert.EqualValues(t, "s1", op.LastError.Step())
 	})
 
 	t.Run("when no description and no err passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "")
+		opManager := NewOperationManagerExtendent(operations, "s1", []kebErr.ErrComponent{kebErr.ErrProvisioner})
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
-		assert.EqualValues(t, "unknown", op.LastError.Component())
+		assert.EqualValues(t, "provisioner", op.LastError.Component())
 		assert.EqualValues(t, "err_not_set", op.LastError.Error())
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
+		assert.EqualValues(t, "s1", op.LastError.Step())
 	})
 }
 
-func fixLogger() logrus.FieldLogger {
+func fixLogger() logrus.FieldLogger{
 	return logrus.StandardLogger()
 }

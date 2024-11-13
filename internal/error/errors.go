@@ -16,6 +16,7 @@ type ErrorReporter interface {
 	error
 	Reason() ErrReason
 	Component() ErrComponent
+	Step()	string
 }
 
 // error reporter
@@ -30,6 +31,7 @@ type LastErrorJSON struct {
 	Message   string       `json:"message"`
 	Reason    ErrReason    `json:"reason"`
 	Component ErrComponent `json:"component"`
+	Step	  string       `json:"step"`
 }
 
 type ErrReason string
@@ -74,6 +76,10 @@ func (err LastError) Error() string {
 	return err.message
 }
 
+func (err LastError) Step() string {
+	return err.step
+}
+
 func (err LastError) SetComponent(component ErrComponent) LastError {
 	err.component = component
 	return err
@@ -86,6 +92,11 @@ func (err LastError) SetReason(reason ErrReason) LastError {
 
 func (err LastError) SetMessage(msg string) LastError {
 	err.message = msg
+	return err
+}
+
+func (err LastError) SetStep(step string) LastError {
+	err.step = step
 	return err
 }
 
@@ -212,6 +223,7 @@ func (l LastError) MarshalJSON() ([]byte, error) {
 			Message:   l.message,
 			Reason:    l.reason,
 			Component: l.component,
+			Step: 	l.step,
 		})
 }
 
@@ -223,6 +235,7 @@ func (l *LastError) UnmarshalJSON(data []byte) error {
 	l.message = tmp.Message
 	l.reason = tmp.Reason
 	l.component = tmp.Component
+	l.step	= tmp.Step
 	return nil
 }
 
@@ -231,5 +244,6 @@ func (ll LastErrorJSON) ToDTO() LastError {
 		message:   ll.Message,
 		reason:    ll.Reason,
 		component: ll.Component,
+		step:	   ll.Step,
 	}
 }

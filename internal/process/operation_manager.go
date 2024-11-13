@@ -24,7 +24,7 @@ func NewOperationManager(storage storage.Operations) *OperationManager {
 	return &OperationManager{storage: storage}
 }
 
-func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependencies ...kebErr.ErrComponent) *OperationManager {
+func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependencies []kebErr.ErrComponent) *OperationManager {
 	return &OperationManager{storage: storage, dependencies: dependencies, stepName: stepName}
 }
 
@@ -185,9 +185,11 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 		toPersist.Reason = kebErr.ErrReason(description)
 	}
 
+	toPersist.Step = om.stepName
+
 	dependecies := om.dependencies
 	if len(om.dependencies) == 0 {
-		toPersist.Component = kebErr.ErrComponent(kebErr.ErrUnknown)
+		toPersist.Component = kebErr.ErrUnknown
 	} else {
 		var sb strings.Builder
 		for idx, dependency := range dependecies {
