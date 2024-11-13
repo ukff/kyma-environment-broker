@@ -15,12 +15,21 @@ import (
 )
 
 type OperationManager struct {
-	storage     storage.Operations
-	dependecies []kebErr.Dependency
+	storage      storage.Operations
+	dependencies []kebErr.Dependency
+	steName	string
 }
 
 func NewOperationManager(storage storage.Operations, dependecies ...kebErr.Dependency) *OperationManager {
-	return &OperationManager{storage: storage, dependecies: dependecies}
+	return &OperationManager{storage: storage, dependencies: dependecies}
+}
+
+func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependecies ...kebErr.Dependency) *OperationManager {
+	return &OperationManager{storage: storage, dependencies: dependecies, steName: stepName}
+}
+
+func(om *OperationManager) isExtendentConstructorUsed() bool {
+	return om.steName != "" && len(om.dependencies) > 0
 }
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
@@ -31,7 +40,9 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	//store last error data in db
-	operation.LastError = om.setLastError(err, description)
+	if om.isExtendentConstructorUsed() {
+		operation.LastError = om.setLastError(err, description)
+	}
 
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
@@ -174,8 +185,8 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 		toPersist.Reason = kebErr.Code(description)
 	}
 
-	dependecies := om.dependecies
-	if len(om.dependecies) == 0 {
+	dependecies := om.dependencies
+	if len(om.dependencies) == 0 {
 		toPersist.Component = kebErr.Dependency(kebErr.UnknownDependency)
 	} else {
 		var sb strings.Builder
