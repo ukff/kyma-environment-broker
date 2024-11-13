@@ -3,9 +3,10 @@ package provisioning
 import (
 	"bytes"
 	"context"
-	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"reflect"
 	"time"
+
+	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
