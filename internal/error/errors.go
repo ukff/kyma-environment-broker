@@ -26,7 +26,7 @@ type LastError struct {
 }
 
 type LastErrorJSON struct {
-	Message   string       `json:"message"`
+	Message   string     `json:"message"`
 	Reason    ErrReason  `json:"reason"`
 	Component Dependency `json:"component"`
 }
