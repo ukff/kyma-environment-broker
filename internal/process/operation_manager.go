@@ -16,10 +16,10 @@ import (
 
 type OperationManager struct {
 	storage     storage.Operations
-	dependecies []kebErr.ErrComponent
+	dependecies []kebErr.Dependency
 }
 
-func NewOperationManager(storage storage.Operations, dependecies ...kebErr.ErrComponent) *OperationManager {
+func NewOperationManager(storage storage.Operations, dependecies ...kebErr.Dependency) *OperationManager {
 	return &OperationManager{storage: storage, dependecies: dependecies}
 }
 
@@ -176,7 +176,7 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 
 	dependecies := om.dependecies
 	if len(om.dependecies) == 0 {
-		toPersist.Component = kebErr.ErrComponent(kebErr.ErrUnknown)
+		toPersist.Component = kebErr.Dependency(kebErr.ErrUnknown)
 	} else {
 		var sb strings.Builder
 		for idx, dependency := range dependecies {
@@ -185,7 +185,7 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 				sb.WriteString(",")
 			}
 		}
-		toPersist.Component = kebErr.ErrComponent(sb.String())
+		toPersist.Component = kebErr.Dependency(sb.String())
 	}
 
 	return toPersist.ToDTO()

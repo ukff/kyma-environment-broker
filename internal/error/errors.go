@@ -15,20 +15,20 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 type ErrorReporter interface {
 	error
 	Reason() ErrReason
-	Component() ErrComponent
+	Component() Dependency
 }
 
 // error reporter
 type LastError struct {
 	message   string
 	reason    ErrReason
-	component ErrComponent
+	component Dependency
 }
 
 type LastErrorJSON struct {
 	Message   string       `json:"message"`
-	Reason    ErrReason    `json:"reason"`
-	Component ErrComponent `json:"component"`
+	Reason    ErrReason  `json:"reason"`
+	Component Dependency `json:"component"`
 }
 
 type ErrReason string
@@ -47,25 +47,25 @@ const (
 	ErrK8SAmbiguousError        ErrReason = "err_k8s_ambiguous_error"
 )
 
-type ErrComponent string
+type Dependency string
 
 const (
-	ErrUnknown          ErrComponent = "unknown"
-	ErrDB               ErrComponent = "db - keb"
-	ErrK8SClient        ErrComponent = "k8s client - keb"
-	ErrKEB              ErrComponent = "keb"
-	ErrEDP              ErrComponent = "edp"
-	ErrProvisioner      ErrComponent = "provisioner"
-	ErrReconciler       ErrComponent = "reconciler"
-	ErrKim              ErrComponent = "kim"
-	ErrLifecycleManager ErrComponent = "lifecycle-manager"
+	ErrUnknown          Dependency = "unknown"
+	ErrDB               Dependency = "db - keb"
+	ErrK8SClient        Dependency = "k8s client - keb"
+	ErrKEB              Dependency = "keb"
+	ErrEDP              Dependency = "edp"
+	ErrProvisioner      Dependency = "provisioner"
+	ErrReconciler       Dependency = "reconciler"
+	ErrKim              Dependency = "kim"
+	ErrLifecycleManager Dependency = "lifecycle-manager"
 )
 
 func (err LastError) Reason() ErrReason {
 	return err.reason
 }
 
-func (err LastError) Component() ErrComponent {
+func (err LastError) Component() Dependency {
 	return err.component
 }
 
@@ -73,7 +73,7 @@ func (err LastError) Error() string {
 	return err.message
 }
 
-func (err LastError) SetComponent(component ErrComponent) LastError {
+func (err LastError) SetComponent(component Dependency) LastError {
 	err.component = component
 	return err
 }
@@ -119,7 +119,7 @@ func ReasonForError(err error) LastError {
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
 		var errReason ErrReason
-		var errComponent ErrComponent
+		var errComponent Dependency
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
@@ -130,7 +130,7 @@ func ReasonForError(err error) LastError {
 		component, found := ee.Extensions()["error_component"]
 		if found {
 			if c, ok := component.(string); ok {
-				errComponent = ErrComponent(c)
+				errComponent = Dependency(c)
 			}
 		}
 

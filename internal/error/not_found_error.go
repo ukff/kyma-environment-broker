@@ -15,7 +15,7 @@ func (NotFoundError) Reason() ErrReason {
 	return ErrClusterNotFound
 }
 
-func (NotFoundError) Component() ErrComponent {
+func (NotFoundError) Component() Dependency {
 	return ErrReconciler
 }
 
