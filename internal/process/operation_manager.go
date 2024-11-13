@@ -17,7 +17,7 @@ import (
 type OperationManager struct {
 	storage      storage.Operations
 	dependencies []kebErr.Dependency
-	steName	string
+	steName      string
 }
 
 func NewOperationManager(storage storage.Operations, dependecies ...kebErr.Dependency) *OperationManager {
@@ -28,7 +28,7 @@ func NewOperationManagerExtendent(storage storage.Operations, stepName string, d
 	return &OperationManager{storage: storage, dependencies: dependecies, steName: stepName}
 }
 
-func(om *OperationManager) isExtendentConstructorUsed() bool {
+func (om *OperationManager) isExtendentConstructorUsed() bool {
 	return om.steName != "" && len(om.dependencies) > 0
 }
 
