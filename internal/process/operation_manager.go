@@ -187,6 +187,8 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 
 	if om.steName != "" {
 		toPersist.StepName = om.steName
+	} else {
+		toPersist.StepName = "not_defined"
 	}
 
 	dependecies := om.dependencies

@@ -150,6 +150,20 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "err_msg_not_set", op.LastError.Reason())
 		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
+
+	t.Run("when no extendent constructor used", func(t *testing.T) {
+		memory := storage.NewMemoryStorage()
+		operations := memory.Operations()
+		opManager := NewOperationManagerExtendent(operations, "", kebErr.ReconcileDependency)
+		op := internal.Operation{}
+		err := operations.InsertOperation(op)
+		require.NoError(t, err)
+		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
+		assert.EqualValues(t, "", op.LastError.Dependency())
+		assert.EqualValues(t, "", op.LastError.Error())
+		assert.EqualValues(t, "", op.LastError.Reason())
+		assert.EqualValues(t, "", op.LastError.StepName())
+	})
 }
 
 func fixLogger() logrus.FieldLogger {
