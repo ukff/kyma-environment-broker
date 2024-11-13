@@ -185,6 +185,10 @@ func (om *OperationManager) setLastError(err error, description string) kebErr.L
 		toPersist.Reason = kebErr.Code(description)
 	}
 
+	if om.steName != "" {
+		toPersist.StepName = om.steName
+	}
+
 	dependecies := om.dependencies
 	if len(om.dependencies) == 0 {
 		toPersist.Component = kebErr.Dependency(kebErr.UnknownDependency)

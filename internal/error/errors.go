@@ -30,7 +30,7 @@ type LastErrorJSON struct {
 	Message   string     `json:"message"`
 	Reason    Code       `json:"reason"`
 	Component Dependency `json:"component"`
-	StepName	string	`json:"step_name"`
+	StepName  string     `json:"step_name"`
 }
 
 type Code string
@@ -222,7 +222,7 @@ func (l LastError) MarshalJSON() ([]byte, error) {
 			Message:   l.message,
 			Reason:    l.reason,
 			Component: l.component,
-			StepName: l.stepName,
+			StepName:  l.stepName,
 		})
 }
 
