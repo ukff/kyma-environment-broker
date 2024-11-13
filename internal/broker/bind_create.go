@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	broker "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -39,6 +41,7 @@ type BindEndpoint struct {
 	bindingsStorage  storage.Bindings
 
 	serviceAccountBindingManager broker.BindingsManager
+	publisher                    event.Publisher
 
 	log logrus.FieldLogger
 }
@@ -65,10 +68,12 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
+func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider,
+	publisher event.Publisher) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
 		instancesStorage:             db.Instances(),
 		bindingsStorage:              db.Bindings(),
+		publisher:                    publisher,
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
@@ -78,6 +83,16 @@ func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger
 //
 //	PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}
 func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
+	start := time.Now()
+	response, err := b.bind(ctx, instanceID, bindingID, details, asyncAllowed)
+	processingDuration := time.Since(start)
+
+	b.publisher.Publish(ctx, BindRequestProcessed{ProcessingDuration: processingDuration, Error: err})
+
+	return response, err
+}
+
+func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
 	b.log.Infof("Bind instanceID: %s", instanceID)
 	b.log.Infof("Bind parameters: %s", string(details.RawParameters))
 	b.log.Infof("Bind context: %s", string(details.RawContext))
@@ -227,6 +242,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 	b.log.Infof("Successfully created binding %s for instance %s", bindingID, instanceID)
+	b.publisher.Publish(context.Background(), BindingCreated{PlanID: instance.ServicePlanID})
 
 	return domain.Binding{
 		IsAsync: false,
@@ -247,4 +263,18 @@ func (b *BindEndpoint) IsPlanBindable(planName string) bool {
 		}
 	}
 	return false
+}
+
+type BindRequestProcessed struct {
+	ProcessingDuration time.Duration
+	Error              error
+}
+
+type UnbindRequestProcessed struct {
+	ProcessingDuration time.Duration
+	Error              error
+}
+
+type BindingCreated struct {
+	PlanID string
 }
