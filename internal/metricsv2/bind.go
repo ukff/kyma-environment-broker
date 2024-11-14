@@ -59,7 +59,7 @@ func (c *BindDurationCollector) OnBindingExecuted(ctx context.Context, ev interf
 
 func (c *BindDurationCollector) OnUnbindingExecuted(ctx context.Context, ev interface{}) error {
 	obj := ev.(broker.UnbindRequestProcessed)
-	c.bindHistorgam.WithLabelValues().Observe(float64(obj.ProcessingDuration.Milliseconds()))
+	c.unbindHistogram.WithLabelValues().Observe(float64(obj.ProcessingDuration.Milliseconds()))
 	return nil
 }
 
