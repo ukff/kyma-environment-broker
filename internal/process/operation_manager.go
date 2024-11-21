@@ -128,6 +128,7 @@ func (om *OperationManager) RetryOperationOnce(operation internal.Operation, err
 func (om *OperationManager) UpdateOperation(operation internal.Operation, update func(operation *internal.Operation), log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	update(&operation)
 	op, err := om.storage.UpdateOperation(operation)
+	fmt.Println(fmt.Sprintf("Update op: %s", op.LastError.Step))
 	switch {
 	case dberr.IsConflict(err):
 		{
