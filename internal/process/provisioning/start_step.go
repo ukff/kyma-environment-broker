@@ -2,8 +2,9 @@ package provisioning
 
 import (
 	"fmt"
-	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"time"
+
+	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"

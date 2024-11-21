@@ -19,8 +19,8 @@ func AsTemporaryError(err error, context string, args ...interface{}) *Temporary
 	return &TemporaryError{message: msg}
 }
 
-func (te TemporaryError) Error() string         { return te.message }
-func (TemporaryError) Temporary() bool          { return true }
+func (te TemporaryError) Error() string        { return te.message }
+func (TemporaryError) Temporary() bool         { return true }
 func (TemporaryError) GetReason() Reason       { return KEBInternalCode }
 func (TemporaryError) GetComponent() Component { return KEBDependency }
 
