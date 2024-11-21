@@ -1,7 +1,6 @@
 package error
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -14,23 +13,16 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 
 type ErrorReporter interface {
 	error
-	Reason() Code
-	Dependency() Dependency
+	GetReason() Code
+	GetDependency() Dependency
 }
 
 // error reporter
 type LastError struct {
-	message   string
-	reason    Code
-	component Dependency
-	stepName  string
-}
-
-type LastErrorJSON struct {
-	Message   string     `json:"message"`
-	Reason    Code       `json:"reason"`
-	Component Dependency `json:"component"`
-	StepName  string     `json:"step_name"`
+	Message   string
+	Reason    Code
+	Component Dependency
+	Step      string
 }
 
 type Code string
@@ -63,47 +55,47 @@ const (
 	LMDepedency           Dependency = "lifecycle-manager"
 )
 
-func (err LastError) Reason() Code {
-	return err.reason
+func (err LastError) GetReason() Code {
+	return err.Reason
 }
 
-func (err LastError) Dependency() Dependency {
-	return err.component
+func (err LastError) GetDependency() Dependency {
+	return err.Component
 }
 
 func (err LastError) Error() string {
-	return err.message
+	return err.Message
 }
 
 func (err LastError) SetComponent(component Dependency) LastError {
-	err.component = component
+	err.Component = component
 	return err
 }
 
 func (err LastError) SetReason(reason Code) LastError {
-	err.reason = reason
+	err.Reason = reason
 	return err
 }
 
 func (err LastError) SetMessage(msg string) LastError {
-	err.message = msg
+	err.Message = msg
 	return err
 }
 
 func (err LastError) StepName() string {
-	return err.stepName
+	return err.Step
 }
 
 func (err LastError) SetStepName(stepName string) LastError {
-	err.stepName = stepName
+	err.Step = stepName
 	return err
 }
 
 func TimeoutError(msg string) LastError {
 	return LastError{
-		message:   msg,
-		reason:    KEBTimeOutCode,
-		component: KEBDependency,
+		Message:   msg,
+		Reason:    KEBTimeOutCode,
+		Component: KEBDependency,
 	}
 }
 
@@ -115,16 +107,16 @@ func ReasonForError(err error) LastError {
 
 	cause := UnwrapAll(err)
 
-	if lastErr := checkK8SError(cause); lastErr.component == K8sDependency {
-		lastErr.message = err.Error()
+	if lastErr := checkK8SError(cause); lastErr.Component == K8sDependency {
+		lastErr.Message = err.Error()
 		return lastErr
 	}
 
 	if status := ErrorReporter(nil); errors.As(cause, &status) {
 		return LastError{
-			message:   err.Error(),
-			reason:    status.Reason(),
-			component: status.Dependency(),
+			Message:   err.Error(),
+			Reason:    status.GetReason(),
+			Component: status.GetDependency(),
 		}
 	}
 
@@ -146,9 +138,9 @@ func ReasonForError(err error) LastError {
 		}
 
 		return LastError{
-			message:   err.Error(),
-			reason:    errReason,
-			component: errComponent,
+			Message:   err.Error(),
+			Reason:    errReason,
+			Component: errComponent,
 		}
 	}
 
@@ -157,9 +149,9 @@ func ReasonForError(err error) LastError {
 	}
 
 	return LastError{
-		message:   err.Error(),
-		reason:    KEBInternalCode,
-		component: KEBDependency,
+		Message:   err.Error(),
+		Reason:    KEBInternalCode,
+		Component: KEBDependency,
 	}
 }
 
@@ -170,23 +162,23 @@ func checkK8SError(cause error) LastError {
 	switch {
 	case errors.As(cause, &status):
 		if apierr.IsUnexpectedServerError(cause) {
-			lastErr.reason = K8SUnexpectedServerCode
+			lastErr.Reason = K8SUnexpectedServerCode
 		} else {
 			// reason could be an empty unknown ""
-			lastErr.reason = Code(apierr.ReasonForError(cause))
+			lastErr.Reason = Code(apierr.ReasonForError(cause))
 		}
-		lastErr.component = K8sDependency
+		lastErr.Component = K8sDependency
 		return lastErr
 	case apierr.IsUnexpectedObjectError(cause):
-		lastErr.reason = K8SUnexpectedObjectCode
+		lastErr.Reason = K8SUnexpectedObjectCode
 	case apierr2.IsAmbiguousError(cause):
-		lastErr.reason = K8SAmbiguousCode
+		lastErr.Reason = K8SAmbiguousCode
 	case apierr2.IsNoMatchError(cause):
-		lastErr.reason = K8SNoMatchCode
+		lastErr.Reason = K8SNoMatchCode
 	}
 
-	if lastErr.reason != "" {
-		lastErr.component = K8sDependency
+	if lastErr.Reason != "" {
+		lastErr.Component = K8sDependency
 	}
 
 	return lastErr
@@ -214,35 +206,4 @@ func UnwrapAll(err error) error {
 		break
 	}
 	return err
-}
-
-func (l LastError) MarshalJSON() ([]byte, error) {
-	return json.Marshal(
-		LastErrorJSON{
-			Message:   l.message,
-			Reason:    l.reason,
-			Component: l.component,
-			StepName:  l.stepName,
-		})
-}
-
-func (l *LastError) UnmarshalJSON(data []byte) error {
-	tmp := &LastErrorJSON{}
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-	l.message = tmp.Message
-	l.reason = tmp.Reason
-	l.component = tmp.Component
-	l.stepName = tmp.StepName
-	return nil
-}
-
-func (ll LastErrorJSON) ToDTO() LastError {
-	return LastError{
-		message:   ll.Message,
-		reason:    ll.Reason,
-		component: ll.Component,
-		stepName:  ll.StepName,
-	}
 }

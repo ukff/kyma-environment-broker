@@ -81,11 +81,11 @@ func (e dbError) Error() string {
 	return e.message
 }
 
-func (e dbError) Dependency() kebError.Dependency {
+func (e dbError) GetDependency() kebError.Dependency {
 	return kebError.KebDbDependency
 }
 
-func (e dbError) Reason() DBErrReason {
+func (e dbError) GetReason() DBErrReason {
 	reason := ErrDBUnknown
 
 	switch e.code {

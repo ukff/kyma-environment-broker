@@ -3,6 +3,8 @@ package runtime
 import (
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 )
 
@@ -98,15 +100,16 @@ type OperationsData struct {
 }
 
 type Operation struct {
-	State                        string        `json:"state"`
-	Type                         OperationType `json:"type,omitempty"`
-	Description                  string        `json:"description"`
-	CreatedAt                    time.Time     `json:"createdAt"`
-	UpdatedAt                    time.Time     `json:"updatedAt"`
-	OperationID                  string        `json:"operationID"`
-	OrchestrationID              string        `json:"orchestrationID,omitempty"`
-	FinishedStages               []string      `json:"finishedStages"`
-	ExecutedButNotCompletedSteps []string      `json:"executedButNotCompletedSteps,omitempty"`
+	State                        string             `json:"state"`
+	Type                         OperationType      `json:"type,omitempty"`
+	Description                  string             `json:"description"`
+	CreatedAt                    time.Time          `json:"createdAt"`
+	UpdatedAt                    time.Time          `json:"updatedAt"`
+	OperationID                  string             `json:"operationID"`
+	OrchestrationID              string             `json:"orchestrationID,omitempty"`
+	FinishedStages               []string           `json:"finishedStages"`
+	ExecutedButNotCompletedSteps []string           `json:"executedButNotCompletedSteps,omitempty"`
+	Error                        kebError.LastError `json:"error,omitempty"`
 }
 
 type RuntimesPage struct {

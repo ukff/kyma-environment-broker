@@ -2,7 +2,6 @@ package process
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -15,21 +14,17 @@ import (
 )
 
 type OperationManager struct {
-	storage      storage.Operations
-	dependencies []kebErr.Dependency
-	steName      string
+	storage   storage.Operations
+	component kebErr.Dependency
+	step      string
 }
 
-func NewOperationManager(storage storage.Operations, dependecies ...kebErr.Dependency) *OperationManager {
-	return &OperationManager{storage: storage, dependencies: dependecies}
+func NewOperationManager(storage storage.Operations, component kebErr.Dependency) *OperationManager {
+	return &OperationManager{storage: storage, component: component}
 }
 
-func NewOperationManagerExtendent(storage storage.Operations, stepName string, dependecies ...kebErr.Dependency) *OperationManager {
-	return &OperationManager{storage: storage, dependencies: dependecies, steName: stepName}
-}
-
-func (om *OperationManager) isExtendentConstructorUsed() bool {
-	return om.steName != "" && len(om.dependencies) > 0
+func NewOperationManagerExtendent(storage storage.Operations, step string, component kebErr.Dependency) *OperationManager {
+	return &OperationManager{storage: storage, component: component, step: step}
 }
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
@@ -39,9 +34,11 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	//store last error data in db
-	if om.isExtendentConstructorUsed() {
-		operation.LastError = om.setLastError(err, description)
+	operation.LastError = kebErr.LastError{
+			Message:   err.Error(),
+			Reason:    kebErr.Code(description),
+			Component: om.component,
+			Step:      om.step,
 	}
 
 	op, t, _ := om.update(operation, domain.Failed, description, log)
@@ -168,42 +165,4 @@ func (om *OperationManager) update(operation internal.Operation, state domain.La
 		operation.State = state
 		operation.Description = description
 	}, log)
-}
-
-func (om *OperationManager) setLastError(err error, description string) kebErr.LastError {
-	toPersist := kebErr.LastErrorJSON{}
-
-	if err == nil || err.Error() == "" {
-		toPersist.Message = string(kebErr.NotSetCode)
-	} else {
-		toPersist.Message = err.Error()
-	}
-
-	if description == "" {
-		toPersist.Reason = kebErr.MsgNotSetCode
-	} else {
-		toPersist.Reason = kebErr.Code(description)
-	}
-
-	if om.steName != "" {
-		toPersist.StepName = om.steName
-	} else {
-		toPersist.StepName = "not_defined"
-	}
-
-	dependecies := om.dependencies
-	if len(om.dependencies) == 0 {
-		toPersist.Component = kebErr.Dependency(kebErr.UnknownDependency)
-	} else {
-		var sb strings.Builder
-		for idx, dependency := range dependecies {
-			sb.WriteString(string(dependency))
-			if len(dependecies) > 1 && idx != len(dependecies)-1 {
-				sb.WriteString(",")
-			}
-		}
-		toPersist.Component = kebErr.Dependency(sb.String())
-	}
-
-	return toPersist.ToDTO()
 }

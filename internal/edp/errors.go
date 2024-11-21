@@ -51,11 +51,11 @@ func (e edpError) Code() int {
 	return e.code
 }
 
-func (e edpError) Dependency() kebError.Dependency {
+func (e edpError) GetDependency() kebError.Dependency {
 	return kebError.EDPDependency
 }
 
-func (e edpError) Reason() EDPErrReason {
+func (e edpError) GetReason() EDPErrReason {
 	reason := ErrEDPOther
 
 	switch e.code {

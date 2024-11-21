@@ -11,11 +11,11 @@ func (NotFoundError) IsNotFound() bool {
 	return true
 }
 
-func (NotFoundError) Reason() Code {
+func (NotFoundError) GetReason() Code {
 	return ClusterNotFoundCode
 }
 
-func (NotFoundError) Dependency() Dependency {
+func (NotFoundError) GetDependency() Dependency {
 	return ReconcileDependency
 }
 
