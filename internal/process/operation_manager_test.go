@@ -117,10 +117,10 @@ func Test_OperationManager_LastError(t *testing.T) {
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
-		assert.EqualValues(t, "provisioner", op.LastError.GetDependency())
-		assert.EqualValues(t, "err_not_set", op.LastError.Error())
-		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
-		assert.EqualValues(t, "some_step", op.LastError.StepName())
+		assert.EqualValues(t, "", op.LastError.GetDependency())
+		assert.EqualValues(t, "", op.LastError.Error())
+		assert.EqualValues(t, "", op.LastError.GetReason())
+		assert.EqualValues(t, "", op.LastError.StepName())
 	})
 
 	t.Run("when no description passed", func(t *testing.T) {
@@ -133,7 +133,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op, _, err = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
 		assert.EqualValues(t, "provisioner", op.LastError.GetDependency())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
-		assert.EqualValues(t, "err_msg_not_set", op.LastError.GetReason())
+		assert.EqualValues(t, "", op.LastError.GetReason())
 		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 
@@ -144,21 +144,21 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
-		assert.EqualValues(t, "reconciler", op.LastError.GetDependency())
-		assert.EqualValues(t, "err_not_set", op.LastError.Error())
-		assert.EqualValues(t, "err_msg_not_set", op.LastError.GetReason())
-		assert.EqualValues(t, "some_step", op.LastError.StepName())
+		op, _, err = opManager.OperationFailed(op, "",nil, fixLogger())
+		assert.EqualValues(t, "", op.LastError.GetDependency())
+		assert.EqualValues(t, "", op.LastError.Error())
+		assert.EqualValues(t, "", op.LastError.GetReason())
+		assert.EqualValues(t, "", op.LastError.StepName())
 	})
 
 	t.Run("when no extendent constructor used", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "", kebErr.ReconcileDependency)
+		opManager := NewOperationManagerExtendent(operations, "step", kebErr.ReconcileDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
+		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
 		assert.EqualValues(t, "", op.LastError.GetDependency())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
