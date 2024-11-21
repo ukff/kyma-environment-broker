@@ -209,6 +209,8 @@ provisioner:
   runtimeResourceStepTimeout: "8m"
   clusterUpdateStepTimeout: "2h"
 
+  deprovisioningDisabled: "false"
+
   gardener:
     enableShootAndSeedSameRegion: "false"
 
