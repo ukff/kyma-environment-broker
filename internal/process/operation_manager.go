@@ -35,6 +35,9 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	if err != nil {
+		if om.step == "" {
+			fmt.Println("step is empty!!!!!!!!!!!!!!!!!")
+		}
 		operation.LastError = kebErr.LastError{
 			Message:   err.Error(),
 			Reason:    kebErr.Reason(description),
