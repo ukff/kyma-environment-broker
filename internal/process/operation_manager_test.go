@@ -98,12 +98,12 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "some_step", kebErr.ProvisionerDependency, kebErr.ReconcileDependency, kebErr.KebDbDependency)
+		opManager := NewOperationManagerExtendent(operations, "some_step",kebErr.KebDbDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
-		assert.EqualValues(t, "provisioner,reconciler,db - keb", op.LastError.GetDependency())
+		assert.EqualValues(t, "db - keb", op.LastError.GetDependency())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
 		assert.EqualValues(t, "some_step", op.LastError.StepName())
@@ -112,12 +112,12 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "some_step", kebErr.ProvisionerDependency, kebErr.ReconcileDependency)
+		opManager := NewOperationManagerExtendent(operations, "some_step", kebErr.ProvisionerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
-		assert.EqualValues(t, "provisioner,reconciler", op.LastError.GetDependency())
+		assert.EqualValues(t, "provisioner", op.LastError.GetDependency())
 		assert.EqualValues(t, "err_not_set", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
 		assert.EqualValues(t, "some_step", op.LastError.StepName())
