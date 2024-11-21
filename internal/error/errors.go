@@ -147,11 +147,13 @@ func ReasonForError(err error) LastError {
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
 		Component: KEBDependency,
+		Step: 	"-",
 	}
 }
 
 func checkK8SError(cause error) LastError {
 	lastErr := LastError{}
+	lastErr.Step = "-"
 	status := apierr.APIStatus(nil)
 
 	switch {
