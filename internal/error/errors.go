@@ -13,6 +13,7 @@ const OperationTimeOutMsg string = "operation has reached the time limit"
 
 type Reason string
 type Component string
+type Step string
 
 type ErrorReporter interface {
 	error
@@ -25,7 +26,7 @@ type LastError struct {
 	Message   string    `json:"message,omitempty"`
 	Reason    Reason    `json:"reason,omitempty"`
 	Component Component `json:"component,omitempty"`
-	Step      string    `json:"step,omitempty"`
+	Step      Step      `json:"step,omitempty"`
 	Team      string    `json:"team,omitempty"`
 }
 
@@ -79,13 +80,8 @@ func (err LastError) SetMessage(msg string) LastError {
 	return err
 }
 
-func (err LastError) StepName() string {
+func (err LastError) GetStepName() Step {
 	return err.Step
-}
-
-func (err LastError) SetStepName(stepName string) LastError {
-	err.Step = stepName
-	return err
 }
 
 func TimeoutError(msg string) LastError {
@@ -114,6 +110,7 @@ func ReasonForError(err error) LastError {
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
 			Component: status.GetComponent(),
+			Step:      "-",
 		}
 	}
 
@@ -138,6 +135,7 @@ func ReasonForError(err error) LastError {
 			Message:   err.Error(),
 			Reason:    errReason,
 			Component: errComponent,
+			Step:      "-",
 		}
 	}
 

@@ -92,7 +92,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
-		assert.EqualValues(t, "some_step", op.LastError.StepName())
+		assert.EqualValues(t, "some_step", op.LastError.GetStepName())
 	})
 
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
@@ -106,7 +106,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "db - keb", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
-		assert.EqualValues(t, "some_step", op.LastError.StepName())
+		assert.EqualValues(t, "some_step", op.LastError.GetStepName())
 	})
 
 	t.Run("when no error passed", func(t *testing.T) {
@@ -120,7 +120,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "", op.LastError.StepName())
+		assert.EqualValues(t, "", op.LastError.GetStepName())
 	})
 
 	t.Run("when no description passed", func(t *testing.T) {
@@ -134,7 +134,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "provisioner", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "some_step", op.LastError.StepName())
+		assert.EqualValues(t, "some_step", op.LastError.GetStepName())
 	})
 
 	t.Run("when no description and no err passed", func(t *testing.T) {
@@ -148,7 +148,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "", op.LastError.StepName())
+		assert.EqualValues(t, "", op.LastError.GetStepName())
 	})
 
 	t.Run("when no extendent constructor used", func(t *testing.T) {
@@ -162,7 +162,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "", op.LastError.StepName())
+		assert.EqualValues(t, "", op.LastError.GetStepName())
 	})
 }
 

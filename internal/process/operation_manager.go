@@ -29,7 +29,7 @@ func NewOperationManagerExtendent(storage storage.Operations, step string, compo
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
 func (om *OperationManager) OperationSucceeded(operation internal.Operation, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	return om.update(operation, domain.Succeeded, description, kebErr.LastError{}, log)
+	return om.update(operation, domain.Succeeded, description, log)
 }
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
@@ -42,11 +42,11 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 			Message:   err.Error(),
 			Reason:    kebErr.Reason(description),
 			Component: om.component,
-			Step:      om.step,
+			Step:      kebErr.Step(om.step),
 		}
 	}
 
-	op, t, _ := om.update(operation, domain.Failed, description, operation.LastError, log)
+	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if t != 0 {
 		return op, t, nil
@@ -69,7 +69,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 
 // OperationCanceled marks the operation as canceled and returns status of the operation's update
 func (om *OperationManager) OperationCanceled(operation internal.Operation, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	return om.update(operation, orchestration.Canceled, description, kebErr.LastError{}, log)
+	return om.update(operation, orchestration.Canceled, description, log)
 }
 
 // RetryOperation checks if operation should be retried or if it's the status should be marked as failed
@@ -166,10 +166,9 @@ func (om *OperationManager) MarkStepAsExcutedButNotCompleted(operation internal.
 	return op, 0, nil
 }
 
-func (om *OperationManager) update(operation internal.Operation, state domain.LastOperationState, description string, err kebErr.LastError, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) update(operation internal.Operation, state domain.LastOperationState, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	return om.UpdateOperation(operation, func(operation *internal.Operation) {
 		operation.State = state
 		operation.Description = description
-		operation.LastError = err
 	}, log)
 }
