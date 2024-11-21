@@ -299,8 +299,8 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		// Then
 		assert.Error(t, err)
 		assert.False(t, kebError.IsTemporaryError(err))
-		assert.Equal(t, kebError.Code("Object not found"), lastErr.GetReason())
-		assert.Equal(t, kebError.Dependency("compass director"), lastErr.GetDependency())
+		assert.Equal(t, kebError.Reason("Object not found"), lastErr.GetReason())
+		assert.Equal(t, kebError.Component("compass director"), lastErr.GetDependency())
 	})
 
 	t.Run("provisioner returns temporary code error", func(t *testing.T) {
@@ -333,8 +333,8 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		// Then
 		assert.Error(t, err)
 		assert.True(t, kebError.IsTemporaryError(err))
-		assert.Equal(t, kebError.Code("whatever"), lastErr.GetReason())
-		assert.Equal(t, kebError.Dependency("db - provisioner"), lastErr.GetDependency())
+		assert.Equal(t, kebError.Reason("whatever"), lastErr.GetReason())
+		assert.Equal(t, kebError.Component("db - provisioner"), lastErr.GetDependency())
 	})
 
 	t.Run("network error", func(t *testing.T) {
@@ -427,16 +427,16 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		lastErr := OperationStatusLastError(response.LastError)
 
 		// Then
-		assert.Equal(t, kebError.Dependency("provisioner-db"), lastErr.GetDependency())
-		assert.Equal(t, kebError.Code("not found"), lastErr.GetReason())
+		assert.Equal(t, kebError.Component("provisioner-db"), lastErr.GetDependency())
+		assert.Equal(t, kebError.Reason("not found"), lastErr.GetReason())
 		assert.Equal(t, "error msg", lastErr.Error())
 
 		err := fmt.Errorf("something: %w", lastErr)
 		lastErr = kebError.ReasonForError(err)
 
 		// Then
-		assert.Equal(t, kebError.Dependency("provisioner-db"), lastErr.GetDependency())
-		assert.Equal(t, kebError.Code("not found"), lastErr.GetReason())
+		assert.Equal(t, kebError.Component("provisioner-db"), lastErr.GetDependency())
+		assert.Equal(t, kebError.Reason("not found"), lastErr.GetReason())
 		assert.Equal(t, "something: error msg", lastErr.Error())
 	})
 }

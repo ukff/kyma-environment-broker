@@ -11,55 +11,53 @@ import (
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
 
+type Reason string
+type Component string
+
 type ErrorReporter interface {
 	error
-	GetReason() Code
-	GetDependency() Dependency
+	GetReason() Reason
+	GetDependency() Component
 }
 
 // error reporter
 type LastError struct {
-	Message   string
-	Reason    Code
-	Component Dependency
-	Step      string
+	Message   string    `json:"message,omitempty"`
+	Reason    Reason    `json:"reason,omitempty"`
+	Component Component `json:"component,omitempty"`
+	Step      string    `json:"step,omitempty"`
+	Team      string    `json:"team,omitempty"`
 }
 
-type Code string
-
 const (
-	MsgNotSetCode           Code = "err_msg_not_set"
-	NotSetCode              Code = "err_not_set"
-	KEBInternalCode         Code = "err_keb_internal"
-	KEBTimeOutCode          Code = "err_keb_timeout"
-	ProvisionerCode         Code = "err_provisioner_nil_last_error"
-	HttpStatusCode          Code = "err_http_status_code"
-	ClusterNotFoundCode     Code = "err_cluster_not_found"
-	K8SUnexpectedServerCode Code = "err_k8s_unexpected_server_error"
-	K8SUnexpectedObjectCode Code = "err_k8s_unexpected_object_error"
-	K8SNoMatchCode          Code = "err_k8s_no_match_error"
-	K8SAmbiguousCode        Code = "err_k8s_ambiguous_error"
+	KEBInternalCode         Reason = "err_keb_internal"
+	KEBTimeOutCode          Reason = "err_keb_timeout"
+	ProvisionerCode         Reason = "err_provisioner_nil_last_error"
+	HttpStatusCode          Reason = "err_http_status_code"
+	ClusterNotFoundCode     Reason = "err_cluster_not_found"
+	K8SUnexpectedServerCode Reason = "err_k8s_unexpected_server_error"
+	K8SUnexpectedObjectCode Reason = "err_k8s_unexpected_object_error"
+	K8SNoMatchCode          Reason = "err_k8s_no_match_error"
+	K8SAmbiguousCode        Reason = "err_k8s_ambiguous_error"
 )
 
-type Dependency string
-
 const (
-	UnknownDependency     Dependency = "unknown"
-	KebDbDependency       Dependency = "db - keb"
-	K8sDependency         Dependency = "k8s client - keb"
-	KEBDependency         Dependency = "keb"
-	EDPDependency         Dependency = "edp"
-	ProvisionerDependency Dependency = "provisioner"
-	ReconcileDependency   Dependency = "reconciler"
-	KIMDependency         Dependency = "kim"
-	LMDepedency           Dependency = "lifecycle-manager"
+	UnknownDependency     Component = "unknown"
+	KebDbDependency       Component = "db - keb"
+	K8sDependency         Component = "k8s client - keb"
+	KEBDependency         Component = "keb"
+	EDPDependency         Component = "edp"
+	ProvisionerDependency Component = "provisioner"
+	ReconcileDependency   Component = "reconciler"
+	KIMDependency         Component = "kim"
+	LMDepedency           Component = "lifecycle-manager"
 )
 
-func (err LastError) GetReason() Code {
+func (err LastError) GetReason() Reason {
 	return err.Reason
 }
 
-func (err LastError) GetDependency() Dependency {
+func (err LastError) GetDependency() Component {
 	return err.Component
 }
 
@@ -67,12 +65,12 @@ func (err LastError) Error() string {
 	return err.Message
 }
 
-func (err LastError) SetComponent(component Dependency) LastError {
+func (err LastError) SetComponent(component Component) LastError {
 	err.Component = component
 	return err
 }
 
-func (err LastError) SetReason(reason Code) LastError {
+func (err LastError) SetReason(reason Reason) LastError {
 	err.Reason = reason
 	return err
 }
@@ -121,19 +119,19 @@ func ReasonForError(err error) LastError {
 	}
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
-		var errReason Code
-		var errComponent Dependency
+		var errReason Reason
+		var errComponent Component
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
 			if r, ok := reason.(string); ok {
-				errReason = Code(r)
+				errReason = Reason(r)
 			}
 		}
 		component, found := ee.Extensions()["error_component"]
 		if found {
 			if c, ok := component.(string); ok {
-				errComponent = Dependency(c)
+				errComponent = Component(c)
 			}
 		}
 
@@ -165,7 +163,7 @@ func checkK8SError(cause error) LastError {
 			lastErr.Reason = K8SUnexpectedServerCode
 		} else {
 			// reason could be an empty unknown ""
-			lastErr.Reason = Code(apierr.ReasonForError(cause))
+			lastErr.Reason = Reason(apierr.ReasonForError(cause))
 		}
 		lastErr.Component = K8sDependency
 		return lastErr

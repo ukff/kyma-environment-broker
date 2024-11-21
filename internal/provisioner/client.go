@@ -215,5 +215,5 @@ func OperationStatusLastError(lastErr *schema.LastError) kebError.ErrorReporter 
 		return err.SetReason(kebError.ProvisionerCode).SetComponent(kebError.ProvisionerDependency)
 	}
 
-	return err.SetMessage(lastErr.ErrMessage).SetReason(kebError.Code(lastErr.Reason)).SetComponent(kebError.Dependency(lastErr.Component))
+	return err.SetMessage(lastErr.ErrMessage).SetReason(kebError.Reason(lastErr.Reason)).SetComponent(kebError.Component(lastErr.Component))
 }

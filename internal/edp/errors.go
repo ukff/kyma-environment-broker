@@ -13,7 +13,7 @@ type edpError struct {
 	message string
 }
 
-type EDPErrReason = kebError.Code
+type EDPErrReason = kebError.Reason
 
 const (
 	ErrEDPConflict   EDPErrReason = "err_edp_internal"
@@ -51,7 +51,7 @@ func (e edpError) Code() int {
 	return e.code
 }
 
-func (e edpError) GetDependency() kebError.Dependency {
+func (e edpError) GetDependency() kebError.Component {
 	return kebError.EDPDependency
 }
 

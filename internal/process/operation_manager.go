@@ -15,7 +15,7 @@ import (
 
 type OperationManager struct {
 	storage   storage.Operations
-	component kebErr.Dependency
+	component kebErr.Component
 	step      string
 }
 
@@ -23,7 +23,7 @@ func NewOperationManager(storage storage.Operations) *OperationManager {
 	return &OperationManager{storage: storage}
 }
 
-func NewOperationManagerExtendent(storage storage.Operations, step string, component kebErr.Dependency) *OperationManager {
+func NewOperationManagerExtendent(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
 	return &OperationManager{storage: storage, component: component, step: step}
 }
 
@@ -37,7 +37,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 	if err != nil {
 		operation.LastError = kebErr.LastError{
 			Message:   err.Error(),
-			Reason:    kebErr.Code(description),
+			Reason:    kebErr.Reason(description),
 			Component: om.component,
 			Step:      om.step,
 		}

@@ -13,7 +13,7 @@ const (
 	CodeConflict      = 4
 )
 
-type DBErrReason = kebError.Code
+type DBErrReason = kebError.Reason
 
 const (
 	ErrDBInternal      DBErrReason = "err_db_internal"
@@ -81,7 +81,7 @@ func (e dbError) Error() string {
 	return e.message
 }
 
-func (e dbError) GetDependency() kebError.Dependency {
+func (e dbError) GetDependency() kebError.Component {
 	return kebError.KebDbDependency
 }
 

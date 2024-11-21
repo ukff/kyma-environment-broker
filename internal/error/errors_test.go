@@ -128,7 +128,7 @@ func TestK8SLastError(t *testing.T) {
 
 	// then
 	assert.EqualError(t, lastErrBadReq, "something: bad request here")
-	assert.Equal(t, kebError.Code("BadRequest"), lastErrBadReq.GetReason())
+	assert.Equal(t, kebError.Reason("BadRequest"), lastErrBadReq.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrBadReq.GetDependency())
 
 	assert.ErrorContains(t, lastErrUnexpObj, "something: unexpected object: ")
