@@ -17,7 +17,7 @@ type Component string
 type ErrorReporter interface {
 	error
 	GetReason() Reason
-	GetDependency() Component
+	GetComponent() Component
 }
 
 // error reporter
@@ -42,7 +42,6 @@ const (
 )
 
 const (
-	UnknownDependency     Component = "unknown"
 	KebDbDependency       Component = "db - keb"
 	K8sDependency         Component = "k8s client - keb"
 	KEBDependency         Component = "keb"
@@ -57,7 +56,7 @@ func (err LastError) GetReason() Reason {
 	return err.Reason
 }
 
-func (err LastError) GetDependency() Component {
+func (err LastError) GetComponent() Component {
 	return err.Component
 }
 
@@ -114,7 +113,7 @@ func ReasonForError(err error) LastError {
 		return LastError{
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
-			Component: status.GetDependency(),
+			Component: status.GetComponent(),
 		}
 	}
 

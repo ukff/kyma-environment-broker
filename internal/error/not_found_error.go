@@ -15,7 +15,7 @@ func (NotFoundError) GetReason() Reason {
 	return ClusterNotFoundCode
 }
 
-func (NotFoundError) GetDependency() Component {
+func (NotFoundError) GetComponent() Component {
 	return ReconcileDependency
 }
 

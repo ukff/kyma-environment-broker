@@ -119,7 +119,7 @@ func GetLabels(op internal.Operation) map[string]string {
 	labels["plan_id"] = op.ProvisioningParameters.PlanID
 	labels["type"] = string(op.Type)
 	labels["state"] = string(op.State)
-	labels["error_category"] = string(op.LastError.GetDependency())
+	labels["error_category"] = string(op.LastError.GetComponent())
 	labels["error_reason"] = string(op.LastError.GetReason())
 	labels["error"] = op.LastError.Error()
 	return labels

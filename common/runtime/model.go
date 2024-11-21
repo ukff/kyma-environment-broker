@@ -109,7 +109,7 @@ type Operation struct {
 	OrchestrationID              string             `json:"orchestrationID,omitempty"`
 	FinishedStages               []string           `json:"finishedStages"`
 	ExecutedButNotCompletedSteps []string           `json:"executedButNotCompletedSteps,omitempty"`
-	Error                        kebError.LastError `json:"error,omitempty"`
+	Error                        *kebError.LastError `json:"error,omitempty"`
 }
 
 type RuntimesPage struct {

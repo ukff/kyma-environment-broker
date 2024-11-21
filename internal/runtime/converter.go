@@ -68,7 +68,7 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
 		if !reflect.DeepEqual(source.LastError, kebError.LastError{}) {
-			target.Error = source.LastError
+			target.Error = &source.LastError
 		}
 	}
 }
