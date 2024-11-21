@@ -116,13 +116,14 @@ func ReasonForError(err error) LastError {
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
 			Component: status.GetComponent(),
-			Step:      "-",
+			Step:      status.GetStepName(),
 		}
 	}
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
 		var errReason Reason
 		var errComponent Component
+		var errStep Step
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
@@ -136,12 +137,16 @@ func ReasonForError(err error) LastError {
 				errComponent = Component(c)
 			}
 		}
+		step, found := ee.Extensions()["error_step"]
+		if found {
+			if s, ok := step.(string); ok { errStep = Step(s) }
+		}
 
 		return LastError{
 			Message:   err.Error(),
 			Reason:    errReason,
 			Component: errComponent,
-			Step:      "-",
+			Step:      errStep,
 		}
 	}
 
@@ -159,7 +164,6 @@ func ReasonForError(err error) LastError {
 
 func checkK8SError(cause error) LastError {
 	lastErr := LastError{}
-	lastErr.Step = "-"
 	status := apierr.APIStatus(nil)
 
 	switch {
