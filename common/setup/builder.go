@@ -19,6 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 	"golang.org/x/oauth2/clientcredentials"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -106,6 +107,8 @@ func (b *AppBuilder) WithStorage() {
 
 func (b *AppBuilder) WithK8sClient() {
 	err := imv1.AddToScheme(scheme.Scheme)
+	FatalOnError(err)
+	err = corev1.AddToScheme(scheme.Scheme)
 	FatalOnError(err)
 	k8sCfg, err := k8scfg.GetConfig()
 	FatalOnError(err)

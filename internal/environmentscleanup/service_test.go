@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
@@ -40,6 +41,8 @@ const (
 func TestService_PerformCleanup(t *testing.T) {
 	sch := k8sruntime.NewScheme()
 	err := imv1.AddToScheme(sch)
+	assert.NoError(t, err)
+	err = corev1.AddToScheme(sch)
 	assert.NoError(t, err)
 	k8sClient := fake.NewClientBuilder().WithScheme(sch).Build()
 
@@ -364,6 +367,74 @@ func TestService_PerformCleanup(t *testing.T) {
 
 		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
 		assert.NoError(t, err)
+	})
+
+	t.Run("should work on dev environment", func(t *testing.T) {
+		// given
+		gcMock := &mocks.GardenerClient{}
+		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
+		gcMock.On("Delete", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("v1.DeleteOptions")).Return(nil)
+		gcMock.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("v1.UpdateOptions")).Return(nil, nil)
+		bcMock := &mocks.BrokerClient{}
+		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
+		memoryStorage := storage.NewMemoryStorage()
+		logger := logrus.New()
+		k8sClient = fake.NewClientBuilder().WithScheme(sch).Build()
+
+		configMap := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kcp-kyma-environment-broker",
+				Namespace: "kcp-system",
+			},
+			Data: map[string]string{
+				"skrDNSProvidersValues.yaml": `providers: 
+- domainsInclude: [ "dev.kyma.ondemand.com" ]`,
+			},
+		}
+		err = k8sClient.Create(context.Background(), configMap)
+		assert.NoError(t, err)
+
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+
+		// when
+		err = svc.Run()
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should not work on environment different than dev", func(t *testing.T) {
+		// given
+		gcMock := &mocks.GardenerClient{}
+		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
+		gcMock.On("Delete", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("v1.DeleteOptions")).Return(nil)
+		gcMock.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("v1.UpdateOptions")).Return(nil, nil)
+		bcMock := &mocks.BrokerClient{}
+		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
+		memoryStorage := storage.NewMemoryStorage()
+		logger := logrus.New()
+		k8sClient = fake.NewClientBuilder().WithScheme(sch).Build()
+
+		configMap := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kcp-kyma-environment-broker",
+				Namespace: "kcp-system",
+			},
+			Data: map[string]string{
+				"skrDNSProvidersValues.yaml": `providers: 
+- domainsInclude: [ "stage.kyma.ondemand.com" ]`,
+			},
+		}
+		err = k8sClient.Create(context.Background(), configMap)
+		assert.NoError(t, err)
+
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+
+		// when
+		err = svc.Run()
+
+		// then
+		assert.EqualError(t, err, "job must run only in the dev environment, current environment: stage.kyma.ondemand.com")
 	})
 }
 
