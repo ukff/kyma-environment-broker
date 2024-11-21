@@ -98,7 +98,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 3 components", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerExtendent(operations, "some_step",kebErr.KebDbDependency)
+		opManager := NewOperationManagerExtendent(operations, "some_step", kebErr.KebDbDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -144,7 +144,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "",nil, fixLogger())
+		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
 		assert.EqualValues(t, "", op.LastError.GetDependency())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
