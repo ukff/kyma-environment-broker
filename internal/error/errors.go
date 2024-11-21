@@ -19,6 +19,7 @@ type ErrorReporter interface {
 	error
 	GetReason() Reason
 	GetComponent() Component
+	GetStepName() Step
 }
 
 // error reporter
@@ -77,6 +78,11 @@ func (err LastError) SetReason(reason Reason) LastError {
 
 func (err LastError) SetMessage(msg string) LastError {
 	err.Message = msg
+	return err
+}
+
+func (err LastError) SetStep(step Step) LastError {
+	err.Step = step
 	return err
 }
 
@@ -147,7 +153,7 @@ func ReasonForError(err error) LastError {
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
 		Component: KEBDependency,
-		Step: 	"-",
+		Step:      "-",
 	}
 }
 

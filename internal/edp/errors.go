@@ -13,6 +13,11 @@ type edpError struct {
 	message string
 }
 
+func (e edpError) GetStepName() kebError.Step {
+	//TODO implement me
+	return "EDP"
+}
+
 type EDPErrReason = kebError.Reason
 
 const (
