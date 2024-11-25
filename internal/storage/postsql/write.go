@@ -1,7 +1,6 @@
 package postsql
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -333,7 +332,6 @@ func (ws writeSession) DeleteState(subaccountID string) dberr.Error {
 }
 
 func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
-	fmt.Println(fmt.Sprintf("update operation db: %s", op.Data))
 	res, err := ws.update(OperationTableName).
 		Where(dbr.Eq("id", op.ID)).
 		Where(dbr.Eq("version", op.Version)).
