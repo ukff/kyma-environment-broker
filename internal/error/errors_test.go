@@ -29,28 +29,32 @@ func TestLastError(t *testing.T) {
 		expectTimeoutMsg := "something: operation has reached the time limit: 2h"
 
 		// when
-		edpLastErr := kebError.ReasonForError(edpErr, "")
-		edpConfLastErr := kebError.ReasonForError(edpConfErr, "")
-		dbLastErr := kebError.ReasonForError(dbErr, "")
-		timeoutLastErr := kebError.ReasonForError(timeoutErr, "")
+		edpLastErr := kebError.ReasonForError(edpErr, "s1")
+		edpConfLastErr := kebError.ReasonForError(edpConfErr, "s2")
+		dbLastErr := kebError.ReasonForError(dbErr, "s3")
+		timeoutLastErr := kebError.ReasonForError(timeoutErr, "s4")
 
 		// then
 		assert.Equal(t, edp.ErrEDPBadRequest, edpLastErr.GetReason())
 		assert.Equal(t, kebError.EDPDependency, edpLastErr.GetComponent())
 		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
+		assert.Equal(t, "s1", edpLastErr.GetStepName())
 
 		assert.Equal(t, edp.ErrEDPConflict, edpConfLastErr.GetReason())
 		assert.Equal(t, kebError.EDPDependency, edpConfLastErr.GetComponent())
 		assert.Equal(t, expectEdpConfMsg, edpConfLastErr.Error())
 		assert.True(t, edp.IsConflictError(edpConfErr))
+		assert.Equal(t, "s2", edpLastErr.GetStepName())
 
 		assert.Equal(t, dberr.ErrDBNotFound, dbLastErr.GetReason())
 		assert.Equal(t, kebError.KebDbDependency, dbLastErr.GetComponent())
 		assert.Equal(t, expectDbErr, dbLastErr.Error())
+		assert.Equal(t, "s3", edpLastErr.GetStepName())
 
 		assert.Equal(t, kebError.KEBTimeOutCode, timeoutLastErr.GetReason())
 		assert.Equal(t, kebError.KEBDependency, timeoutLastErr.GetComponent())
 		assert.Equal(t, expectTimeoutMsg, timeoutLastErr.Error())
+		assert.Equal(t, "s4", edpLastErr.GetStepName())
 	})
 }
 
