@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"fmt"
 	"time"
 
 	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -37,8 +36,6 @@ func (s *StartStep) Name() string {
 }
 
 func (s *StartStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	return s.operationManager.OperationFailed(operation, "Starting step must be implemented", fmt.Errorf("tech error"), log)
-
 	if operation.State != orchestration.Pending {
 		return operation, 0, nil
 	}

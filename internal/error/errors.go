@@ -139,7 +139,9 @@ func ReasonForError(err error) LastError {
 		}
 		step, found := ee.Extensions()["error_step"]
 		if found {
-			if s, ok := step.(string); ok { errStep = Step(s) }
+			if s, ok := step.(string); ok {
+				errStep = Step(s)
+			}
 		}
 
 		return LastError{
