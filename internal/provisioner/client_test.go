@@ -294,13 +294,14 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
-		lastErr := kebError.ReasonForError(err, "")
+		lastErr := kebError.ReasonForError(err, "s1")
 
 		// Then
 		assert.Error(t, err)
 		assert.False(t, kebError.IsTemporaryError(err))
 		assert.Equal(t, kebError.Reason("Object not found"), lastErr.GetReason())
 		assert.Equal(t, kebError.Component("compass director"), lastErr.GetComponent())
+		assert.Equal(t, "s1", lastErr.GetStepName())
 	})
 
 	t.Run("provisioner returns temporary code error", func(t *testing.T) {
@@ -432,12 +433,13 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		assert.Equal(t, "error msg", lastErr.Error())
 
 		err := fmt.Errorf("something: %w", lastErr)
-		lastErr = kebError.ReasonForError(err, "")
+		lastErr = kebError.ReasonForError(err, "s1")
 
 		// Then
 		assert.Equal(t, kebError.Component("provisioner-db"), lastErr.GetComponent())
 		assert.Equal(t, kebError.Reason("not found"), lastErr.GetReason())
 		assert.Equal(t, "something: error msg", lastErr.Error())
+		assert.Equal(t, "s1", lastErr.GetStepName())
 	})
 }
 

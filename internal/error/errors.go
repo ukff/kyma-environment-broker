@@ -114,6 +114,7 @@ func ReasonForError(err error, stepName string) LastError {
 
 	if lastErr := checkK8SError(cause); lastErr.Component == K8sDependency {
 		lastErr.Message = err.Error()
+		lastErr.Step = Step(stepName)
 		return lastErr
 	}
 
