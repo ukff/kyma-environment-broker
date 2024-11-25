@@ -51,11 +51,13 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.Fiel
 	state := runtime.Status.State
 	log.Infof("Runtime resource state: %s", state)
 	if state != imv1.RuntimeStateReady {
-		if time.Since(operation.UpdatedAt) > s.runtimeResourceStepTimeout {
+		if time.Since(operation.CreatedAt) > s.runtimeResourceStepTimeout {
 			description := fmt.Sprintf("Waiting for Runtime resource (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
 			log.Infof("Runtime resource status: %v, timeout: %v", runtime.Status, s.runtimeResourceStepTimeout)
 			return s.operationManager.OperationFailed(operation, description, nil, log)
+		} else {
+			log.Infof("Runtime resource status: %v, time since last update: %v, timeout set: %v", runtime.Status, time.Since(operation.UpdatedAt), s.runtimeResourceStepTimeout)
 		}
 		return operation, 10 * time.Second, nil
 	}

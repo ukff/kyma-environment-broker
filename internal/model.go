@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -24,7 +25,7 @@ type ProvisionerInputCreator interface {
 	CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error)
 	CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error)
 	CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error)
-	Provider() CloudProvider
+	Provider() pkg.CloudProvider
 	Configuration() *ConfigForPlan
 
 	CreateProvisionClusterInput() (gqlschema.ProvisionRuntimeInput, error)
@@ -64,7 +65,7 @@ type Instance struct {
 	ExpiredAt *time.Time
 
 	Version      int
-	Provider     CloudProvider
+	Provider     pkg.CloudProvider
 	Reconcilable bool
 }
 
@@ -388,6 +389,10 @@ type InstanceStats struct {
 // ERSContextStats provides aggregated information regarding ERSContext
 type ERSContextStats struct {
 	LicenseType map[string]int
+}
+
+type BindingStats struct {
+	MinutesSinceEarliestExpiration float64 `db:"minutes_since_earliest_expiration"`
 }
 
 // NewProvisioningOperation creates a fresh (just starting) instance of the ProvisioningOperation

@@ -67,7 +67,8 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.OrchestrationID = source.OrchestrationID
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
-		if !reflect.DeepEqual(source.LastError, kebError.LastError{}) {
+		target.Parameters = source.ProvisioningParameters.Parameters
+    if !reflect.DeepEqual(source.LastError, kebError.LastError{}) {
 			target.Error = &source.LastError
 		}
 	}
@@ -93,6 +94,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 			ModifiedAt: instance.UpdatedAt,
 			ExpiredAt:  instance.ExpiredAt,
 		},
+		Parameters: instance.Parameters.Parameters,
 	}
 	if !instance.DeletedAt.IsZero() {
 		toReturn.Status.DeletedAt = &instance.DeletedAt
