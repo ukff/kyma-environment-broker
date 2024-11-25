@@ -29,10 +29,10 @@ func TestLastError(t *testing.T) {
 		expectTimeoutMsg := "something: operation has reached the time limit: 2h"
 
 		// when
-		edpLastErr := kebError.ReasonForError(edpErr)
-		edpConfLastErr := kebError.ReasonForError(edpConfErr)
-		dbLastErr := kebError.ReasonForError(dbErr)
-		timeoutLastErr := kebError.ReasonForError(timeoutErr)
+		edpLastErr := kebError.ReasonForError(edpErr, "")
+		edpConfLastErr := kebError.ReasonForError(edpConfErr, "")
+		dbLastErr := kebError.ReasonForError(dbErr, "")
+		timeoutLastErr := kebError.ReasonForError(timeoutErr, "")
 
 		// then
 		assert.Equal(t, edp.ErrEDPBadRequest, edpLastErr.GetReason())
@@ -68,8 +68,8 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		expectEdpMsg := fmt.Sprintf("EDP server returns failed status %s", "501")
 
 		// when
-		lastErr := kebError.ReasonForError(tempErr)
-		edpLastErr := kebError.ReasonForError(edpTempErr)
+		lastErr := kebError.ReasonForError(tempErr, "")
+		edpLastErr := kebError.ReasonForError(edpTempErr, "")
 
 		// then
 		assert.Equal(t, kebError.HttpStatusCode, lastErr.GetReason())
@@ -89,7 +89,7 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		expectMsg := "something: temporary error..."
 
 		// when
-		lastErr := kebError.ReasonForError(tempErr)
+		lastErr := kebError.ReasonForError(tempErr, "")
 
 		// then
 		assert.Equal(t, kebError.KEBInternalCode, lastErr.GetReason())
@@ -104,7 +104,7 @@ func TestNotFoundError(t *testing.T) {
 	err := fmt.Errorf("something: %w", kebError.NotFoundError{})
 
 	// when
-	lastErr := kebError.ReasonForError(err)
+	lastErr := kebError.ReasonForError(err, "")
 
 	// then
 	assert.EqualError(t, lastErr, "something: not found")
@@ -121,10 +121,10 @@ func TestK8SLastError(t *testing.T) {
 	errNoMatch := fmt.Errorf("something: %w", &apierr2.NoKindMatchError{})
 
 	// when
-	lastErrBadReq := kebError.ReasonForError(errBadReq)
-	lastErrUnexpObj := kebError.ReasonForError(errUnexpObj)
-	lastErrAmbi := kebError.ReasonForError(errAmbi)
-	lastErrNoMatch := kebError.ReasonForError(errNoMatch)
+	lastErrBadReq := kebError.ReasonForError(errBadReq, "")
+	lastErrUnexpObj := kebError.ReasonForError(errUnexpObj, "")
+	lastErrAmbi := kebError.ReasonForError(errAmbi, "")
+	lastErrNoMatch := kebError.ReasonForError(errNoMatch, "")
 
 	// then
 	assert.EqualError(t, lastErrBadReq, "something: bad request here")

@@ -52,9 +52,9 @@ func (te WrapTemporaryError) Error() string { return te.err.Error() }
 func (WrapTemporaryError) Temporary() bool  { return true }
 
 func (wte WrapTemporaryError) GetReason() Reason {
-	return ReasonForError(wte.err).GetReason()
+	return ReasonForError(wte.err, "").GetReason()
 }
 
 func (wte WrapTemporaryError) GetComponent() Component {
-	return ReasonForError(wte.err).GetComponent()
+	return ReasonForError(wte.err, "").GetComponent()
 }

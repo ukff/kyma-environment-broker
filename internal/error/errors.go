@@ -17,6 +17,7 @@ type Step string
 
 type ErrorReporter interface {
 	error
+	GetMessage() string
 	GetReason() Reason
 	GetComponent() Component
 	GetStepName() Step
@@ -76,6 +77,10 @@ func (err LastError) SetReason(reason Reason) LastError {
 	return err
 }
 
+func (err LastError) GetMessage() string {
+	return err.Message
+}
+
 func (err LastError) SetMessage(msg string) LastError {
 	err.Message = msg
 	return err
@@ -90,16 +95,17 @@ func (err LastError) GetStepName() Step {
 	return err.Step
 }
 
-func TimeoutError(msg string) LastError {
+func TimeoutError(msg, stepName string) LastError {
 	return LastError{
 		Message:   msg,
 		Reason:    KEBTimeOutCode,
 		Component: KEBDependency,
+		Step:      Step(stepName),
 	}
 }
 
 // resolve error component and reason
-func ReasonForError(err error) LastError {
+func ReasonForError(err error, stepName string) LastError {
 	if err == nil {
 		return LastError{}
 	}
@@ -153,14 +159,14 @@ func ReasonForError(err error) LastError {
 	}
 
 	if strings.Contains(err.Error(), OperationTimeOutMsg) {
-		return TimeoutError(err.Error())
+		return TimeoutError(err.Error(), stepName)
 	}
 
 	return LastError{
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
 		Component: KEBDependency,
-		Step:      "-",
+		Step:      Step(stepName),
 	}
 }
 

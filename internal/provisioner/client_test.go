@@ -294,7 +294,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
-		lastErr := kebError.ReasonForError(err)
+		lastErr := kebError.ReasonForError(err, "")
 
 		// Then
 		assert.Error(t, err)
@@ -328,7 +328,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
-		lastErr := kebError.ReasonForError(err)
+		lastErr := kebError.ReasonForError(err, "")
 
 		// Then
 		assert.Error(t, err)
@@ -432,7 +432,7 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		assert.Equal(t, "error msg", lastErr.Error())
 
 		err := fmt.Errorf("something: %w", lastErr)
-		lastErr = kebError.ReasonForError(err)
+		lastErr = kebError.ReasonForError(err, "")
 
 		// Then
 		assert.Equal(t, kebError.Component("provisioner-db"), lastErr.GetComponent())
