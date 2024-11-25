@@ -93,13 +93,14 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		expectMsg := "something: temporary error..."
 
 		// when
-		lastErr := kebError.ReasonForError(tempErr, "")
+		lastErr := kebError.ReasonForError(tempErr, "s")
 
 		// then
 		assert.Equal(t, kebError.KEBInternalCode, lastErr.GetReason())
 		assert.Equal(t, kebError.KEBDependency, lastErr.GetComponent())
 		assert.Equal(t, expectMsg, lastErr.Error())
 		assert.True(t, kebError.IsTemporaryError(tempErr))
+		assert.Equal(t, "s", lastErr.GetStepName())
 	})
 }
 
@@ -108,13 +109,14 @@ func TestNotFoundError(t *testing.T) {
 	err := fmt.Errorf("something: %w", kebError.NotFoundError{})
 
 	// when
-	lastErr := kebError.ReasonForError(err, "")
+	lastErr := kebError.ReasonForError(err, "s")
 
 	// then
 	assert.EqualError(t, lastErr, "something: not found")
 	assert.Equal(t, kebError.ClusterNotFoundCode, lastErr.GetReason())
 	assert.Equal(t, kebError.ReconcileDependency, lastErr.GetComponent())
 	assert.True(t, kebError.IsNotFoundError(err))
+	assert.Equal(t, "s", lastErr.GetStepName())
 }
 
 func TestK8SLastError(t *testing.T) {
@@ -125,25 +127,29 @@ func TestK8SLastError(t *testing.T) {
 	errNoMatch := fmt.Errorf("something: %w", &apierr2.NoKindMatchError{})
 
 	// when
-	lastErrBadReq := kebError.ReasonForError(errBadReq, "")
-	lastErrUnexpObj := kebError.ReasonForError(errUnexpObj, "")
-	lastErrAmbi := kebError.ReasonForError(errAmbi, "")
-	lastErrNoMatch := kebError.ReasonForError(errNoMatch, "")
+	lastErrBadReq := kebError.ReasonForError(errBadReq, "s1")
+	lastErrUnexpObj := kebError.ReasonForError(errUnexpObj, "s2")
+	lastErrAmbi := kebError.ReasonForError(errAmbi, "s3")
+	lastErrNoMatch := kebError.ReasonForError(errNoMatch, "s4")
 
 	// then
 	assert.EqualError(t, lastErrBadReq, "something: bad request here")
 	assert.Equal(t, kebError.Reason("BadRequest"), lastErrBadReq.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrBadReq.GetComponent())
+	assert.Equal(t, "s1", lastErrBadReq.GetStepName())
 
 	assert.ErrorContains(t, lastErrUnexpObj, "something: unexpected object: ")
 	assert.Equal(t, kebError.K8SUnexpectedObjectCode, lastErrUnexpObj.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrUnexpObj.GetComponent())
+	assert.Equal(t, "s2", lastErrUnexpObj.GetStepName())
 
 	assert.ErrorContains(t, lastErrAmbi, "matches multiple resources or kinds")
 	assert.Equal(t, kebError.K8SAmbiguousCode, lastErrAmbi.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrAmbi.GetComponent())
+	assert.Equal(t, "s3", lastErrAmbi.GetStepName())
 
 	assert.ErrorContains(t, lastErrNoMatch, "something: no matches for kind")
 	assert.Equal(t, kebError.K8SNoMatchCode, lastErrNoMatch.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrNoMatch.GetComponent())
+	assert.Equal(t, "s4", lastErrNoMatch.GetStepName())
 }

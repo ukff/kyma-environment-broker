@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"time"
 
-	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -30,9 +28,7 @@ type ApplyKymaStep struct {
 var _ process.Step = &ApplyKymaStep{}
 
 func NewApplyKymaStep(os storage.Operations, cli client.Client) *ApplyKymaStep {
-	step := &ApplyKymaStep{k8sClient: cli}
-	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebErr.K8sDependency)
-	return step
+	return &ApplyKymaStep{operationManager: process.NewOperationManager(os), k8sClient: cli}
 }
 
 func (a *ApplyKymaStep) Name() string {
