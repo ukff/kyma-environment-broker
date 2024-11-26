@@ -10,6 +10,7 @@ import (
 )
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
+const StepNotApplicable = "n/a"
 
 type Reason string
 type Component string
@@ -108,6 +109,7 @@ func ReasonForError(err error, step string) LastError {
 
 	if lastErr := checkK8SError(cause); lastErr.Component == K8sDependency {
 		lastErr.Message = err.Error()
+		lastErr.Step = step
 		return lastErr
 	}
 
@@ -116,12 +118,14 @@ func ReasonForError(err error, step string) LastError {
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
 			Component: status.GetDependency(),
+			Step:      step,
 		}
 	}
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
 		var errReason Reason
 		var errComponent Component
+		var errStep string
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
@@ -135,11 +139,18 @@ func ReasonForError(err error, step string) LastError {
 				errComponent = Component(c)
 			}
 		}
+		step, found := ee.Extensions()["error_step"]
+		if found {
+			if s, ok := step.(string); ok {
+				errStep = s
+			}
+		}
 
 		return LastError{
 			Message:   err.Error(),
 			Reason:    errReason,
 			Component: errComponent,
+			Step:      errStep,
 		}
 	}
 
@@ -151,6 +162,7 @@ func ReasonForError(err error, step string) LastError {
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
 		Component: KEBDependency,
+		Step:      step,
 	}
 }
 
