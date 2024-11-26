@@ -17,7 +17,7 @@ type Instances interface {
 	Insert(instance internal.Instance) error
 	Update(instance internal.Instance) (*internal.Instance, error)
 	Delete(instanceID string) error
-	GetInstanceStats() (internal.InstanceStats, error)
+	GetActiveInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
 	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
@@ -135,4 +135,5 @@ type Bindings interface {
 	Delete(instanceID, bindingID string) error
 	ListByInstanceID(instanceID string) ([]internal.Binding, error)
 	ListExpired() ([]internal.Binding, error)
+	GetStatistics() (internal.BindingStats, error)
 }

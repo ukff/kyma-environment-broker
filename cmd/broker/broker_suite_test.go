@@ -29,6 +29,7 @@ import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
@@ -143,7 +144,7 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 		}
 	}()
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), cfg.MetricsV2, logrus.New())
+	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db, cfg.MetricsV2, logrus.New())
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }
@@ -182,7 +183,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		MachineImage:                 "coreos",
 		URL:                          "http://localhost",
 		DefaultGardenerShootPurpose:  "testing",
-		DefaultTrialProvider:         internal.AWS,
+		DefaultTrialProvider:         pkg.AWS,
 		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
 	}, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
 
@@ -240,7 +241,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 
-	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs, k8sClientProvider, gardener.NewFakeClient())
+	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs, k8sClientProvider, gardener.NewFakeClient(), eventBroker)
 
 	notificationFakeClient := notification.NewFakeClient()
 	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
@@ -279,8 +280,8 @@ func fakeK8sClientProvider(k8sCli client.Client) func(s string) (client.Client, 
 	}
 }
 
-func defaultOIDCValues() internal.OIDCConfigDTO {
-	return internal.OIDCConfigDTO{
+func defaultOIDCValues() pkg.OIDCConfigDTO {
+	return pkg.OIDCConfigDTO{
 		ClientID:       "client-id-oidc",
 		GroupsClaim:    "groups",
 		IssuerURL:      "https://issuer.url",
@@ -342,7 +343,7 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningRuntimeResourc
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) ChangeDefaultTrialProvider(provider internal.CloudProvider) {
+func (s *BrokerSuiteTest) ChangeDefaultTrialProvider(provider pkg.CloudProvider) {
 	s.inputBuilderFactory.(*input.InputBuilderFactory).SetDefaultTrialProvider(provider)
 }
 
@@ -357,7 +358,7 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	return resp
 }
 
-func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, logs logrus.FieldLogger, skrK8sClientProvider *kubeconfig.FakeProvider, gardenerClient client.Client) {
+func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, logs logrus.FieldLogger, skrK8sClientProvider *kubeconfig.FakeProvider, gardenerClient client.Client, eventBroker *event.PubSub) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -381,13 +382,14 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 			},
 		},
 	}
-	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	var fakeKcpK8sClient = fake.NewClientBuilder().Build()
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
-	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue, lager.NewLogger("api"), logs, planDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, fakeKcpK8sClient)
+	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
+		lager.NewLogger("api"), logs, planDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, fakeKcpK8sClient, eventBroker)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

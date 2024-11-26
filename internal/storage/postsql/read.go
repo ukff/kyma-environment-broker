@@ -673,10 +673,26 @@ func (r readSession) GetOperationStatsForOrchestration(orchestrationID string) (
 	return rows, err
 }
 
-func (r readSession) GetInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
+func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
-	_, err := r.session.SelectBySql(fmt.Sprintf("select global_account_id, count(*) as total from %s where deleted_at = '0001-01-01T00:00:00.000Z' group by global_account_id",
-		InstancesTableName)).Load(&rows)
+	var stmt *dbr.SelectStmt
+	filter := dbmodel.InstanceFilter{
+		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
+	}
+	// Find and join the last operation for each instance matching the state filter(s).
+	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
+	stmt = r.session.
+		Select(fmt.Sprintf("%s.global_account_id", InstancesTableName), "count(*) as total").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
+		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
+		Where("o2.created_at IS NULL").
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
+		Where(buildInstanceStateFilters("o1", filter)).
+		GroupBy(fmt.Sprintf("%s.global_account_id", InstancesTableName))
+
+	_, err := stmt.Load(&rows)
 	return rows, err
 }
 
@@ -1051,6 +1067,20 @@ func (r readSession) ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbm
 	}
 
 	return instancesArchived, len(instancesArchived), totalCount, nil
+}
+
+func (r readSession) GetBindingsStatistics() (dbmodel.BindingStatsDTO, error) {
+	dto := dbmodel.BindingStatsDTO{}
+	statement := r.session.Select("max(extract(epoch from AGE(now(), expires_at))) as seconds_since_earliest_expiration").From(BindingsTableName)
+
+	err := statement.LoadOne(&dto)
+	if err != nil {
+		return dbmodel.BindingStatsDTO{}, err
+	}
+	if dto.SecondsSinceEarliestExpiration == nil {
+		dto.SecondsSinceEarliestExpiration = new(float64)
+	}
+	return dto, nil
 }
 
 func (r readSession) getInstanceArchivedCount(filter dbmodel.InstanceFilter) (int, error) {
