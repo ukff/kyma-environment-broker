@@ -313,9 +313,11 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 					"runtimeStatus"
 				  ],
 				  "extensions": {
+					"error_message": "testmsg",
 					"error_code": 500,
 					"error_reason": "whatever",
-					"error_component": "db - provisioner"
+					"error_component": "db - provisioner",
+                    "error_step": "s1"
 				  }
 				}
 			  ],
@@ -329,13 +331,14 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
-		lastErr := kebError.ReasonForError(err, "")
+		lastErr := kebError.ReasonForError(err, "s1")
 
 		// Then
 		assert.Error(t, err)
 		assert.True(t, kebError.IsTemporaryError(err))
 		assert.Equal(t, kebError.Reason("whatever"), lastErr.GetReason())
 		assert.Equal(t, kebError.Component("db - provisioner"), lastErr.GetComponent())
+		assert.Equal(t, "s1", lastErr.GetComponent())
 	})
 
 	t.Run("network error", func(t *testing.T) {

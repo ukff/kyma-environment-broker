@@ -27,7 +27,7 @@ func NewStartStep(os storage.Operations, is storage.Instances) *StartStep {
 		operationStorage: os,
 		instanceStorage:  is,
 	}
-	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebErr.KEBDependency)
+	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebErr.ProvisionerDependency)
 	return step
 }
 

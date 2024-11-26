@@ -38,23 +38,23 @@ func TestLastError(t *testing.T) {
 		assert.Equal(t, edp.ErrEDPBadRequest, edpLastErr.GetReason())
 		assert.Equal(t, kebError.EDPDependency, edpLastErr.GetComponent())
 		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
-		assert.Equal(t, "s1", edpLastErr.GetStepName())
+		assert.Equal(t, "n/a", edpLastErr.GetStepName())
 
 		assert.Equal(t, edp.ErrEDPConflict, edpConfLastErr.GetReason())
 		assert.Equal(t, kebError.EDPDependency, edpConfLastErr.GetComponent())
 		assert.Equal(t, expectEdpConfMsg, edpConfLastErr.Error())
 		assert.True(t, edp.IsConflictError(edpConfErr))
-		assert.Equal(t, "s2", edpLastErr.GetStepName())
+		assert.Equal(t, "n/a", edpConfLastErr.GetStepName())
 
 		assert.Equal(t, dberr.ErrDBNotFound, dbLastErr.GetReason())
 		assert.Equal(t, kebError.KebDbDependency, dbLastErr.GetComponent())
 		assert.Equal(t, expectDbErr, dbLastErr.Error())
-		assert.Equal(t, "s3", edpLastErr.GetStepName())
+		assert.Equal(t, kebError.Step("s3"), dbLastErr.GetStepName())
 
 		assert.Equal(t, kebError.KEBTimeOutCode, timeoutLastErr.GetReason())
 		assert.Equal(t, kebError.KEBDependency, timeoutLastErr.GetComponent())
 		assert.Equal(t, expectTimeoutMsg, timeoutLastErr.Error())
-		assert.Equal(t, "s4", edpLastErr.GetStepName())
+		assert.Equal(t, kebError.Step("s4"), timeoutLastErr.GetStepName())
 	})
 }
 

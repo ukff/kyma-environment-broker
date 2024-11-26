@@ -2,6 +2,7 @@ package error
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
@@ -107,18 +108,23 @@ func TimeoutError(msg, stepName string) LastError {
 // resolve error component and reason
 func ReasonForError(err error, stepName string) LastError {
 	if err == nil {
+		fmt.Println("Error is nil")
 		return LastError{}
 	}
 
 	cause := UnwrapAll(err)
+	fmt.Println("after UnwrapAll")
+	fmt.Println(cause.Error())
 
 	if lastErr := checkK8SError(cause); lastErr.Component == K8sDependency {
 		lastErr.Message = err.Error()
 		lastErr.Step = Step(stepName)
+		fmt.Println("after checkK8SError")
 		return lastErr
 	}
 
 	if status := ErrorReporter(nil); errors.As(cause, &status) {
+		fmt.Println("after ErrorReporter")
 		return LastError{
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
@@ -127,7 +133,8 @@ func ReasonForError(err error, stepName string) LastError {
 		}
 	}
 
-	if ee, ok := cause.(gcli.ExtendedError); ok {
+	var ee gcli.ExtendedError
+	if errors.As(cause, &ee) {
 		var errReason Reason
 		var errComponent Component
 		var errStep Step
@@ -150,7 +157,7 @@ func ReasonForError(err error, stepName string) LastError {
 				errStep = Step(s)
 			}
 		}
-
+		fmt.Println("after gcli.ExtendedError")
 		return LastError{
 			Message:   err.Error(),
 			Reason:    errReason,
@@ -160,9 +167,11 @@ func ReasonForError(err error, stepName string) LastError {
 	}
 
 	if strings.Contains(err.Error(), OperationTimeOutMsg) {
+		fmt.Println("after OperationTimeOutMsg")
 		return TimeoutError(err.Error(), stepName)
 	}
 
+	fmt.Println("after default")
 	return LastError{
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
@@ -196,7 +205,9 @@ func checkK8SError(cause error) LastError {
 	if lastErr.Reason != "" {
 		lastErr.Component = K8sDependency
 	}
-
+	fmt.Println("checkK8SError")
+	fmt.Println(lastErr.Component)
+	fmt.Println(lastErr.Reason)
 	return lastErr
 }
 
