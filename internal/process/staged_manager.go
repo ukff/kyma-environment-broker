@@ -122,7 +122,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operationID, "instanceID": operation.InstanceID, "planID": operation.ProvisioningParameters.PlanID})
 	logOperation.Infof("Start process operation steps for GlobalAccount=%s, ", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
-		timeoutErr := kebError.TimeoutError("operation has reached the time limit", "")
+		timeoutErr := kebError.TimeoutError("operation has reached the time limit", kebError.NotSet)
 		operation.LastError = timeoutErr
 		defer m.publishEventOnFail(operation, err)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)

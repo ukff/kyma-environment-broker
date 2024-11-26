@@ -10,7 +10,7 @@ import (
 )
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
-const StepNotApplicable = "n/a"
+const NotSet = "not-set"
 
 type Reason string
 type Component string
@@ -43,7 +43,6 @@ const (
 )
 
 const (
-	UnknownDependency     Component = "unknown"
 	KebDbDependency       Component = "db - keb"
 	K8sDependency         Component = "k8s client - keb"
 	KEBDependency         Component = "keb"
