@@ -12,6 +12,8 @@ import (
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
 
+const NotApplied = "n/a"
+
 type Reason string
 type Component string
 type Step string
@@ -21,7 +23,7 @@ type ErrorReporter interface {
 	GetMessage() string
 	GetReason() Reason
 	GetComponent() Component
-	GetStepName() Step
+	GetStep() Step
 }
 
 // error reporter
@@ -92,7 +94,7 @@ func (err LastError) SetStep(step Step) LastError {
 	return err
 }
 
-func (err LastError) GetStepName() Step {
+func (err LastError) GetStep() Step {
 	return err.Step
 }
 
@@ -129,7 +131,7 @@ func ReasonForError(err error, stepName string) LastError {
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
 			Component: status.GetComponent(),
-			Step:      status.GetStepName(),
+			Step:      status.GetStep(),
 		}
 	}
 

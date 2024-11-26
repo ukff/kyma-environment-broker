@@ -76,8 +76,8 @@ func (e edpError) GetMessage() string {
 	return e.message
 }
 
-func (e edpError) GetStepName() kebError.Step {
-	return ""
+func (e edpError) GetStep() kebError.Step {
+	return kebError.NotApplied
 }
 
 func IsConflictError(err error) bool {

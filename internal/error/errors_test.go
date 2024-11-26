@@ -38,23 +38,23 @@ func TestLastError(t *testing.T) {
 		assert.Equal(t, edp.ErrEDPBadRequest, edpLastErr.GetReason())
 		assert.Equal(t, kebError.EDPDependency, edpLastErr.GetComponent())
 		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
-		assert.Equal(t, "n/a", edpLastErr.GetStepName())
+		assert.Equal(t, "n/a", edpLastErr.GetStep())
 
 		assert.Equal(t, edp.ErrEDPConflict, edpConfLastErr.GetReason())
 		assert.Equal(t, kebError.EDPDependency, edpConfLastErr.GetComponent())
 		assert.Equal(t, expectEdpConfMsg, edpConfLastErr.Error())
 		assert.True(t, edp.IsConflictError(edpConfErr))
-		assert.Equal(t, "n/a", edpConfLastErr.GetStepName())
+		assert.Equal(t, "n/a", edpConfLastErr.GetStep())
 
 		assert.Equal(t, dberr.ErrDBNotFound, dbLastErr.GetReason())
 		assert.Equal(t, kebError.KebDbDependency, dbLastErr.GetComponent())
 		assert.Equal(t, expectDbErr, dbLastErr.Error())
-		assert.Equal(t, kebError.Step("s3"), dbLastErr.GetStepName())
+		assert.Equal(t, kebError.Step("s3"), dbLastErr.GetStep())
 
 		assert.Equal(t, kebError.KEBTimeOutCode, timeoutLastErr.GetReason())
 		assert.Equal(t, kebError.KEBDependency, timeoutLastErr.GetComponent())
 		assert.Equal(t, expectTimeoutMsg, timeoutLastErr.Error())
-		assert.Equal(t, kebError.Step("s4"), timeoutLastErr.GetStepName())
+		assert.Equal(t, kebError.Step("s4"), timeoutLastErr.GetStep())
 	})
 }
 
@@ -100,7 +100,7 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		assert.Equal(t, kebError.KEBDependency, lastErr.GetComponent())
 		assert.Equal(t, expectMsg, lastErr.Error())
 		assert.True(t, kebError.IsTemporaryError(tempErr))
-		assert.Equal(t, kebError.Step("s1"), lastErr.GetStepName())
+		assert.Equal(t, kebError.Step("s1"), lastErr.GetStep())
 	})
 }
 
@@ -116,7 +116,7 @@ func TestNotFoundError(t *testing.T) {
 	assert.Equal(t, kebError.ClusterNotFoundCode, lastErr.GetReason())
 	assert.Equal(t, kebError.ReconcileDependency, lastErr.GetComponent())
 	assert.True(t, kebError.IsNotFoundError(err))
-	assert.Equal(t, kebError.Step("s1"), lastErr.GetStepName())
+	assert.Equal(t, kebError.Step("s1"), lastErr.GetStep())
 }
 
 func TestK8SLastError(t *testing.T) {
@@ -136,20 +136,20 @@ func TestK8SLastError(t *testing.T) {
 	assert.EqualError(t, lastErrBadReq, "something: bad request here")
 	assert.Equal(t, kebError.Reason("BadRequest"), lastErrBadReq.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrBadReq.GetComponent())
-	assert.Equal(t, kebError.Step("s1"), lastErrBadReq.GetStepName())
+	assert.Equal(t, kebError.Step("s1"), lastErrBadReq.GetStep())
 
 	assert.ErrorContains(t, lastErrUnexpObj, "something: unexpected object: ")
 	assert.Equal(t, kebError.K8SUnexpectedObjectCode, lastErrUnexpObj.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrUnexpObj.GetComponent())
-	assert.Equal(t, kebError.Step("s2"), lastErrUnexpObj.GetStepName())
+	assert.Equal(t, kebError.Step("s2"), lastErrUnexpObj.GetStep())
 
 	assert.ErrorContains(t, lastErrAmbi, "matches multiple resources or kinds")
 	assert.Equal(t, kebError.K8SAmbiguousCode, lastErrAmbi.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrAmbi.GetComponent())
-	assert.Equal(t, kebError.Step("s3"), lastErrAmbi.GetStepName())
+	assert.Equal(t, kebError.Step("s3"), lastErrAmbi.GetStep())
 
 	assert.ErrorContains(t, lastErrNoMatch, "something: no matches for kind")
 	assert.Equal(t, kebError.K8SNoMatchCode, lastErrNoMatch.GetReason())
 	assert.Equal(t, kebError.K8sDependency, lastErrNoMatch.GetComponent())
-	assert.Equal(t, kebError.Step("s4"), lastErrNoMatch.GetStepName())
+	assert.Equal(t, kebError.Step("s4"), lastErrNoMatch.GetStep())
 }
