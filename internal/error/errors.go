@@ -94,7 +94,7 @@ func TimeoutError(msg, step string) LastError {
 		Message:   msg,
 		Reason:    KEBTimeOutCode,
 		Component: KEBDependency,
-		Step: 	step,
+		Step:      step,
 	}
 }
 
