@@ -1,7 +1,6 @@
 package error
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -11,139 +10,158 @@ import (
 )
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
+const NotSet = "not-set"
+
+type Reason string
+type Component string
 
 type ErrorReporter interface {
 	error
-	Reason() ErrReason
-	Component() ErrComponent
+	GetReason() Reason
+	GetDependency() Component
 }
 
 // error reporter
 type LastError struct {
-	message   string
-	reason    ErrReason
-	component ErrComponent
+	Message   string    `json:"message,omitempty"`
+	Reason    Reason    `json:"reason,omitempty"`
+	Component Component `json:"component,omitempty"`
+	Step      string    `json:"step,omitempty"`
+	Team      string    `json:"team,omitempty"`
 }
-
-type LastErrorJSON struct {
-	Message   string       `json:"message"`
-	Reason    ErrReason    `json:"reason"`
-	Component ErrComponent `json:"component"`
-}
-
-type ErrReason string
 
 const (
-	ErrKEBInternal              ErrReason = "err_keb_internal"
-	ErrKEBTimeOut               ErrReason = "err_keb_timeout"
-	ErrProvisionerNilLastError  ErrReason = "err_provisioner_nil_last_error"
-	ErrHttpStatusCode           ErrReason = "err_http_status_code"
-	ErrClusterNotFound          ErrReason = "err_cluster_not_found"
-	ErrK8SUnexpectedServerError ErrReason = "err_k8s_unexpected_server_error"
-	ErrK8SUnexpectedObjectError ErrReason = "err_k8s_unexpected_object_error"
-	ErrK8SNoMatchError          ErrReason = "err_k8s_no_match_error"
-	ErrK8SAmbiguousError        ErrReason = "err_k8s_ambiguous_error"
+	KEBInternalCode         Reason = "err_keb_internal"
+	KEBTimeOutCode          Reason = "err_keb_timeout"
+	ProvisionerCode         Reason = "err_provisioner_nil_last_error"
+	HttpStatusCode          Reason = "err_http_status_code"
+	ClusterNotFoundCode     Reason = "err_cluster_not_found"
+	K8SUnexpectedServerCode Reason = "err_k8s_unexpected_server_error"
+	K8SUnexpectedObjectCode Reason = "err_k8s_unexpected_object_error"
+	K8SNoMatchCode          Reason = "err_k8s_no_match_error"
+	K8SAmbiguousCode        Reason = "err_k8s_ambiguous_error"
 )
-
-type ErrComponent string
 
 const (
-	ErrDB          ErrComponent = "db - keb"
-	ErrK8SClient   ErrComponent = "k8s client - keb"
-	ErrKEB         ErrComponent = "keb"
-	ErrEDP         ErrComponent = "edp"
-	ErrProvisioner ErrComponent = "provisioner"
-	ErrReconciler  ErrComponent = "reconciler"
+	KebDbDependency            Component = "db - keb"
+	K8sDependency              Component = "k8s client - keb"
+	KEBDependency              Component = "keb"
+	EDPDependency              Component = "edp"
+	ProvisionerDependency      Component = "provisioner"
+	ReconcileDependency        Component = "reconciler"
+	KIMDependency              Component = "kim"
+	LifeCycleManagerDependency Component = "lifecycle-manager"
 )
 
-func (err LastError) Reason() ErrReason {
-	return err.reason
+func (err LastError) GetReason() Reason {
+	return err.Reason
 }
 
-func (err LastError) Component() ErrComponent {
-	return err.component
+func (err LastError) GetDependency() Component {
+	return err.Component
 }
 
 func (err LastError) Error() string {
-	return err.message
+	return err.Message
 }
 
-func (err LastError) SetComponent(component ErrComponent) LastError {
-	err.component = component
+func (err LastError) SetComponent(component Component) LastError {
+	err.Component = component
 	return err
 }
 
-func (err LastError) SetReason(reason ErrReason) LastError {
-	err.reason = reason
+func (err LastError) SetReason(reason Reason) LastError {
+	err.Reason = reason
 	return err
 }
 
 func (err LastError) SetMessage(msg string) LastError {
-	err.message = msg
+	err.Message = msg
 	return err
 }
 
-func TimeoutError(msg string) LastError {
+func (err LastError) StepName() string {
+	return err.Step
+}
+
+func (err LastError) SetStepName(stepName string) LastError {
+	err.Step = stepName
+	return err
+}
+
+func TimeoutError(msg, step string) LastError {
 	return LastError{
-		message:   msg,
-		reason:    ErrKEBTimeOut,
-		component: ErrKEB,
+		Message:   msg,
+		Reason:    KEBTimeOutCode,
+		Component: KEBDependency,
+		Step:      step,
 	}
 }
 
 // resolve error component and reason
-func ReasonForError(err error) LastError {
+func ReasonForError(err error, step string) LastError {
 	if err == nil {
 		return LastError{}
 	}
 
 	cause := UnwrapAll(err)
 
-	if lastErr := checkK8SError(cause); lastErr.component == ErrK8SClient {
-		lastErr.message = err.Error()
+	if lastErr := checkK8SError(cause); lastErr.Component == K8sDependency {
+		lastErr.Message = err.Error()
+		lastErr.Step = step
 		return lastErr
 	}
 
 	if status := ErrorReporter(nil); errors.As(cause, &status) {
 		return LastError{
-			message:   err.Error(),
-			reason:    status.Reason(),
-			component: status.Component(),
+			Message:   err.Error(),
+			Reason:    status.GetReason(),
+			Component: status.GetDependency(),
+			Step:      step,
 		}
 	}
 
 	if ee, ok := cause.(gcli.ExtendedError); ok {
-		var errReason ErrReason
-		var errComponent ErrComponent
+		var errReason Reason
+		var errComponent Component
+		var errStep string
 
 		reason, found := ee.Extensions()["error_reason"]
 		if found {
 			if r, ok := reason.(string); ok {
-				errReason = ErrReason(r)
+				errReason = Reason(r)
 			}
 		}
 		component, found := ee.Extensions()["error_component"]
 		if found {
 			if c, ok := component.(string); ok {
-				errComponent = ErrComponent(c)
+				errComponent = Component(c)
+			}
+		}
+		step, found := ee.Extensions()["error_step"]
+		if found {
+			if s, ok := step.(string); ok {
+				errStep = s
 			}
 		}
 
 		return LastError{
-			message:   err.Error(),
-			reason:    errReason,
-			component: errComponent,
+			Message:   err.Error(),
+			Reason:    errReason,
+			Component: errComponent,
+			Step:      errStep,
 		}
 	}
 
 	if strings.Contains(err.Error(), OperationTimeOutMsg) {
-		return TimeoutError(err.Error())
+		return TimeoutError(err.Error(), step)
 	}
 
 	return LastError{
-		message:   err.Error(),
-		reason:    ErrKEBInternal,
-		component: ErrKEB,
+		Message:   err.Error(),
+		Reason:    KEBInternalCode,
+		Component: KEBDependency,
+		Step:      step,
 	}
 }
 
@@ -154,23 +172,23 @@ func checkK8SError(cause error) LastError {
 	switch {
 	case errors.As(cause, &status):
 		if apierr.IsUnexpectedServerError(cause) {
-			lastErr.reason = ErrK8SUnexpectedServerError
+			lastErr.Reason = K8SUnexpectedServerCode
 		} else {
 			// reason could be an empty unknown ""
-			lastErr.reason = ErrReason(apierr.ReasonForError(cause))
+			lastErr.Reason = Reason(apierr.ReasonForError(cause))
 		}
-		lastErr.component = ErrK8SClient
+		lastErr.Component = K8sDependency
 		return lastErr
 	case apierr.IsUnexpectedObjectError(cause):
-		lastErr.reason = ErrK8SUnexpectedObjectError
+		lastErr.Reason = K8SUnexpectedObjectCode
 	case apierr2.IsAmbiguousError(cause):
-		lastErr.reason = ErrK8SAmbiguousError
+		lastErr.Reason = K8SAmbiguousCode
 	case apierr2.IsNoMatchError(cause):
-		lastErr.reason = ErrK8SNoMatchError
+		lastErr.Reason = K8SNoMatchCode
 	}
 
-	if lastErr.reason != "" {
-		lastErr.component = ErrK8SClient
+	if lastErr.Reason != "" {
+		lastErr.Component = K8sDependency
 	}
 
 	return lastErr
@@ -198,24 +216,4 @@ func UnwrapAll(err error) error {
 		break
 	}
 	return err
-}
-
-func (l LastError) MarshalJSON() ([]byte, error) {
-	return json.Marshal(
-		LastErrorJSON{
-			Message:   l.message,
-			Reason:    l.reason,
-			Component: l.component,
-		})
-}
-
-func (l *LastError) UnmarshalJSON(data []byte) error {
-	tmp := &LastErrorJSON{}
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-	l.message = tmp.Message
-	l.reason = tmp.Reason
-	l.component = tmp.Component
-	return nil
 }

@@ -13,7 +13,7 @@ const (
 	CodeConflict      = 4
 )
 
-type DBErrReason = kebError.ErrReason
+type DBErrReason = kebError.Reason
 
 const (
 	ErrDBInternal      DBErrReason = "err_db_internal"
@@ -81,11 +81,11 @@ func (e dbError) Error() string {
 	return e.message
 }
 
-func (e dbError) Component() kebError.ErrComponent {
-	return kebError.ErrDB
+func (e dbError) GetDependency() kebError.Component {
+	return kebError.KebDbDependency
 }
 
-func (e dbError) Reason() DBErrReason {
+func (e dbError) GetReason() DBErrReason {
 	reason := ErrDBUnknown
 
 	switch e.code {

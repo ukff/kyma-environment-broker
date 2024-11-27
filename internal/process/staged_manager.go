@@ -122,7 +122,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operationID, "instanceID": operation.InstanceID, "planID": operation.ProvisioningParameters.PlanID})
 	logOperation.Infof("Start process operation steps for GlobalAccount=%s, ", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
-		timeoutErr := kebError.TimeoutError("operation has reached the time limit")
+		timeoutErr := kebError.TimeoutError("operation has reached the time limit", kebError.NotSet)
 		operation.LastError = timeoutErr
 		defer m.publishEventOnFail(operation, err)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
@@ -232,8 +232,8 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		stepLogger := logger.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID})
 		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
-			processedOperation.LastError = kebError.ReasonForError(err)
-			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+			processedOperation.LastError = kebError.ReasonForError(err, step.Name())
+			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.GetDependency(), "error_reason": processedOperation.LastError.GetReason()})
 			logOperation.Warnf("Last error from step: %s", processedOperation.LastError.Error())
 			// only save to storage, skip for alerting if error
 			_, err = m.operationStorage.UpdateOperation(processedOperation)
@@ -259,7 +259,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - the loop takes too much time (to not block the worker too long)
 		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
 			if err != nil {
-				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.GetDependency(), "error_reason": processedOperation.LastError.GetReason()})
 				logOperation.Errorf("Last Error that terminated the step: %s", processedOperation.LastError.Error())
 			}
 			return processedOperation, backoff, err
@@ -270,7 +270,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 }
 
 func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
-	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
+	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.GetDependency(), "error_reason": operation.LastError.GetReason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
 
 	m.publishOperationFinishedEvent(*operation)

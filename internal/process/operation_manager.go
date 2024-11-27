@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -13,11 +14,17 @@ import (
 )
 
 type OperationManager struct {
-	storage storage.Operations
+	storage   storage.Operations
+	component kebErr.Component
+	step      string
 }
 
 func NewOperationManager(storage storage.Operations) *OperationManager {
 	return &OperationManager{storage: storage}
+}
+
+func NewOperationManagerWithMetadata(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
+	return &OperationManager{storage: storage, component: component, step: step}
 }
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
@@ -27,6 +34,15 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if err != nil {
+		operation.LastError = kebErr.LastError{
+			Message:   err.Error(),
+			Reason:    kebErr.Reason(description),
+			Component: om.component,
+			Step:      om.step,
+		}
+	}
+
 	op, t, _ := om.update(operation, domain.Failed, description, log)
 	// repeat in case of storage error
 	if t != 0 {

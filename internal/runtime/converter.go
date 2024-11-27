@@ -1,9 +1,12 @@
 package runtime
 
 import (
+	"reflect"
+
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
 
@@ -65,6 +68,9 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
 		target.Parameters = source.ProvisioningParameters.Parameters
+		if !reflect.DeepEqual(source.LastError, kebError.LastError{}) {
+			target.Error = &source.LastError
+		}
 	}
 }
 

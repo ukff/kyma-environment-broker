@@ -294,13 +294,13 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
-		lastErr := kebError.ReasonForError(err)
+		lastErr := kebError.ReasonForError(err, "")
 
 		// Then
 		assert.Error(t, err)
 		assert.False(t, kebError.IsTemporaryError(err))
-		assert.Equal(t, kebError.ErrReason("Object not found"), lastErr.Reason())
-		assert.Equal(t, kebError.ErrComponent("compass director"), lastErr.Component())
+		assert.Equal(t, kebError.Reason("Object not found"), lastErr.GetReason())
+		assert.Equal(t, kebError.Component("compass director"), lastErr.GetDependency())
 	})
 
 	t.Run("provisioner returns temporary code error", func(t *testing.T) {
@@ -328,13 +328,13 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
-		lastErr := kebError.ReasonForError(err)
+		lastErr := kebError.ReasonForError(err, "")
 
 		// Then
 		assert.Error(t, err)
 		assert.True(t, kebError.IsTemporaryError(err))
-		assert.Equal(t, kebError.ErrReason("whatever"), lastErr.Reason())
-		assert.Equal(t, kebError.ErrComponent("db - provisioner"), lastErr.Component())
+		assert.Equal(t, kebError.Reason("whatever"), lastErr.GetReason())
+		assert.Equal(t, kebError.Component("db - provisioner"), lastErr.GetDependency())
 	})
 
 	t.Run("network error", func(t *testing.T) {
@@ -405,8 +405,8 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		lastErr := OperationStatusLastError(response.LastError)
 
 		// Then
-		assert.Equal(t, kebError.ErrProvisioner, lastErr.Component())
-		assert.Equal(t, kebError.ErrProvisionerNilLastError, lastErr.Reason())
+		assert.Equal(t, kebError.ProvisionerDependency, lastErr.GetDependency())
+		assert.Equal(t, kebError.ProvisionerCode, lastErr.GetReason())
 		assert.Equal(t, "", lastErr.Error())
 	})
 
@@ -427,16 +427,16 @@ func TestClient_OperationStatusLastError(t *testing.T) {
 		lastErr := OperationStatusLastError(response.LastError)
 
 		// Then
-		assert.Equal(t, kebError.ErrComponent("provisioner-db"), lastErr.Component())
-		assert.Equal(t, kebError.ErrReason("not found"), lastErr.Reason())
+		assert.Equal(t, kebError.Component("provisioner-db"), lastErr.GetDependency())
+		assert.Equal(t, kebError.Reason("not found"), lastErr.GetReason())
 		assert.Equal(t, "error msg", lastErr.Error())
 
 		err := fmt.Errorf("something: %w", lastErr)
-		lastErr = kebError.ReasonForError(err)
+		lastErr = kebError.ReasonForError(err, "")
 
 		// Then
-		assert.Equal(t, kebError.ErrComponent("provisioner-db"), lastErr.Component())
-		assert.Equal(t, kebError.ErrReason("not found"), lastErr.Reason())
+		assert.Equal(t, kebError.Component("provisioner-db"), lastErr.GetDependency())
+		assert.Equal(t, kebError.Reason("not found"), lastErr.GetReason())
 		assert.Equal(t, "something: error msg", lastErr.Error())
 	})
 }

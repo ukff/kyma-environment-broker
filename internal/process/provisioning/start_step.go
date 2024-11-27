@@ -22,9 +22,9 @@ type StartStep struct {
 
 func NewStartStep(os storage.Operations, is storage.Instances) *StartStep {
 	return &StartStep{
+		operationManager: process.NewOperationManager(os),
 		operationStorage: os,
 		instanceStorage:  is,
-		operationManager: process.NewOperationManager(os),
 	}
 }
 
