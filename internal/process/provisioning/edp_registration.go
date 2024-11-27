@@ -32,11 +32,12 @@ type EDPRegistrationStep struct {
 }
 
 func NewEDPRegistrationStep(os storage.Operations, client EDPClient, config edp.Config) *EDPRegistrationStep {
-	return &EDPRegistrationStep{
-		operationManager: process.NewOperationManager(os),
+	step := &EDPRegistrationStep{
 		client:           client,
 		config:           config,
 	}
+	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebError.EDPDependency)
+	return step
 }
 
 func (s *EDPRegistrationStep) Name() string {

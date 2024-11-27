@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -27,12 +28,13 @@ func NewCheckRuntimeStep(os storage.Operations,
 	provisionerClient provisioner.Client,
 	provisioningTimeout time.Duration,
 	kimConfig broker.KimConfig) *CheckRuntimeStep {
-	return &CheckRuntimeStep{
+	step := &CheckRuntimeStep{
 		provisionerClient:   provisionerClient,
-		operationManager:    process.NewOperationManager(os),
 		provisioningTimeout: provisioningTimeout,
 		kimConfig:           kimConfig,
 	}
+	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebError.ProvisionerDependency)
+	return step
 }
 
 var _ process.Step = (*CheckRuntimeStep)(nil)

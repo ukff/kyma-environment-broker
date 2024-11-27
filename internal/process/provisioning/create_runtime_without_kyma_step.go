@@ -32,13 +32,14 @@ type CreateRuntimeWithoutKymaStep struct {
 }
 
 func NewCreateRuntimeWithoutKymaStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, cli provisioner.Client, kimConfig broker.KimConfig) *CreateRuntimeWithoutKymaStep {
-	return &CreateRuntimeWithoutKymaStep{
-		operationManager:    process.NewOperationManager(os),
+	step := &CreateRuntimeWithoutKymaStep{
 		instanceStorage:     is,
 		provisionerClient:   cli,
 		runtimeStateStorage: runtimeStorage,
 		kimConfig:           kimConfig,
 	}
+	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebError.ProvisionerDependency)
+	return step
 }
 
 func (s *CreateRuntimeWithoutKymaStep) Name() string {
