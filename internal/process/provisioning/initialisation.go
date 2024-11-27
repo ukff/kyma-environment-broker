@@ -37,11 +37,11 @@ type InitialisationStep struct {
 
 func NewInitialisationStep(os storage.Operations, is storage.Instances, b input.CreatorForPlan) *InitialisationStep {
 	s := &InitialisationStep{
-		operationManager: process.NewOperationManager(os),
 		inputBuilder:     b,
 		instanceStorage:  is,
 	}
 	s.operationManager = process.NewOperationManagerExtendent(os, s.Name(), kebError.ProvisionerDependency)
+	return s
 }
 
 func (s *InitialisationStep) Name() string {
