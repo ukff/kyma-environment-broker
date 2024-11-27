@@ -49,8 +49,8 @@ const (
 	EDPDependency         Component = "edp"
 	ProvisionerDependency Component = "provisioner"
 	ReconcileDependency   Component = "reconciler"
-	KIMDependency         Component = "kim"
-	LMDepedency           Component = "lifecycle-manager"
+	KIMDependency              Component = "kim"
+	LifeCycleManagerDependency Component = "lifecycle-manager"
 )
 
 func (err LastError) GetReason() Reason {

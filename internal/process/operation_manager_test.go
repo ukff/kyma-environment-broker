@@ -81,7 +81,7 @@ func Test_OperationManager_RetryOperation(t *testing.T) {
 }
 
 func Test_OperationManager_LastError(t *testing.T) {
-	t.Run("when all last error field set with 1 component", func(t *testing.T) {
+	t.Run("when all last error field set with 1 component v1", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.ProvisionerDependency)
@@ -95,7 +95,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		assert.EqualValues(t, "some_step", op.LastError.StepName())
 	})
 
-	t.Run("when all last error field set with 3 components", func(t *testing.T) {
+	t.Run("when all last error field set with 1 components v2", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
 		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.KebDbDependency)
@@ -145,20 +145,6 @@ func Test_OperationManager_LastError(t *testing.T) {
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
-		assert.EqualValues(t, "", op.LastError.GetDependency())
-		assert.EqualValues(t, "", op.LastError.Error())
-		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "", op.LastError.StepName())
-	})
-
-	t.Run("when no extendent constructor used", func(t *testing.T) {
-		memory := storage.NewMemoryStorage()
-		operations := memory.Operations()
-		opManager := NewOperationManagerWithMetadata(operations, "step", kebErr.ReconcileDependency)
-		op := internal.Operation{}
-		err := operations.InsertOperation(op)
-		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
 		assert.EqualValues(t, "", op.LastError.GetDependency())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
