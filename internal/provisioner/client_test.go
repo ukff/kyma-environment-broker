@@ -280,7 +280,8 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 				  "extensions": {
 					"error_code": 400,
 					"error_reason": "Object not found",
-					"error_component": "compass director"
+					"error_component": "compass director",
+					"error_step": "s1"
 				  }
 				}
 			  ],
@@ -301,7 +302,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		assert.False(t, kebError.IsTemporaryError(err))
 		assert.Equal(t, kebError.Reason("Object not found"), lastErr.GetReason())
 		assert.Equal(t, kebError.Component("compass director"), lastErr.GetComponent())
-		assert.Equal(t, "s1", lastErr.Step)
+		assert.Equal(t, "s1", lastErr.GetStep())
 	})
 
 	t.Run("provisioner returns temporary code error", func(t *testing.T) {
