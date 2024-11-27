@@ -1,6 +1,8 @@
 package provisioning
 
 import (
+	"fmt"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -21,11 +23,11 @@ type StartStep struct {
 }
 
 func NewStartStep(os storage.Operations, is storage.Instances) *StartStep {
-	return &StartStep{
+	step := &StartStep{
 		operationStorage: os,
 		instanceStorage:  is,
-		operationManager: process.NewOperationManager(os),
 	}
+	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebError.ProvisionerDependency)
 }
 
 func (s *StartStep) Name() string {
@@ -33,6 +35,7 @@ func (s *StartStep) Name() string {
 }
 
 func (s *StartStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	return s.operationManager.OperationFailed(operation, "Starting step must be implemented", fmt.Errorf("technical error"), log)
 	if operation.State != orchestration.Pending {
 		return operation, 0, nil
 	}
