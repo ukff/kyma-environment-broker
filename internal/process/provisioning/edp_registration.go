@@ -36,7 +36,7 @@ func NewEDPRegistrationStep(os storage.Operations, client EDPClient, config edp.
 		client: client,
 		config: config,
 	}
-	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebError.EDPDependency)
+	step.operationManager = process.NewOperationManagerWithMetadata(os, step.Name(), kebError.EDPDependency)
 	return step
 }
 

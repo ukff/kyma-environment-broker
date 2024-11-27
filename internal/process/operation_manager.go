@@ -23,7 +23,7 @@ func NewOperationManager(storage storage.Operations) *OperationManager {
 	return &OperationManager{storage: storage}
 }
 
-func NewOperationManagerExtendent(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
+func NewOperationManagerWithMetadata(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
 	return &OperationManager{storage: storage, component: component, step: step}
 }
 
