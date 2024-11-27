@@ -43,12 +43,12 @@ const (
 )
 
 const (
-	KebDbDependency       Component = "db - keb"
-	K8sDependency         Component = "k8s client - keb"
-	KEBDependency         Component = "keb"
-	EDPDependency         Component = "edp"
-	ProvisionerDependency Component = "provisioner"
-	ReconcileDependency   Component = "reconciler"
+	KebDbDependency            Component = "db - keb"
+	K8sDependency              Component = "k8s client - keb"
+	KEBDependency              Component = "keb"
+	EDPDependency              Component = "edp"
+	ProvisionerDependency      Component = "provisioner"
+	ReconcileDependency        Component = "reconciler"
 	KIMDependency              Component = "kim"
 	LifeCycleManagerDependency Component = "lifecycle-manager"
 )
