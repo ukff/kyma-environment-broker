@@ -36,12 +36,11 @@ type InitialisationStep struct {
 }
 
 func NewInitialisationStep(os storage.Operations, is storage.Instances, b input.CreatorForPlan) *InitialisationStep {
-	s := &InitialisationStep{
+	return &InitialisationStep{
+		operationManager: process.NewOperationManager(os),
 		inputBuilder:     b,
 		instanceStorage:  is,
 	}
-	s.operationManager = process.NewOperationManagerExtendent(os, s.Name(), kebError.ProvisionerDependency)
-	return s
 }
 
 func (s *InitialisationStep) Name() string {
@@ -49,7 +48,6 @@ func (s *InitialisationStep) Name() string {
 }
 
 func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	return s.operationManager.OperationFailed(operation, "Starting step must be implemented", fmt.Errorf("technical error"), log)
 	// create Provisioner InputCreator
 	log.Infof("create provisioner input creator for %q plan ID", operation.ProvisioningParameters.PlanID)
 	creator, err := s.inputBuilder.CreateProvisionInput(operation.ProvisioningParameters)
