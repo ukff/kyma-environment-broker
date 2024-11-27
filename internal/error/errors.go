@@ -18,7 +18,7 @@ type Component string
 type ErrorReporter interface {
 	error
 	GetReason() Reason
-	GetDependency() Component
+	GetComponent() Component
 }
 
 // error reporter
@@ -57,7 +57,7 @@ func (err LastError) GetReason() Reason {
 	return err.Reason
 }
 
-func (err LastError) GetDependency() Component {
+func (err LastError) GetComponent() Component {
 	return err.Component
 }
 
@@ -80,12 +80,12 @@ func (err LastError) SetMessage(msg string) LastError {
 	return err
 }
 
-func (err LastError) StepName() string {
+func (err LastError) GetStep() string {
 	return err.Step
 }
 
-func (err LastError) SetStepName(stepName string) LastError {
-	err.Step = stepName
+func (err LastError) SetStep(step string) LastError {
+	err.Step = step
 	return err
 }
 
@@ -116,7 +116,7 @@ func ReasonForError(err error, step string) LastError {
 		return LastError{
 			Message:   err.Error(),
 			Reason:    status.GetReason(),
-			Component: status.GetDependency(),
+			Component: status.GetComponent(),
 			Step:      step,
 		}
 	}

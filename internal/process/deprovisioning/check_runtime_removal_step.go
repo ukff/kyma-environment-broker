@@ -80,10 +80,10 @@ func (s *CheckRuntimeRemovalStep) Run(operation internal.Operation, log logrus.F
 	case gqlschema.OperationStatePending:
 		return operation, 30 * time.Second, nil
 	case gqlschema.OperationStateFailed:
-		lastErr := provisioner.OperationStatusLastError(status.LastError)
+		lastErr := provisioner.OperationStatusLastError(status.LastError, s.Name())
 		return s.operationManager.OperationFailed(operation, "provisioner client returns failed status", lastErr, log)
 	}
 
-	lastErr := provisioner.OperationStatusLastError(status.LastError)
+	lastErr := provisioner.OperationStatusLastError(status.LastError, s.Name())
 	return s.operationManager.OperationFailed(operation, fmt.Sprintf("unsupported provisioner client status: %s", status.State.String()), lastErr, log)
 }

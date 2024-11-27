@@ -208,12 +208,12 @@ func isNotFoundError(err error) bool {
 	return false
 }
 
-func OperationStatusLastError(lastErr *schema.LastError) kebError.ErrorReporter {
+func OperationStatusLastError(lastErr *schema.LastError, step string) kebError.ErrorReporter {
 	var err kebError.LastError
 
 	if lastErr == nil {
-		return err.SetReason(kebError.ProvisionerCode).SetComponent(kebError.ProvisionerDependency).SetStepName(kebError.NotSet)
+		return err.SetReason(kebError.ProvisionerCode).SetComponent(kebError.ProvisionerDependency).SetStep(step)
 	}
 
-	return err.SetMessage(lastErr.ErrMessage).SetReason(kebError.Reason(lastErr.Reason)).SetComponent(kebError.Component(lastErr.Component)).SetStepName(kebError.NotSet)
+	return err.SetMessage(lastErr.ErrMessage).SetReason(kebError.Reason(lastErr.Reason)).SetComponent(kebError.Component(lastErr.Component)).SetStep(step)
 }
