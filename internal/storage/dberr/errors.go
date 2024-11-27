@@ -81,7 +81,7 @@ func (e dbError) Error() string {
 	return e.message
 }
 
-func (e dbError) GetDependency() kebError.Component {
+func (e dbError) GetComponent() kebError.Component {
 	return kebError.KebDbDependency
 }
 
