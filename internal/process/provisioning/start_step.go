@@ -28,6 +28,7 @@ func NewStartStep(os storage.Operations, is storage.Instances) *StartStep {
 		instanceStorage:  is,
 	}
 	step.operationManager = process.NewOperationManagerExtendent(os, step.Name(), kebError.ProvisionerDependency)
+	return step
 }
 
 func (s *StartStep) Name() string {
