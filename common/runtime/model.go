@@ -58,6 +58,8 @@ type RuntimeDTO struct {
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
+	BetaEnabled                 string                         `json:"betaEnabled,omitempty"`
+	UsedForProduction           string                         `json:"usedForProduction,omitempty"`
 }
 
 type CloudProvider string
