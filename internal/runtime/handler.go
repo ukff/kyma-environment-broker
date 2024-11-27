@@ -39,6 +39,7 @@ type Handler struct {
 	runtimeStatesDb     storage.RuntimeStates
 	bindingsDb          storage.Bindings
 	instancesArchivedDb storage.InstancesArchived
+	subaccountStatesDb  storage.SubaccountStates
 	converter           Converter
 	defaultMaxPage      int
 	provisionerClient   provisioner.Client
@@ -47,20 +48,20 @@ type Handler struct {
 	logger              logrus.FieldLogger
 }
 
-func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates,
-	instancesArchived storage.InstancesArchived, bindingsDb storage.Bindings, defaultMaxPage int, defaultRequestRegion string,
+func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultRequestRegion string,
 	provisionerClient provisioner.Client,
 	k8sClient client.Client, kimConfig broker.KimConfig,
 	logger logrus.FieldLogger) *Handler {
 	return &Handler{
-		instancesDb:         instanceDb,
-		operationsDb:        operationDb,
-		runtimeStatesDb:     runtimeStatesDb,
-		bindingsDb:          bindingsDb,
+		instancesDb:         storage.Instances(),
+		operationsDb:        storage.Operations(),
+		runtimeStatesDb:     storage.RuntimeStates(),
+		bindingsDb:          storage.Bindings(),
+		instancesArchivedDb: storage.InstancesArchived(),
+		subaccountStatesDb:  storage.SubaccountStates(),
 		converter:           NewConverter(defaultRequestRegion),
 		defaultMaxPage:      defaultMaxPage,
 		provisionerClient:   provisionerClient,
-		instancesArchivedDb: instancesArchived,
 		kimConfig:           kimConfig,
 		k8sClient:           k8sClient,
 		logger:              logger.WithField("service", "RuntimeHandler"),
@@ -134,12 +135,14 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 	}
 
 	var result []pkg.RuntimeDTO
-	instances, count, total, err := h.instancesDb.List(filter)
+	instances, count, total, err := h.instancesDb.ListWithSubaccountState(filter)
 	if err != nil {
 		return []pkg.RuntimeDTO{}, 0, 0, err
 	}
 	for _, instance := range instances {
-		dto, err := h.converter.NewDTO(instance)
+		dto, err := h.converter.NewDTO(instance.Instance)
+		dto.BetaEnabled = instance.BetaEnabled
+		dto.UsedForProduction = instance.UsedForProduction
 		if err != nil {
 			return []pkg.RuntimeDTO{}, 0, 0, err
 		}

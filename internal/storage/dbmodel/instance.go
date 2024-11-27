@@ -76,3 +76,10 @@ type InstanceWithExtendedOperationDTO struct {
 	InstanceDTO
 	OperationDTO
 }
+
+type InstanceWithSubaccountStateDTO struct {
+	InstanceDTO
+	OperationDTO
+	BetaEnabled       *string
+	UsedForProduction *string
+}

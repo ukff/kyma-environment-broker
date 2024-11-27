@@ -69,6 +69,12 @@ type Instance struct {
 	Reconcilable bool
 }
 
+type InstanceWithSubaccountState struct {
+	Instance
+	BetaEnabled       string
+	UsedForProduction string
+}
+
 func (i *Instance) IsExpired() bool {
 	return i.ExpiredAt != nil
 }
