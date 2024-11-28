@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -133,6 +135,18 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 			return newOp, backoff, nil
 		}
 		operation = newOp
+
+		err = s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
+
+		switch {
+		case err == nil:
+		case dberr.IsConflict(err):
+			err := s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
+			if err != nil {
+				log.Errorf("cannot update instance: %s", err)
+				return operation, 1 * time.Minute, nil
+			}
+		}
 	}
 	return operation, 0, nil
 }
@@ -320,6 +334,20 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 			AdditionalOidcConfig: nil,
 		},
 	}
+}
+
+func (s *CreateRuntimeResourceStep) updateInstance(id string, region string) error {
+	instance, err := s.instanceStorage.GetByID(id)
+	if err != nil {
+		return fmt.Errorf("while getting instance: %w", err)
+	}
+	instance.ProviderRegion = region
+	_, err = s.instanceStorage.Update(*instance)
+	if err != nil {
+		return fmt.Errorf("while updating instance: %w", err)
+	}
+
+	return nil
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
