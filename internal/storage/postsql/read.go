@@ -747,7 +747,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
 		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
 
-	if len(filter.States) > 0 {
+	if len(filter.States) > 0 || filter.Suspended != nil {
 		stateFilters := buildInstanceStateFilters("o1", filter)
 		stmt.Where(stateFilters)
 	}
@@ -851,7 +851,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		Where("o2.created_at IS NULL").
 		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled))
 
-	if len(filter.States) > 0 {
+	if len(filter.States) > 0 || filter.Suspended != nil {
 		stateFilters := buildInstanceStateFilters("o1", filter)
 		stmt.Where(stateFilters)
 	}
@@ -916,6 +916,9 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 				dbr.Neq(fmt.Sprintf("%s.state", table), domain.Succeeded),
 			))
 		}
+	}
+	if filter.Suspended != nil && *filter.Suspended {
+		exprs = append(exprs, dbr.Expr("((instances.provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false"))
 	}
 
 	return dbr.Or(exprs...)

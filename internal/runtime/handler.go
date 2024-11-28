@@ -500,7 +500,8 @@ func (h *Handler) getFilters(req *http.Request) dbmodel.InstanceFilter {
 			case pkg.StateUpdating:
 				filter.States = append(filter.States, dbmodel.InstanceUpdating)
 			case pkg.StateSuspended:
-				filter.States = append(filter.States, dbmodel.InstanceDeprovisioned)
+				suspended := true
+				filter.Suspended = &suspended
 			case pkg.StateDeprovisioned:
 				filter.States = append(filter.States, dbmodel.InstanceDeprovisioned)
 			case pkg.StateDeprovisionIncomplete:
