@@ -928,7 +928,8 @@ func fixConfig() *Config {
 		},
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans: []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
+			EnablePlans:                           []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
+			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
 				BindablePlans:        []string{"aws", "azure"},
@@ -938,12 +939,13 @@ func fixConfig() *Config {
 				MaxBindingsCount:     10,
 				CreateBindingTimeout: 15 * time.Second,
 			},
-			AllowUpdateExpiredInstanceWithContext: true,
 			KimConfig: broker.KimConfig{
 				Enabled:      true,
 				Plans:        []string{"preview"},
 				KimOnlyPlans: []string{"preview"},
 			},
+			WorkerHealthCheckInterval:     10 * time.Minute,
+			WorkerHealthCheckWarnInterval: 10 * time.Minute,
 		},
 		Notification: notification.Config{
 			Url: "http://host:8080/",

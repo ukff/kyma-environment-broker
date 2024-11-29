@@ -1252,6 +1252,10 @@ func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtim
 	return runtimes.Items[0]
 }
 
+func (s *BrokerSuiteTest) DisableProvisioner() {
+	s.provisionerClient.EnableErrorSimulation()
+}
+
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {
 	list := &unstructured.UnstructuredList{}
 	list.SetGroupVersionKind(gvk)

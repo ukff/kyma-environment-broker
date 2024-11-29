@@ -38,7 +38,7 @@ func (s *RemoveRuntimeStep) Name() string {
 
 func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 
-	if operation.KimDeprovisionsOnly {
+	if operation.KimDeprovisionsOnly != nil && *operation.KimDeprovisionsOnly {
 		log.Infof("Skipping the step because the runtime %s/%s is not controlled by the provisioner", operation.GetRuntimeResourceName(), operation.GetRuntimeResourceName())
 		return operation, 0, nil
 	}

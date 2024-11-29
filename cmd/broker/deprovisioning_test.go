@@ -111,6 +111,50 @@ func TestReDeprovision(t *testing.T) {
 	suite.WaitForOperationsNotExists(iid)
 }
 
+func TestReDeprovision_BlockProvisionerCallSecondTime(t *testing.T) {
+	// TODO: remove this tests when migration to from Provisioner to KIM is done
+	// given
+	cfg := fixConfig()
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite.DisableProvisioner()
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	// preview plan - KIM only (no provisioner)
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMOnlyProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid), ``)
+	opID = suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// second deprovisioning (the first one removed runtime resource, but second must not call Provisioner)
+	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid), ``)
+	opID = suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+}
+
 func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// given
 	cfg := fixConfig()

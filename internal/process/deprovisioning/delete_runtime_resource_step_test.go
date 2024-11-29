@@ -44,7 +44,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceDoesNotExists(t *testing.T) {
 	assertRuntimeDoesNotExists(t, kcpClient, "kyma-ns", "runtime-name")
 
 	// till provisioner may be involved
-	assert.False(t, postOperation.KimDeprovisionsOnly)
+	assert.Nil(t, postOperation.KimDeprovisionsOnly)
 }
 
 func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
@@ -69,7 +69,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
 	assertRuntimeDoesNotExists(t, kcpClient, "kyma-ns", "runtime-name")
 
 	// till provisioner may be involved
-	assert.True(t, postOperation.KimDeprovisionsOnly)
+	assert.True(t, *postOperation.KimDeprovisionsOnly)
 }
 
 func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(t *testing.T) {
@@ -95,7 +95,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(
 	assertRuntimeDoesNotExists(t, kcpClient, "kyma-ns", "runtime-name")
 
 	// till provisioner may be involved
-	assert.False(t, postOperation.KimDeprovisionsOnly)
+	assert.False(t, *postOperation.KimDeprovisionsOnly)
 }
 
 func assertRuntimeDoesNotExists(t *testing.T, kcpClient client.WithWatch, namespace string, name string) {

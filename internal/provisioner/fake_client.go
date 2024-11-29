@@ -37,6 +37,8 @@ type FakeClient struct {
 
 	//needed in the transition period
 	kimOnlyDrivenRuntimes runtimesSet
+
+	enableErrorSimulation bool
 }
 
 func NewFakeClient() *FakeClient {
@@ -68,6 +70,10 @@ func NewFakeClientWithGardener(gc dynamic.Interface, ns string) *FakeClient {
 
 func (c *FakeClient) EnableRequestDumping() {
 	c.dumpRequest = true
+}
+
+func (c *FakeClient) EnableErrorSimulation() {
+	c.enableErrorSimulation = true
 }
 
 func (c *FakeClient) GetLatestProvisionRuntimeInput() schema.ProvisionRuntimeInput {
@@ -121,6 +127,10 @@ func (c *FakeClient) SetOperation(id string, operation schema.OperationStatus) {
 // Provisioner Client methods
 
 func (c *FakeClient) ProvisionRuntime(accountID, subAccountID string, config schema.ProvisionRuntimeInput) (schema.OperationStatus, error) {
+	if c.enableErrorSimulation {
+		return schema.OperationStatus{}, fmt.Errorf("error")
+	}
+
 	rid := uuid.New().String()
 	opId := uuid.New().String()
 
@@ -138,6 +148,10 @@ func (c *FakeClient) Provision(operation internal.ProvisioningOperation) (schema
 }
 
 func (c *FakeClient) ProvisionRuntimeWithIDs(accountID, subAccountID, runtimeID, operationID string, config schema.ProvisionRuntimeInput) (schema.OperationStatus, error) {
+	if c.enableErrorSimulation {
+		return schema.OperationStatus{}, fmt.Errorf("error")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -188,6 +202,10 @@ func (c *FakeClient) ProvisionRuntimeWithIDs(accountID, subAccountID, runtimeID,
 }
 
 func (c *FakeClient) DeprovisionRuntime(accountID, runtimeID string) (string, error) {
+	if c.enableErrorSimulation {
+		return "", fmt.Errorf("error")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -208,6 +226,10 @@ func (c *FakeClient) ReconnectRuntimeAgent(accountID, runtimeID string) (string,
 }
 
 func (c *FakeClient) RuntimeOperationStatus(accountID, operationID string) (schema.OperationStatus, error) {
+	if c.enableErrorSimulation {
+		return schema.OperationStatus{}, fmt.Errorf("error")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -219,6 +241,10 @@ func (c *FakeClient) RuntimeOperationStatus(accountID, operationID string) (sche
 }
 
 func (c *FakeClient) RuntimeStatus(accountID, runtimeID string) (schema.RuntimeStatus, error) {
+	if c.enableErrorSimulation {
+		return schema.RuntimeStatus{}, fmt.Errorf("error")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -251,6 +277,10 @@ func (c *FakeClient) RuntimeStatus(accountID, runtimeID string) (schema.RuntimeS
 }
 
 func (c *FakeClient) UpgradeRuntime(accountID, runtimeID string, config schema.UpgradeRuntimeInput) (schema.OperationStatus, error) {
+	if c.enableErrorSimulation {
+		return schema.OperationStatus{}, fmt.Errorf("error")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

@@ -135,6 +135,9 @@ func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log logrus
 	operation, err := internal.NewProvisioningOperationWithID(id, instance.InstanceID, instance.Parameters)
 	operation.InstanceDetails, err = instance.GetInstanceDetails()
 
+	// next suspension must set this flag once again
+	operation.KimDeprovisionsOnly = nil
+
 	if err != nil {
 		h.log.Errorf("unable to extract shoot name: %s", err.Error())
 		return err
