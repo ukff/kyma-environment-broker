@@ -208,6 +208,7 @@ provisioner:
   gardenerClusterStepTimeout: "3m"
   runtimeResourceStepTimeout: "8m"
   clusterUpdateStepTimeout: "2h"
+  checkRuntimeResourceDeletionStepTimeout: "1h"
 
   deprovisioningDisabled: "false"
 
