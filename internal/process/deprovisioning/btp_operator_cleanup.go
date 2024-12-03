@@ -44,7 +44,7 @@ func NewBTPOperatorCleanupStep(os storage.Operations, k8sClientProvider K8sClien
 	step := &BTPOperatorCleanupStep{
 		k8sClientProvider: k8sClientProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 
