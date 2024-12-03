@@ -30,10 +30,11 @@ type InjectBTPOperatorCredentialsStep struct {
 }
 
 func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider K8sClientProvider) *InjectBTPOperatorCredentialsStep {
-	return &InjectBTPOperatorCredentialsStep{
-		operationManager:  process.NewOperationManager(os),
+	step := &InjectBTPOperatorCredentialsStep{
 		k8sClientProvider: k8sClientProvider,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *InjectBTPOperatorCredentialsStep) Name() string {

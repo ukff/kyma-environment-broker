@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -23,11 +25,12 @@ type RemoveInstanceStep struct {
 var _ process.Step = &RemoveInstanceStep{}
 
 func NewRemoveInstanceStep(instanceStorage storage.Instances, operationStorage storage.Operations) *RemoveInstanceStep {
-	return &RemoveInstanceStep{
-		operationManager: process.NewOperationManager(operationStorage),
+	step := &RemoveInstanceStep{
 		instanceStorage:  instanceStorage,
 		operationStorage: operationStorage,
 	}
+	step.operationManager = process.NewOperationManager(operationStorage, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *RemoveInstanceStep) Name() string {

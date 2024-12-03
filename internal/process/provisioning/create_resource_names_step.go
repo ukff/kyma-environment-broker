@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -17,9 +19,9 @@ type CreateResourceNamesStep struct {
 }
 
 func NewCreateResourceNamesStep(os storage.Operations) *CreateResourceNamesStep {
-	return &CreateResourceNamesStep{
-		operationManager: process.NewOperationManager(os),
-	}
+	step := &CreateResourceNamesStep{}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *CreateResourceNamesStep) Name() string {

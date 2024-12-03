@@ -34,7 +34,7 @@ func NewCheckRuntimeStep(os storage.Operations,
 		provisioningTimeout: provisioningTimeout,
 		kimConfig:           kimConfig,
 	}
-	step.operationManager = process.NewOperationManagerWithMetadata(os, step.Name(), kebError.ProvisionerDependency)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 

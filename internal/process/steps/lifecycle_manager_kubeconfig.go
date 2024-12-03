@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -28,11 +30,15 @@ type deleteKubeconfig struct {
 }
 
 func SyncKubeconfig(os storage.Operations, k8sClient client.Client) syncKubeconfig {
-	return syncKubeconfig{k8sClient: k8sClient, operationManager: process.NewOperationManager(os)}
+	step := syncKubeconfig{k8sClient: k8sClient}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func DeleteKubeconfig(os storage.Operations, k8sClient client.Client) deleteKubeconfig {
-	return deleteKubeconfig{k8sClient: k8sClient, operationManager: process.NewOperationManager(os)}
+	step := deleteKubeconfig{k8sClient: k8sClient}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (_ syncKubeconfig) Name() string {

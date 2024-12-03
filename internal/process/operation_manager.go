@@ -19,11 +19,7 @@ type OperationManager struct {
 	step      string
 }
 
-func NewOperationManager(storage storage.Operations) *OperationManager {
-	return &OperationManager{storage: storage}
-}
-
-func NewOperationManagerWithMetadata(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
+func NewOperationManager(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
 	return &OperationManager{storage: storage, component: component, step: step}
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -22,11 +24,12 @@ type CheckRuntimeResourceDeletionStep struct {
 }
 
 func NewCheckRuntimeResourceDeletionStep(operations storage.Operations, kcpClient client.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
-	return &CheckRuntimeResourceDeletionStep{
-		operationManager:                        process.NewOperationManager(operations),
+	step := &CheckRuntimeResourceDeletionStep{
 		kcpClient:                               kcpClient,
 		checkRuntimeResourceDeletionStepTimeout: checkRuntimeResourceDeletionStepTimeout,
 	}
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (step *CheckRuntimeResourceDeletionStep) Name() string {

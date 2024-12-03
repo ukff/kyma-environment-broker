@@ -36,11 +36,12 @@ type InitialisationStep struct {
 }
 
 func NewInitialisationStep(os storage.Operations, is storage.Instances, b input.CreatorForPlan) *InitialisationStep {
-	return &InitialisationStep{
-		operationManager: process.NewOperationManager(os),
-		inputBuilder:     b,
-		instanceStorage:  is,
+	step := &InitialisationStep{
+		inputBuilder:    b,
+		instanceStorage: is,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *InitialisationStep) Name() string {

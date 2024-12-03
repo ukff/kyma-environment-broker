@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -24,12 +26,13 @@ type RemoveRuntimeStep struct {
 }
 
 func NewRemoveRuntimeStep(os storage.Operations, is storage.Instances, cli provisioner.Client, provisionerTimeout time.Duration) *RemoveRuntimeStep {
-	return &RemoveRuntimeStep{
-		operationManager:   process.NewOperationManager(os),
+	step := &RemoveRuntimeStep{
 		instanceStorage:    is,
 		provisionerClient:  cli,
 		provisionerTimeout: provisionerTimeout,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *RemoveRuntimeStep) Name() string {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,11 +27,12 @@ type CheckKymaResourceDeletedStep struct {
 }
 
 func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient client.Client, kymaResourceDeletionTimeout time.Duration) *CheckKymaResourceDeletedStep {
-	return &CheckKymaResourceDeletedStep{
-		operationManager:            process.NewOperationManager(operations),
+	step := &CheckKymaResourceDeletedStep{
 		kcpClient:                   kcpClient,
 		kymaResourceDeletionTimeout: kymaResourceDeletionTimeout,
 	}
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (step *CheckKymaResourceDeletedStep) Name() string {

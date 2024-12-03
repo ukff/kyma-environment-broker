@@ -3,6 +3,8 @@ package provisioning
 import (
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/sirupsen/logrus"
 
@@ -22,11 +24,12 @@ type GetKubeconfigStep struct {
 func NewGetKubeconfigStep(os storage.Operations,
 	provisionerClient provisioner.Client,
 	kimConfig broker.KimConfig) *GetKubeconfigStep {
-	return &GetKubeconfigStep{
+	step := &GetKubeconfigStep{
 		provisionerClient: provisionerClient,
-		operationManager:  process.NewOperationManager(os),
 		kimConfig:         kimConfig,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 var _ process.Step = (*GetKubeconfigStep)(nil)

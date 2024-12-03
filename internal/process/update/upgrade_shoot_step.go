@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -34,12 +36,13 @@ func NewUpgradeShootStep(
 	runtimeStorage storage.RuntimeStates,
 	cli provisioner.Client, k8sClient client.Client) *UpgradeShootStep {
 
-	return &UpgradeShootStep{
-		operationManager:    process.NewOperationManager(os),
+	step := &UpgradeShootStep{
 		provisionerClient:   cli,
 		runtimeStateStorage: runtimeStorage,
 		k8sClient:           k8sClient,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *UpgradeShootStep) Name() string {

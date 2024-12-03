@@ -41,10 +41,11 @@ type BTPOperatorCleanupStep struct {
 }
 
 func NewBTPOperatorCleanupStep(os storage.Operations, k8sClientProvider K8sClientProvider) *BTPOperatorCleanupStep {
-	return &BTPOperatorCleanupStep{
-		operationManager:  process.NewOperationManager(os),
+	step := &BTPOperatorCleanupStep{
 		k8sClientProvider: k8sClientProvider,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *BTPOperatorCleanupStep) Name() string {

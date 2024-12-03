@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -25,12 +27,13 @@ var _ process.Step = &CheckRuntimeRemovalStep{}
 
 func NewCheckRuntimeRemovalStep(operations storage.Operations, instances storage.Instances,
 	provisionerClient provisioner.Client, timeout time.Duration) *CheckRuntimeRemovalStep {
-	return &CheckRuntimeRemovalStep{
-		operationManager:  process.NewOperationManager(operations),
+	step := &CheckRuntimeRemovalStep{
 		provisionerClient: provisionerClient,
 		instanceStorage:   instances,
 		timeout:           timeout,
 	}
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *CheckRuntimeRemovalStep) Name() string {

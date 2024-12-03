@@ -38,7 +38,7 @@ func NewCreateRuntimeWithoutKymaStep(os storage.Operations, runtimeStorage stora
 		runtimeStateStorage: runtimeStorage,
 		kimConfig:           kimConfig,
 	}
-	step.operationManager = process.NewOperationManagerWithMetadata(os, step.Name(), kebError.ProvisionerDependency)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 

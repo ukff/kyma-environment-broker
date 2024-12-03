@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -21,12 +23,13 @@ type InitStep struct {
 }
 
 func NewInitStep(operations storage.Operations, instances storage.Instances, operationTimeout time.Duration) *InitStep {
-	return &InitStep{
-		operationManager: process.NewOperationManager(operations),
+	step := &InitStep{
 		operationTimeout: operationTimeout,
 		operationStorage: operations,
 		instanceStorage:  instances,
 	}
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *InitStep) Name() string {
