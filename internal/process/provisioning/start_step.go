@@ -21,11 +21,12 @@ type StartStep struct {
 }
 
 func NewStartStep(os storage.Operations, is storage.Instances) *StartStep {
-	return &StartStep{
-		operationManager: process.NewOperationManager(os),
+	step := &StartStep{
 		operationStorage: os,
 		instanceStorage:  is,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), orchestration.Pending)
+	return step
 }
 
 func (s *StartStep) Name() string {

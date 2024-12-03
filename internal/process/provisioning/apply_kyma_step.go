@@ -31,7 +31,7 @@ var _ process.Step = &ApplyKymaStep{}
 
 func NewApplyKymaStep(os storage.Operations, cli client.Client) *ApplyKymaStep {
 	step := &ApplyKymaStep{k8sClient: cli}
-	step.operationManager = process.NewOperationManagerWithMetadata(os, step.Name(), kebErr.LifeCycleManagerDependency)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebErr.LifeCycleManagerDependency)
 	return step
 }
 

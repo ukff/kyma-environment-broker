@@ -34,13 +34,14 @@ type InstanceOperationStorage interface {
 }
 
 func NewEDPDeregistrationStep(os storage.Operations, is storage.Instances, client EDPClient, config edp.Config) *EDPDeregistrationStep {
-	return &EDPDeregistrationStep{
-		operationManager: process.NewOperationManager(os),
-		client:           client,
-		config:           config,
-		dbOperations:     os,
-		dbInstances:      is,
+	step := &EDPDeregistrationStep{
+		client:       client,
+		config:       config,
+		dbOperations: os,
+		dbInstances:  is,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.EDPDependency)
+	return step
 }
 
 func (s *EDPDeregistrationStep) Name() string {

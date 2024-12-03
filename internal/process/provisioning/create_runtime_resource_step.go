@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
@@ -50,8 +52,7 @@ type CreateRuntimeResourceStep struct {
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig broker.KimConfig, cfg input.Config,
 	trialPlatformRegionMapping map[string]string, useSmallerMachines bool, oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
-	return &CreateRuntimeResourceStep{
-		operationManager:           process.NewOperationManager(os),
+	step := &CreateRuntimeResourceStep{
 		instanceStorage:            is,
 		kimConfig:                  kimConfig,
 		k8sClient:                  k8sClient,
@@ -60,6 +61,8 @@ func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k
 		useSmallerMachineTypes:     useSmallerMachines,
 		oidcDefaultValues:          oidcDefaultValues,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *CreateRuntimeResourceStep) Name() string {

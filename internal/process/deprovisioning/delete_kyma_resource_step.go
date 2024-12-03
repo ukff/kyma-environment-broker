@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 
@@ -34,12 +36,13 @@ type DeleteKymaResourceStep struct {
 }
 
 func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.Instances, kcpClient client.Client, configProvider input.ConfigurationProvider) *DeleteKymaResourceStep {
-	return &DeleteKymaResourceStep{
-		operationManager: process.NewOperationManager(operations),
-		kcpClient:        kcpClient,
-		configProvider:   configProvider,
-		instances:        instances,
+	step := &DeleteKymaResourceStep{
+		kcpClient:      kcpClient,
+		configProvider: configProvider,
+		instances:      instances,
 	}
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (step *DeleteKymaResourceStep) Name() string {

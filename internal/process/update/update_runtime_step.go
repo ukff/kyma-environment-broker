@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -23,11 +25,12 @@ type UpdateRuntimeStep struct {
 }
 
 func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration) *UpdateRuntimeStep {
-	return &UpdateRuntimeStep{
-		operationManager: process.NewOperationManager(os),
-		k8sClient:        k8sClient,
-		delay:            delay,
+	step := &UpdateRuntimeStep{
+		k8sClient: k8sClient,
+		delay:     delay,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *UpdateRuntimeStep) Name() string {

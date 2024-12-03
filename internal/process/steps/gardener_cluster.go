@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -22,20 +24,22 @@ import (
 const GardenerClusterStateReady = "Ready"
 
 func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig) *syncGardenerCluster {
-	return &syncGardenerCluster{
-		k8sClient:        k8sClient,
-		kimConfig:        kimConfig,
-		operationManager: process.NewOperationManager(os),
+	step := &syncGardenerCluster{
+		k8sClient: k8sClient,
+		kimConfig: kimConfig,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig, gardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
-	return &checkGardenerCluster{
+	step := &checkGardenerCluster{
 		k8sClient:                  k8sClient,
 		kimConfig:                  kimConfig,
-		operationManager:           process.NewOperationManager(os),
 		gardenerClusterStepTimeout: gardenerClusterStepTimeout,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 type checkGardenerCluster struct {

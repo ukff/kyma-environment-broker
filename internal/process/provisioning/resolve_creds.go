@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -25,11 +27,12 @@ type ResolveCredentialsStep struct {
 }
 
 func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider) *ResolveCredentialsStep {
-	return &ResolveCredentialsStep{
-		operationManager: process.NewOperationManager(os),
-		opStorage:        os,
-		accountProvider:  accountProvider,
+	step := &ResolveCredentialsStep{
+		opStorage:       os,
+		accountProvider: accountProvider,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *ResolveCredentialsStep) Name() string {

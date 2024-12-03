@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -26,7 +28,9 @@ func (k *OverrideKymaModules) Name() string {
 }
 
 func NewOverrideKymaModules(os storage.Operations) *OverrideKymaModules {
-	return &OverrideKymaModules{operationManager: process.NewOperationManager(os)}
+	step := &OverrideKymaModules{}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 // Cases:

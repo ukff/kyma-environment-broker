@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -23,11 +25,12 @@ type CheckStep struct {
 func NewCheckStep(os storage.Operations,
 	provisionerClient provisioner.Client,
 	provisioningTimeout time.Duration) *CheckStep {
-	return &CheckStep{
+	step := &CheckStep{
 		provisionerClient:   provisionerClient,
-		operationManager:    process.NewOperationManager(os),
 		provisioningTimeout: provisioningTimeout,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 var _ process.Step = (*CheckStep)(nil)

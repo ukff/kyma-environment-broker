@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -25,10 +27,11 @@ type CheckGardenerClusterDeletedStep struct {
 }
 
 func NewCheckGardenerClusterDeletedStep(operations storage.Operations, kcpClient client.Client) *CheckGardenerClusterDeletedStep {
-	return &CheckGardenerClusterDeletedStep{
-		operationManager: process.NewOperationManager(operations),
-		kcpClient:        kcpClient,
+	step := &CheckGardenerClusterDeletedStep{
+		kcpClient: kcpClient,
 	}
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (step *CheckGardenerClusterDeletedStep) Name() string {

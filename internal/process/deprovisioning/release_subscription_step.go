@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
@@ -25,11 +27,12 @@ type ReleaseSubscriptionStep struct {
 var _ process.Step = &ReleaseSubscriptionStep{}
 
 func NewReleaseSubscriptionStep(os storage.Operations, instanceStorage storage.Instances, accountProvider hyperscaler.AccountProvider) ReleaseSubscriptionStep {
-	return ReleaseSubscriptionStep{
-		operationManager: process.NewOperationManager(os),
-		instanceStorage:  instanceStorage,
-		accountProvider:  accountProvider,
+	step := ReleaseSubscriptionStep{
+		instanceStorage: instanceStorage,
+		accountProvider: accountProvider,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s ReleaseSubscriptionStep) Name() string {

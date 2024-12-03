@@ -18,7 +18,7 @@ func Test_OperationManager_RetryOperationOnce(t *testing.T) {
 	// given
 	memory := storage.NewMemoryStorage()
 	operations := memory.Operations()
-	opManager := NewOperationManager(operations)
+	opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
 	op := internal.Operation{}
 	op.UpdatedAt = time.Now()
 	retryInterval := time.Hour
@@ -50,7 +50,7 @@ func Test_OperationManager_RetryOperation(t *testing.T) {
 	// given
 	memory := storage.NewMemoryStorage()
 	operations := memory.Operations()
-	opManager := NewOperationManager(operations)
+	opManager := NewOperationManager(operations, "some_step", kebErr.NotSet)
 	op := internal.Operation{}
 	op.UpdatedAt = time.Now()
 	retryInterval := time.Hour
@@ -84,7 +84,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 component v1", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.ProvisionerDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -98,7 +98,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 components v2", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.KebDbDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.KebDbDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.ProvisionerDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -126,7 +126,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.ProvisionerDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
@@ -140,7 +140,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description and no err passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManagerWithMetadata(operations, "some_step", kebErr.ReconcileDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.ReconcileDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
@@ -16,12 +18,13 @@ import (
 )
 
 func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig, runtimeResourceStepTimeout time.Duration) *checkRuntimeResource {
-	return &checkRuntimeResource{
+	step := &checkRuntimeResource{
 		k8sClient:                  k8sClient,
-		operationManager:           process.NewOperationManager(os),
 		kimConfig:                  kimConfig,
 		runtimeResourceStepTimeout: runtimeResourceStepTimeout,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 type checkRuntimeResource struct {

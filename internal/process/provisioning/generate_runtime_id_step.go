@@ -3,6 +3,8 @@ package provisioning
 import (
 	"fmt"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/google/uuid"
 
 	"time"
@@ -20,10 +22,11 @@ type GenerateRuntimeIDStep struct {
 }
 
 func NewGenerateRuntimeIDStep(os storage.Operations, is storage.Instances) *GenerateRuntimeIDStep {
-	return &GenerateRuntimeIDStep{
-		operationManager: process.NewOperationManager(os),
-		instanceStorage:  is,
+	step := &GenerateRuntimeIDStep{
+		instanceStorage: is,
 	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *GenerateRuntimeIDStep) Name() string {

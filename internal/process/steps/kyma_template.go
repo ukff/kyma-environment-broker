@@ -3,6 +3,8 @@ package steps
 import (
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -17,7 +19,9 @@ type InitKymaTemplate struct {
 var _ process.Step = &InitKymaTemplate{}
 
 func NewInitKymaTemplate(os storage.Operations) *InitKymaTemplate {
-	return &InitKymaTemplate{operationManager: process.NewOperationManager(os)}
+	step := &InitKymaTemplate{}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	return step
 }
 
 func (s *InitKymaTemplate) Name() string {

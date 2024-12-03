@@ -219,7 +219,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		if pErr := recover(); pErr != nil {
 			logger.Println("panic in RunStep in staged manager: ", pErr)
 			err = errors.New(fmt.Sprintf("%v", pErr))
-			om := NewOperationManager(m.operationStorage)
+			om := NewOperationManager(m.operationStorage, step.Name(), kebError.NotSet)
 			processedOperation, _, _ = om.OperationFailed(operation, "recovered from panic", err, m.log)
 		}
 	}()
