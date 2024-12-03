@@ -49,7 +49,7 @@ const (
 	EDPDependency              Component = "edp"
 	ProvisionerDependency      Component = "provisioner"
 	ReconcileDependency        Component = "reconciler"
-	InfrastructureDependency   Component = "infrastructure-manager"
+	InfrastructureManagerDependency   Component = "infrastructure-manager"
 	LifeCycleManagerDependency Component = "lifecycle-manager"
 )
 
