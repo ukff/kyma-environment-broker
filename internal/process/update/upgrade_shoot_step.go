@@ -41,7 +41,7 @@ func NewUpgradeShootStep(
 		runtimeStateStorage: runtimeStorage,
 		k8sClient:           k8sClient,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 

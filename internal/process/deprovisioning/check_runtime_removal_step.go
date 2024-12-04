@@ -32,7 +32,7 @@ func NewCheckRuntimeRemovalStep(operations storage.Operations, instances storage
 		instanceStorage:   instances,
 		timeout:           timeout,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 

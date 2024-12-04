@@ -28,7 +28,7 @@ func NewInitStep(operations storage.Operations, instances storage.Instances, ope
 		operationStorage: operations,
 		instanceStorage:  instances,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.KEBDependency)
 	return step
 }
 

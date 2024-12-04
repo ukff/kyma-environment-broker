@@ -31,7 +31,7 @@ func NewRemoveRuntimeStep(os storage.Operations, is storage.Instances, cli provi
 		provisionerClient:  cli,
 		provisionerTimeout: provisionerTimeout,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 

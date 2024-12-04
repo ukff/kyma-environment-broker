@@ -30,7 +30,7 @@ func NewDeleteGardenerClusterStep(operations storage.Operations, kcpClient clien
 		kcpClient: kcpClient,
 		instances: instances,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.KEBDependency)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

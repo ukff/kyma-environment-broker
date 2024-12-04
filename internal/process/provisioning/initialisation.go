@@ -40,7 +40,7 @@ func NewInitialisationStep(os storage.Operations, is storage.Instances, b input.
 		inputBuilder:    b,
 		instanceStorage: is,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 

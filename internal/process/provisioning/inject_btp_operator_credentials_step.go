@@ -33,7 +33,7 @@ func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvide
 	step := &InjectBTPOperatorCredentialsStep{
 		k8sClientProvider: k8sClientProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.BtpManagerDependency)
 	return step
 }
 

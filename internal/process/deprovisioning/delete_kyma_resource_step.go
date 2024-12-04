@@ -41,7 +41,7 @@ func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.
 		configProvider: configProvider,
 		instances:      instances,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.LifeCycleManagerDependency)
 	return step
 }
 

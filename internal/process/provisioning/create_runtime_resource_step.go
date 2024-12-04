@@ -61,7 +61,7 @@ func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k
 		useSmallerMachineTypes:     useSmallerMachines,
 		oidcDefaultValues:          oidcDefaultValues,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

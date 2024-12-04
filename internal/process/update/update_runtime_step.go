@@ -29,7 +29,7 @@ func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay 
 		k8sClient: k8sClient,
 		delay:     delay,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

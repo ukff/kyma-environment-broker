@@ -28,7 +28,7 @@ func NewCheckRuntimeResourceDeletionStep(operations storage.Operations, kcpClien
 		kcpClient:                               kcpClient,
 		checkRuntimeResourceDeletionStepTimeout: checkRuntimeResourceDeletionStepTimeout,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

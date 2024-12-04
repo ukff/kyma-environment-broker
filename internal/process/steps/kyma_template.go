@@ -20,7 +20,7 @@ var _ process.Step = &InitKymaTemplate{}
 
 func NewInitKymaTemplate(os storage.Operations) *InitKymaTemplate {
 	step := &InitKymaTemplate{}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 

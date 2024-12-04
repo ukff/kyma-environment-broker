@@ -29,7 +29,7 @@ func NewCheckStep(os storage.Operations,
 		provisionerClient:   provisionerClient,
 		provisioningTimeout: provisioningTimeout,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 
