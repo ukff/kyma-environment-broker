@@ -3,6 +3,7 @@ package postsql
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -320,7 +320,6 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 				lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
 				return false, lastErr
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -385,7 +384,6 @@ func (s *operations) GetNotFinishedOperationsByType(operationType internal.Opera
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		dto, err := session.GetNotFinishedOperationsByType(operationType)
 		if err != nil {
-			log.Errorf("while getting operations from the storage: %v", err)
 			return false, nil
 		}
 		operations = dto
@@ -470,7 +468,6 @@ func calFailedStatusForOrchestration(entries []dbmodel.OperationStatEntry) ([]st
 			}
 		}
 		if failedFound && !invalidFailed {
-			log.Info("calFailedStatusForOrchestration() append ", instanceID)
 			result = append(result, instanceID)
 		}
 	}
@@ -502,7 +499,6 @@ func (s *operations) GetOperationsForIDs(operationIDList []string) ([]internal.O
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		dto, err := session.GetOperationsForIDs(operationIDList)
 		if err != nil {
-			log.Errorf("while getting operations from the storage: %v", err)
 			return false, nil
 		}
 		operations = dto
@@ -526,7 +522,6 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		operations, size, total, lastErr = session.ListOperations(filter)
 		if lastErr != nil {
-			log.Errorf("while getting operations from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -564,7 +559,6 @@ func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, fil
 				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
 				return false, lastErr
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -642,7 +636,6 @@ func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperatio
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
 			if lastErr != nil {
-				log.Errorf("while getting operation: %v", lastErr)
 				return false, nil
 			}
 
@@ -664,7 +657,6 @@ func (s *operations) ListUpdatingOperationsByInstanceID(instanceID string) ([]in
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpdate)
 		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -705,7 +697,6 @@ func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClu
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
 			if lastErr != nil {
-				log.Errorf("while getting operation: %v", lastErr)
 				return false, nil
 			}
 
@@ -741,7 +732,6 @@ func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string)
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpgradeCluster)
 		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -772,7 +762,6 @@ func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(orchestration
 				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
 				return false, lastErr
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -837,7 +826,7 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 
 	err = s.cipher.DecryptKubeconfig(&provisioningParameters)
 	if err != nil {
-		log.Warn("decrypting skipped because kubeconfig is in a plain text")
+		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
 
 	stages := make([]string, 0)
@@ -1123,7 +1112,6 @@ func (s *operations) getByID(id string) (*dbmodel.OperationDTO, error) {
 				lastErr = dberr.NotFound("Operation with id %s not exist", id)
 				return false, lastErr
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -1142,7 +1130,6 @@ func (s *operations) insert(dto dbmodel.OperationDTO) error {
 	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		lastErr = session.InsertOperation(dto)
 		if lastErr != nil {
-			log.Errorf("while insert operation: %v", lastErr)
 			return false, nil
 		}
 		// TODO: insert link to orchestration
@@ -1162,7 +1149,6 @@ func (s *operations) getByInstanceID(id string) (*dbmodel.OperationDTO, error) {
 				lastErr = dberr.NotFound("operation does not exist")
 				return false, lastErr
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -1182,7 +1168,6 @@ func (s *operations) getByTypeAndInstanceID(id string, opType internal.Operation
 				lastErr = dberr.NotFound("operation does not exist")
 				return false, lastErr
 			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -1203,7 +1188,6 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 				return false, lastErr
 			}
 			if lastErr != nil {
-				log.Errorf("while getting operation: %v", lastErr)
 				return false, nil
 			}
 
@@ -1224,7 +1208,6 @@ func (s *operations) listOperationsByInstanceIdAndType(instanceId string, operat
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceId, operationType)
 		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -1243,7 +1226,6 @@ func (s *operations) listOperationsByType(operationType internal.OperationType) 
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		operations, lastErr = session.ListOperationsByType(operationType)
 		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -1262,7 +1244,6 @@ func (s *operations) listOperationsByInstanceId(instanceId string) ([]dbmodel.Op
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		operations, lastErr = session.GetOperationsByInstanceID(instanceId)
 		if lastErr != nil {
-			log.Errorf("while reading operation from the storage: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
