@@ -3,6 +3,7 @@ package postsql
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -32,7 +32,6 @@ func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		subAccounts, lastErr = sess.GetDistinctSubAccounts()
 		if lastErr != nil {
-			log.Errorf("while fetching distinct subaccounts list: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -84,7 +83,6 @@ func (s *Instance) InsertWithoutEncryption(instance internal.Instance) error {
 	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		err := sess.InsertInstance(dto)
 		if err != nil {
-			log.Errorf("while saving instance ID %s: %v", instance.InstanceID, err)
 			return false, nil
 		}
 		return true, nil
@@ -161,7 +159,6 @@ func (s *Instance) UpdateWithoutEncryption(instance internal.Instance) (*interna
 				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
 			}
 			if lastErr != nil {
-				log.Errorf(fmt.Sprintf("while getting Operation: %v", lastErr))
 				return false, nil
 			}
 
@@ -169,7 +166,6 @@ func (s *Instance) UpdateWithoutEncryption(instance internal.Instance) (*interna
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", instance.InstanceID)
 			return false, lastErr
 		case lastErr != nil:
-			log.Errorf("while updating instance ID %s: %v", instance.InstanceID, lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -190,7 +186,6 @@ func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]i
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		instances, lastErr = sess.FindAllInstancesJoinedWithOperation(prct...)
 		if lastErr != nil {
-			log.Errorf("while fetching all instances: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -214,7 +209,7 @@ func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]i
 		case internal.OperationTypeDeprovision:
 			deprovOp, err := s.toDeprovisioningOp(&dto)
 			if err != nil {
-				log.Errorf("while unmarshalling DTO deprovisioning operation data: %v", err)
+				slog.Error(fmt.Sprintf("while unmarshalling DTO deprovisioning operation data: %v", err))
 			}
 			isSuspensionOp = deprovOp.Temporary
 		}
@@ -262,7 +257,6 @@ func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]intern
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("Instances with runtime IDs from list '%+q' not exist", runtimeIdList)
 			}
-			log.Errorf("while getting instances from runtime ID list '%+q': %v", runtimeIdList, lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -292,7 +286,6 @@ func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]i
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		instances, lastErr = sess.FindAllInstancesForSubAccounts(subAccountslist)
 		if lastErr != nil {
-			log.Errorf("while fetching instances by subaccount list: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -335,7 +328,6 @@ func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("Instance with id %s not exist", instanceID)
 			}
-			log.Errorf("while getting instanceDTO by ID %s: %v", instanceID, lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -372,7 +364,7 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 
 	err = s.cipher.DecryptKubeconfig(&params)
 	if err != nil {
-		log.Warn("decrypting skipped because kubeconfig is in a plain text")
+		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
 
 	return internal.Instance{
@@ -410,8 +402,9 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 
 	err = s.cipher.DecryptKubeconfig(&params)
 	if err != nil {
-		log.Warn("decrypting skipped because kubeconfig is in a plain text")
+		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
+
 	var betaEnabled, usedForProduction string
 	if dto.BetaEnabled == nil {
 		betaEnabled = ""
@@ -462,7 +455,6 @@ func (s *Instance) Insert(instance internal.Instance) error {
 	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		err := sess.InsertInstance(dto)
 		if err != nil {
-			log.Errorf("while saving instance ID %s: %v", instance.InstanceID, err)
 			return false, nil
 		}
 		return true, nil
@@ -486,7 +478,6 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
 			}
 			if lastErr != nil {
-				log.Warn(fmt.Errorf("while getting Operation: %w", lastErr))
 				return false, nil
 			}
 
@@ -494,7 +485,6 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", instance.InstanceID)
 			return false, lastErr
 		case lastErr != nil:
-			log.Errorf("while updating instance ID %s: %v", instance.InstanceID, lastErr)
 			return false, nil
 		}
 		return true, nil
