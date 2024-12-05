@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -34,10 +34,10 @@ type Config struct {
 type Client struct {
 	httpClient *http.Client
 	config     Config
-	log        logrus.FieldLogger
+	log        *slog.Logger
 }
 
-func NewClient(ctx context.Context, config Config, log logrus.FieldLogger) *Client {
+func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -52,7 +52,7 @@ func NewClient(ctx context.Context, config Config, log logrus.FieldLogger) *Clie
 	return &Client{
 		httpClient: httpClientOAuth,
 		config:     config,
-		log:        log.WithField("client", "CIS-2.0"),
+		log:        log,
 	}
 }
 
@@ -76,12 +76,8 @@ func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
 
-	c.log.Infof("CIS returned total amount of delete events: %d, client fetched %d subaccounts to delete. "+
-		"The events includes a range of time from %s to %s",
-		subaccounts.total,
-		len(subaccounts.ids),
-		subaccounts.from,
-		subaccounts.to)
+	c.log.Info(fmt.Sprintf("CIS returned total amount of delete events: %d, client fetched %d subaccounts to delete. "+
+		"The events include a range of time from %s to %s", subaccounts.total, len(subaccounts.ids), subaccounts.from, subaccounts.to))
 
 	return subaccounts.ids, nil
 }
@@ -167,7 +163,7 @@ func (c *Client) handleWrongStatusCode(response *http.Response) string {
 func (c *Client) appendSubaccountsFromDeleteEvents(cisResp *CisResponse, subaccs *subaccounts) {
 	for _, event := range cisResp.Events {
 		if event.Type != eventType {
-			c.log.Warnf("event type %s is not equal to %s, skip event", event.Type, eventType)
+			c.log.Warn(fmt.Sprintf("event type %s is not equal to %s, skip event", event.Type, eventType))
 			continue
 		}
 		subaccs.ids = append(subaccs.ids, event.SubAccount)

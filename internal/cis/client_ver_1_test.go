@@ -3,11 +3,11 @@ package cis
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
@@ -25,10 +25,14 @@ func TestClientVer1_FetchSubaccountsToDelete(t *testing.T) {
 		testServer := fixHTTPServerVer1(newServerVer1(t))
 		defer testServer.Close()
 
+		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
 		client := NewClientVer1(context.TODO(), Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "3",
-		}, logger.NewLogDummy())
+		}, logger)
 		client.SetHttpClient(testServer.Client())
 
 		// When
@@ -47,10 +51,14 @@ func TestClientVer1_FetchSubaccountsToDelete(t *testing.T) {
 		testServer := fixHTTPServerVer1(srv)
 		defer testServer.Close()
 
+		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
 		client := NewClientVer1(context.TODO(), Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "3",
-		}, logger.NewLogDummy())
+		}, logger)
 		client.SetHttpClient(testServer.Client())
 
 		// When
