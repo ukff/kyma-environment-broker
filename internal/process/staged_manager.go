@@ -122,7 +122,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operationID, "instanceID": operation.InstanceID, "planID": operation.ProvisioningParameters.PlanID})
 	logOperation.Infof("Start process operation steps for GlobalAccount=%s, ", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
-		timeoutErr := kebError.TimeoutError("operation has reached the time limit", kebError.NotSet)
+		timeoutErr := kebError.TimeoutError("operation has reached the time limit", string(kebError.KEBDependency))
 		operation.LastError = timeoutErr
 		defer m.publishEventOnFail(operation, err)
 		logOperation.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
@@ -219,7 +219,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		if pErr := recover(); pErr != nil {
 			logger.Println("panic in RunStep in staged manager: ", pErr)
 			err = errors.New(fmt.Sprintf("%v", pErr))
-			om := NewOperationManager(m.operationStorage, step.Name(), kebError.NotSet)
+			om := NewOperationManager(m.operationStorage, step.Name(), kebError.KEBDependency)
 			processedOperation, _, _ = om.OperationFailed(operation, "recovered from panic", err, m.log)
 		}
 	}()

@@ -29,7 +29,7 @@ func NewRemoveInstanceStep(instanceStorage storage.Instances, operationStorage s
 		instanceStorage:  instanceStorage,
 		operationStorage: operationStorage,
 	}
-	step.operationManager = process.NewOperationManager(operationStorage, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operationStorage, step.Name(), kebError.KEBDependency)
 	return step
 }
 

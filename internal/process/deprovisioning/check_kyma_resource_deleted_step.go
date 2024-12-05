@@ -31,7 +31,7 @@ func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient cl
 		kcpClient:                   kcpClient,
 		kymaResourceDeletionTimeout: kymaResourceDeletionTimeout,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.LifeCycleManagerDependency)
 	return step
 }
 

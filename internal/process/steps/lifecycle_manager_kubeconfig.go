@@ -31,13 +31,13 @@ type deleteKubeconfig struct {
 
 func SyncKubeconfig(os storage.Operations, k8sClient client.Client) syncKubeconfig {
 	step := syncKubeconfig{k8sClient: k8sClient}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 
 func DeleteKubeconfig(os storage.Operations, k8sClient client.Client) deleteKubeconfig {
 	step := deleteKubeconfig{k8sClient: k8sClient}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 

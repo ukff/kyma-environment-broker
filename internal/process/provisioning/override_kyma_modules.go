@@ -29,7 +29,7 @@ func (k *OverrideKymaModules) Name() string {
 
 func NewOverrideKymaModules(os storage.Operations) *OverrideKymaModules {
 	step := &OverrideKymaModules{}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 

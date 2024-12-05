@@ -28,7 +28,7 @@ func NewGetKubeconfigStep(os storage.Operations,
 		provisionerClient: provisionerClient,
 		kimConfig:         kimConfig,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.ProvisionerDependency)
 	return step
 }
 

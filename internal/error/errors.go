@@ -51,6 +51,8 @@ const (
 	ReconcileDependency             Component = "reconciler"
 	InfrastructureManagerDependency Component = "infrastructure-manager"
 	LifeCycleManagerDependency      Component = "lifecycle-manager"
+	BtpManagerDependency            Component = "btp-manager"
+	AccountPoolDependency           Component = "account-pool"
 )
 
 func (err LastError) GetReason() Reason {

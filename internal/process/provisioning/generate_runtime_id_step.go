@@ -25,7 +25,7 @@ func NewGenerateRuntimeIDStep(os storage.Operations, is storage.Instances) *Gene
 	step := &GenerateRuntimeIDStep{
 		instanceStorage: is,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 

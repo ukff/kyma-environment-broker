@@ -28,7 +28,7 @@ func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client, kimC
 		k8sClient: k8sClient,
 		kimConfig: kimConfig,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
@@ -38,7 +38,7 @@ func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, kim
 		kimConfig:                  kimConfig,
 		gardenerClusterStepTimeout: gardenerClusterStepTimeout,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

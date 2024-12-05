@@ -30,7 +30,7 @@ func NewCheckGardenerClusterDeletedStep(operations storage.Operations, kcpClient
 	step := &CheckGardenerClusterDeletedStep{
 		kcpClient: kcpClient,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

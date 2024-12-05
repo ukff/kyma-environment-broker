@@ -31,7 +31,7 @@ func NewReleaseSubscriptionStep(os storage.Operations, instanceStorage storage.I
 		instanceStorage: instanceStorage,
 		accountProvider: accountProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
 }
 

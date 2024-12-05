@@ -31,7 +31,7 @@ func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscale
 		opStorage:       os,
 		accountProvider: accountProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.NotSet)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
 }
 

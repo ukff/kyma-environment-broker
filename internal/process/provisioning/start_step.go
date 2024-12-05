@@ -3,6 +3,8 @@ package provisioning
 import (
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -25,7 +27,7 @@ func NewStartStep(os storage.Operations, is storage.Instances) *StartStep {
 		operationStorage: os,
 		instanceStorage:  is,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), orchestration.Pending)
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 
