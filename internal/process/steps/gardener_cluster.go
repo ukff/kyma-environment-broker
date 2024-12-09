@@ -54,10 +54,10 @@ func (_ *checkGardenerCluster) Name() string {
 }
 
 func (s *checkGardenerCluster) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+	/*if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 		return operation, 0, nil
-	}
+	}*/
 
 	gc, err := s.GetGardenerCluster(operation.RuntimeID, operation.KymaResourceNamespace)
 	// simulate error

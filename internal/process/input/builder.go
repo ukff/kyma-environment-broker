@@ -132,6 +132,9 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 }
 
 func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
+	// simualte for gophers
+	// return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
+
 	if !f.IsPlanSupport(provisioningParameters.PlanID) {
 		return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
 	}
