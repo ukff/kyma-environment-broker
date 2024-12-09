@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -53,27 +53,26 @@ func (_ *checkGardenerCluster) Name() string {
 	return "Check_GardenerCluster"
 }
 
-func (s *checkGardenerCluster) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *checkGardenerCluster) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	/*if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		log.Info(fmt.Sprintf("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
 		return operation, 0, nil
 	}*/
 
 	gc, err := s.GetGardenerCluster(operation.RuntimeID, operation.KymaResourceNamespace)
-	// simulate error
 	if err == nil {
-		log.Error("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
+		log.Error(fmt.Sprintf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID))
 		return s.operationManager.RetryOperation(operation, "unable to get GardenerCluster", err, time.Second, 10*time.Second, log)
 	}
 
 	// check status
 	state := gc.GetState()
-	log.Infof("GardenerCluster state: %s", state)
+	log.Info(fmt.Sprintf("GardenerCluster state: %s", state))
 	if state != GardenerClusterStateReady {
 		if time.Since(operation.UpdatedAt) > s.gardenerClusterStepTimeout {
 			description := fmt.Sprintf("Waiting for GardenerCluster (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
-			log.Infof("GardenerCluster status: %s", gc.StatusAsString())
+			log.Info(fmt.Sprintf("GardenerCluster status: %s", gc.StatusAsString()))
 			return s.operationManager.OperationFailed(operation, description, nil, log)
 		}
 		return operation, 500 * time.Millisecond, nil
