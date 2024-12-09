@@ -107,9 +107,9 @@ func (_ *syncGardenerCluster) Name() string {
 	return "Sync_GardenerCluster"
 }
 
-func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *syncGardenerCluster) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		log.Info(fmt.Sprintf("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
 		return operation, 0, nil
 	}
 
@@ -118,24 +118,24 @@ func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.Field
 			op.GardenerClusterName = GardenerClusterName(op)
 		}, log)
 		if backoff != 0 {
-			log.Errorf("cannot save the operation")
+			log.Error("cannot save the operation")
 			return operation, 5 * time.Second, nil
 		}
 		operation = modifiedOperation
 	}
 	gardenerCluster, err := s.GetOrCreateNewGardenerCluster(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
-		log.Errorf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
+		log.Error(fmt.Sprintf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID))
 		return s.operationManager.RetryOperation(operation, "unable to get GardenerCluster", err, 3*time.Second, 20*time.Second, log)
 	}
 	err = gardenerCluster.SetShootName(operation.ShootName)
 	if err != nil {
-		log.Errorf("unable to set GardenerCluster shoot name: %s", err)
+		log.Error(fmt.Sprintf("unable to set GardenerCluster shoot name: %s", err))
 		return s.operationManager.RetryOperation(operation, "unable to set GardenerCluster shoot name", err, 3*time.Second, 20*time.Second, log)
 	}
 	err = gardenerCluster.SetKubecofigSecret(fmt.Sprintf("kubeconfig-%s", operation.RuntimeID), operation.KymaResourceNamespace)
 	if err != nil {
-		log.Errorf("unable to set GardenerCluster kubeconfig secret: %s", err)
+		log.Error(fmt.Sprintf("unable to set GardenerCluster kubeconfig secret: %s", err))
 		return s.operationManager.RetryOperation(operation, "unable to set GardenerCluster kubeconfig secret", err, 3*time.Second, 20*time.Second, log)
 	}
 
@@ -145,13 +145,13 @@ func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.Field
 	if gardenerCluster.ExistsInTheCluster() {
 		err := s.k8sClient.Update(context.Background(), obj)
 		if err != nil {
-			log.Errorf("unable to update GardenerCluster %s/%s: %s", operation.KymaResourceNamespace, operation.RuntimeID, err.Error())
+			log.Error(fmt.Sprintf("unable to update GardenerCluster %s/%s: %s", operation.KymaResourceNamespace, operation.RuntimeID, err.Error()))
 			return s.operationManager.RetryOperation(operation, "unable to update GardenerCluster", err, 3*time.Second, 20*time.Second, log)
 		}
 	} else {
 		err := s.k8sClient.Create(context.Background(), obj)
 		if err != nil {
-			log.Errorf("unable to create GardenerCluster %s/%s: ", operation.KymaResourceNamespace, operation.RuntimeID, err.Error())
+			log.Error(fmt.Sprintf("unable to create GardenerCluster %s/%s: %s", operation.KymaResourceNamespace, operation.RuntimeID, err.Error()))
 			return s.operationManager.RetryOperation(operation, "unable to create GardenerCluster", err, 3*time.Second, 20*time.Second, log)
 		}
 	}
