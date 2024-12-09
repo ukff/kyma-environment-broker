@@ -205,7 +205,7 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 		time.Sleep(profiler.Sampling)
 	}
 }
-
+// build trigger
 func main() {
 	err := apiextensionsv1.AddToScheme(scheme.Scheme)
 	panicOnError(err)
