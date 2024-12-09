@@ -23,6 +23,10 @@ func NewOperationManager(storage storage.Operations, step string, component kebE
 	return &OperationManager{storage: storage, component: component, step: step}
 }
 
+func (om *OperationManager) Component() kebErr.Component {
+	return om.component
+}
+
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
 func (om *OperationManager) OperationSucceeded(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	return om.update(operation, domain.Succeeded, description, log)
@@ -33,6 +37,13 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 	if err != nil {
 		operation.LastError = kebErr.LastError{
 			Message:   err.Error(),
+			Reason:    kebErr.Reason(description),
+			Component: om.component,
+			Step:      om.step,
+		}
+	} else {
+		operation.LastError = kebErr.LastError{
+			Message:   "-",
 			Reason:    kebErr.Reason(description),
 			Component: om.component,
 			Step:      om.step,

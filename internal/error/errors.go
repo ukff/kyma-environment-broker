@@ -92,18 +92,18 @@ func (err LastError) SetStep(step string) LastError {
 	return err
 }
 
-func TimeoutError(msg, step string) LastError {
+func TimeoutError(msg, step string, component Component) LastError {
 	fmt.Println("[lj-debug] -> TimeoutError")
 	return LastError{
 		Message:   msg,
 		Reason:    KEBTimeOutCode,
-		Component: KEBDependency,
+		Component: component,
 		Step:      step,
 	}
 }
 
 // resolve error component and reason
-func ReasonForError(err error, step string) LastError {
+func ReasonForError(err error, step string, component Component) LastError {
 	if err == nil {
 		return LastError{}
 	}
@@ -159,14 +159,14 @@ func ReasonForError(err error, step string) LastError {
 
 	if strings.Contains(err.Error(), OperationTimeOutMsg) {
 		fmt.Println("[lj-debug] -> err contains TimeoutError")
-		return TimeoutError(err.Error(), step)
+		return TimeoutError(err.Error(), step, component)
 	}
 
 	fmt.Println("[lj-debug] -> err contains KEBDependency")
 	return LastError{
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
-		Component: KEBDependency,
+		Component: component,
 		Step:      step,
 	}
 }

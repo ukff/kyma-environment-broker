@@ -40,6 +40,14 @@ func (a *ApplyKymaStep) Name() string {
 	return "Apply_Kyma"
 }
 
+func (s *ApplyKymaStep) Dependency() kebErr.Component {
+	return s.operationManager.Component()
+}
+
+func (a *ApplyKymaStep) Component() kebErr.Component {
+	return a.operationManager.Component()
+}
+
 func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
