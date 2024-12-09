@@ -60,7 +60,8 @@ func (s *checkGardenerCluster) Run(operation internal.Operation, log logrus.Fiel
 	}
 
 	gc, err := s.GetGardenerCluster(operation.RuntimeID, operation.KymaResourceNamespace)
-	if err != nil {
+	// simulate error
+	if err == nil {
 		log.Errorf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
 		return s.operationManager.RetryOperation(operation, "unable to get GardenerCluster", err, time.Second, 10*time.Second, log)
 	}
