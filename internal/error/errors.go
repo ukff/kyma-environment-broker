@@ -2,6 +2,7 @@ package error
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
@@ -92,6 +93,7 @@ func (err LastError) SetStep(step string) LastError {
 }
 
 func TimeoutError(msg, step string) LastError {
+	fmt.Println("[lj-debug] -> TimeoutError")
 	return LastError{
 		Message:   msg,
 		Reason:    KEBTimeOutCode,
@@ -156,9 +158,11 @@ func ReasonForError(err error, step string) LastError {
 	}
 
 	if strings.Contains(err.Error(), OperationTimeOutMsg) {
+		fmt.Println("[lj-debug] -> err contains TimeoutError")
 		return TimeoutError(err.Error(), step)
 	}
 
+	fmt.Println("[lj-debug] -> err contains KEBDependency")
 	return LastError{
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
