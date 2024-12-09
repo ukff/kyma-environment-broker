@@ -39,10 +39,10 @@ func (_ *checkRuntimeResource) Name() string {
 }
 
 func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+	/*if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		log.Info("Only provisioner is controlling provisioning process, skipping")
 		return operation, 0, nil
-	}
+	}*/
 
 	runtime, err := s.GetRuntimeResource(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *checkRuntimeResource) GetRuntimeResource(name string, namespace string)
 	runtime := imv1.Runtime{}
 	err := s.k8sClient.Get(context.Background(), client.ObjectKey{
 		Namespace: namespace,
-		Name:      name,
+		Name:      "testfail",
 	}, &runtime)
 	if err != nil {
 		return nil, err
