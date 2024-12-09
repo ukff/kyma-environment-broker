@@ -41,11 +41,10 @@ func (a *ApplyKymaStep) Name() string {
 }
 
 func (s *ApplyKymaStep) Dependency() kebErr.Component {
-	return s.operationManager.Component()
-}
 
-func (a *ApplyKymaStep) Component() kebErr.Component {
-	return a.operationManager.Component()
+
+
+	return s.operationManager.Component()
 }
 
 func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
@@ -65,7 +64,7 @@ func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (
 	var existingKyma unstructured.Unstructured
 	existingKyma.SetGroupVersionKind(template.GroupVersionKind())
 	err = a.k8sClient.Get(context.Background(), client.ObjectKey{
-		Namespace: operation.KymaResourceNamespace,
+		Namespace: "wrong-namespace",
 		Name:      template.GetName(),
 	}, &existingKyma)
 

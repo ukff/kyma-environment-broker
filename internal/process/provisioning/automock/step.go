@@ -18,8 +18,7 @@ type Step struct {
 }
 
 func (_m *Step) Dependency() kebError.Component {
-	//TODO implement me
-	return ""
+	return kebError.NotSet
 }
 
 // Name provides a mock function with given fields:

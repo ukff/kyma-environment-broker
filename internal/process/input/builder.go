@@ -132,9 +132,6 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 }
 
 func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
-	return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
-
-	 /*
 	if !f.IsPlanSupport(provisioningParameters.PlanID) {
 		return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
 	}
@@ -166,8 +163,6 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 		trialNodesNumber:             f.config.TrialNodesNumber,
 		enableShootAndSeedSameRegion: f.config.EnableShootAndSeedSameRegion,
 	}, nil
-	 *
-	  */
 }
 
 func (f *InputBuilderFactory) forTrialPlan(provider *pkg.CloudProvider) HyperscalerInputProvider {
